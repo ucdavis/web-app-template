@@ -3,9 +3,9 @@ import "./App.css";
 
 interface Forecast {
   date: string;
+  summary: string;
   temperatureC: number;
   temperatureF: number;
-  summary: string;
 }
 
 function App() {
@@ -27,7 +27,7 @@ function App() {
         </em>
       </p>
     ) : (
-      <table className="table table-striped" aria-labelledby="tableLabel">
+      <table aria-labelledby="tableLabel" className="table table-striped">
         <thead>
           <tr>
             <th>Date</th>

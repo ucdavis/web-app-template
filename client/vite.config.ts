@@ -2,10 +2,10 @@ import { fileURLToPath, URL } from "node:url";
 
 import { defineConfig } from "vite";
 import plugin from "@vitejs/plugin-react";
-import fs from "fs";
-import path from "path";
-import child_process from "child_process";
-import { env } from "process";
+import fs from "node:fs";
+import path from "node:path";
+import child_process from "node:child_process";
+import { env } from "node:process";
 
 const baseFolder =
   env.APPDATA !== undefined && env.APPDATA !== ""
@@ -44,8 +44,8 @@ if (!fs.existsSync(certFilePath) || !fs.existsSync(keyFilePath)) {
 const target = env.ASPNETCORE_HTTPS_PORT
   ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
   : env.ASPNETCORE_URLS
-  ? env.ASPNETCORE_URLS.split(";")[0]
-  : "https://localhost:7258";
+    ? env.ASPNETCORE_URLS.split(";")[0]
+    : "https://localhost:7258";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -56,14 +56,14 @@ export default defineConfig({
     },
   },
   server: {
+    open: true,
+    port: 5173,
     proxy: {
       "^/api": {
-        target,
         secure: false,
+        target,
       },
     },
-    port: 5173,
-    open: true,
     // Uncomment the following lines to enable HTTPS in the Vite development server
     // https: {
     //   key: fs.readFileSync(keyFilePath),
