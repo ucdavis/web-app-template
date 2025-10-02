@@ -64,9 +64,10 @@ export default defineConfig({
     },
     port: 5173,
     open: true,
-    https: {
-      key: fs.readFileSync(keyFilePath),
-      cert: fs.readFileSync(certFilePath),
-    },
+    // Uncomment the following lines to enable HTTPS in the Vite development server
+    // https: {
+    //   key: fs.readFileSync(keyFilePath),
+    //   cert: fs.readFileSync(certFilePath),
+    // },
   },
 });

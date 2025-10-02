@@ -18,8 +18,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    // only use HTTPS redirection in non-development environments
+    app.UseHttpsRedirection();
+}
 
-app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
