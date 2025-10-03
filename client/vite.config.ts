@@ -68,6 +68,14 @@ export default defineConfig({
     open: true,
     port: 5173,
     proxy: {
+      '/login': {
+        secure: false,
+        target,
+      },
+      '/signin-oidc': {
+        secure: false,
+        target,
+      },
       '^/api': {
         secure: false,
         target,
