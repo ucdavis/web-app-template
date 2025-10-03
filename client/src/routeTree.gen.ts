@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)/route'
 import { Route as authenticatedIndexRouteImport } from './routes/(authenticated)/index'
+import { Route as authenticatedMeRouteImport } from './routes/(authenticated)/me'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -27,27 +28,40 @@ const authenticatedIndexRoute = authenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
+const authenticatedMeRoute = authenticatedMeRouteImport.update({
+  id: '/me',
+  path: '/me',
+  getParentRoute: () => authenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof authenticatedIndexRoute
   '/about': typeof AboutRoute
+  '/me': typeof authenticatedMeRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
+  '/me': typeof authenticatedMeRoute
   '/': typeof authenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(authenticated)': typeof authenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/(authenticated)/me': typeof authenticatedMeRoute
   '/(authenticated)/': typeof authenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/' | '/about' | '/me'
   fileRoutesByTo: FileRoutesByTo
-  to: '/about' | '/'
-  id: '__root__' | '/(authenticated)' | '/about' | '/(authenticated)/'
+  to: '/about' | '/me' | '/'
+  id:
+    | '__root__'
+    | '/(authenticated)'
+    | '/about'
+    | '/(authenticated)/me'
+    | '/(authenticated)/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -78,14 +92,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedIndexRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/me': {
+      id: '/(authenticated)/me'
+      path: '/me'
+      fullPath: '/me'
+      preLoaderRoute: typeof authenticatedMeRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
   }
 }
 
 interface authenticatedRouteRouteChildren {
+  authenticatedMeRoute: typeof authenticatedMeRoute
   authenticatedIndexRoute: typeof authenticatedIndexRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
+  authenticatedMeRoute: authenticatedMeRoute,
   authenticatedIndexRoute: authenticatedIndexRoute,
 }
 

@@ -1,6 +1,8 @@
+import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { fetchJson } from '../../lib/api.ts';
 
+// this route is at `/` and protected by the (authenticated) layout route
 export const Route = createFileRoute('/(authenticated)/')({
   component: Dashboard,
 });
@@ -13,14 +15,15 @@ interface Forecast {
 }
 
 function Dashboard() {
-  const [forecasts, setForecasts] = useState<Forecast[]>();
-
-  useEffect(() => {
-    populateWeatherData();
-  }, []);
+  // usually you would define the query in a separate file but this is just a demo page
+  const weatherQuery = useQuery({
+    queryFn: () => fetchJson<Forecast[]>('/api/weatherforecast'),
+    queryKey: ['weather'],
+    staleTime: 5 * 60_000, // 5 minutes
+  });
 
   const contents =
-    forecasts === undefined ? (
+    weatherQuery.data === undefined ? (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -56,7 +59,7 @@ function Dashboard() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {forecasts.map((forecast, index) => (
+            {weatherQuery.data?.map((forecast, index) => (
               <tr
                 className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
                 key={forecast.date}
@@ -91,10 +94,4 @@ function Dashboard() {
       {contents}
     </div>
   );
-
-  async function populateWeatherData() {
-    const response = await fetch('api/weatherforecast');
-    const data = await response.json();
-    setForecasts(data);
-  }
 }

@@ -13,8 +13,11 @@ const RootLayout = () => (
       <Link className="[&.active]:font-bold" to="/">
         Home
       </Link>{' '}
+      <Link className="[&.active]:font-bold" to="/me">
+        Me
+      </Link>{' '}
       <Link className="[&.active]:font-bold" to="/about">
-        About
+        About (public)
       </Link>
     </div>
     <hr />
