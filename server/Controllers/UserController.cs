@@ -1,11 +1,9 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Server.Controllers;
 
-[Authorize]
-public class UserController : ApiController
+public class UserController : ApiControllerBase
 {
     [HttpGet("me")]
     public IActionResult Me()
