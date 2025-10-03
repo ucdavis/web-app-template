@@ -16,9 +16,17 @@ builder.Services
         options.Events ??= new OpenIdConnectEvents();
         options.Events.OnRedirectToIdentityProvider = ctx =>
         {
+            // If the request is for an API endpoint, don't redirect to the login page
+            if (ctx.Request.Path.StartsWithSegments("/api"))
+            {
+                ctx.Response.StatusCode = 401;
+                ctx.HandleResponse();
+                return Task.CompletedTask;
+            }
+
             // Send the domain hint so users are routed straight to your org’s HRD
             ctx.ProtocolMessage.DomainHint = "ucdavis.edu"; // or "organizations"/"consumers" in other cases
-            
+
             return Task.CompletedTask;
         };
     });
