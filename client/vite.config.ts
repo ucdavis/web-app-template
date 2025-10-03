@@ -1,12 +1,13 @@
 import { fileURLToPath, URL } from 'node:url';
 
 import { defineConfig } from 'vite';
-import plugin from '@vitejs/plugin-react';
+import react from '@vitejs/plugin-react';
 import fs from 'node:fs';
 import path from 'node:path';
 import child_process from 'node:child_process';
 import tailwindcss from '@tailwindcss/vite';
 import { env } from 'node:process';
+import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const baseFolder =
   env.APPDATA !== undefined && env.APPDATA !== ''
@@ -50,7 +51,14 @@ const target = env.ASPNETCORE_HTTPS_PORT
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [plugin(), tailwindcss()],
+  plugins: [
+    tanstackRouter({
+      autoCodeSplitting: true,
+      target: 'react',
+    }),
+    react(),
+    tailwindcss(),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

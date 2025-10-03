@@ -1,8 +1,10 @@
-import nkzw from "@nkzw/eslint-config";
+import nkzw from '@nkzw/eslint-config';
+import pluginRouter from '@tanstack/eslint-plugin-router';
 
 export default [
+  ...pluginRouter.configs['flat/recommended'],
   ...nkzw,
   {
-    ignores: ["dist/", "vite.config.ts.timestamp-*"],
+    ignores: ['dist/', 'vite.config.ts.timestamp-*'],
   },
 ];
