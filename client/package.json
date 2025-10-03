@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.90.2",
+    "@tanstack/react-query-devtools": "^5.90.2",
     "@tanstack/react-router": "^1.132.33",
     "@tanstack/react-router-devtools": "^1.132.33",
     "react": "^19.1.1",
@@ -18,6 +20,7 @@
   "devDependencies": {
     "@nkzw/eslint-config": "^3.0.3",
     "@tailwindcss/vite": "^4.1.14",
+    "@tanstack/eslint-plugin-query": "^5.91.0",
     "@tanstack/eslint-plugin-router": "^1.132.31",
     "@tanstack/router-plugin": "^1.132.33",
     "@types/node": "^24.3.3",

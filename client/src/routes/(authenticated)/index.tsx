@@ -1,8 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 
-export const Route = createFileRoute('/')({
-  component: App,
+export const Route = createFileRoute('/(authenticated)/')({
+  component: Dashboard,
 });
 
 interface Forecast {
@@ -12,7 +12,7 @@ interface Forecast {
   temperatureF: number;
 }
 
-function App() {
+function Dashboard() {
   const [forecasts, setForecasts] = useState<Forecast[]>();
 
   useEffect(() => {

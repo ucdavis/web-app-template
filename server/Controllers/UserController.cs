@@ -11,8 +11,8 @@ public class UserController : ApiController
     public IActionResult Me()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var userName = User.FindFirst(ClaimTypes.Name)?.Value;
-        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        var userName = User.FindFirst("name")?.Value;
+        var userEmail = User.FindFirst("preferred_username")?.Value;
 
         if (userId == null)
         {
