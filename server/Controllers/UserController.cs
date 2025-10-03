@@ -1,0 +1,32 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Server.Controllers;
+
+[Authorize]
+public class UserController : ApiController
+{
+    [HttpGet("me")]
+    public IActionResult Me()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+        var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+
+        var userInfo = new
+        {
+            Id = userId,
+            Name = userName,
+            Email = userEmail,
+            Claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
+        };
+
+        return Ok(userInfo);
+    }
+}

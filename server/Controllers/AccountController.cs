@@ -8,9 +8,11 @@ public class AccountController : Controller
 {
     [Authorize(AuthenticationSchemes = OpenIdConnectDefaults.AuthenticationScheme)] // trigger authentication
     [Route("login")]
+    [ApiExplorerSettings(IgnoreApi = true)]
     public IActionResult Login(string? returnUrl)
     {
         // redirect to return url if it exists, otherwise /
         return Redirect(returnUrl ?? "/");
     }
+
 }
