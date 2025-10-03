@@ -20,7 +20,7 @@ const RootLayout = () => (
     <hr />
     <Outlet />
     <ReactQueryDevtools buttonPosition="top-right" />
-    <TanStackRouterDevtools />
+    <TanStackRouterDevtools position="bottom-right" />
   </>
 );
 
