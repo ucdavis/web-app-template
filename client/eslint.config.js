@@ -9,4 +9,14 @@ export default [
   {
     ignores: ['dist/', 'vite.config.ts.timestamp-*'],
   },
+  {
+    settings: {
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+      },
+    },
+  },
 ];
