@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)/route'
 import { Route as authenticatedIndexRouteImport } from './routes/(authenticated)/index'
+import { Route as authenticatedStylesRouteImport } from './routes/(authenticated)/styles'
 import { Route as authenticatedMeRouteImport } from './routes/(authenticated)/me'
+import { Route as authenticatedFetchRouteImport } from './routes/(authenticated)/fetch'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -28,39 +30,57 @@ const authenticatedIndexRoute = authenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
+const authenticatedStylesRoute = authenticatedStylesRouteImport.update({
+  id: '/styles',
+  path: '/styles',
+  getParentRoute: () => authenticatedRouteRoute,
+} as any)
 const authenticatedMeRoute = authenticatedMeRouteImport.update({
   id: '/me',
   path: '/me',
+  getParentRoute: () => authenticatedRouteRoute,
+} as any)
+const authenticatedFetchRoute = authenticatedFetchRouteImport.update({
+  id: '/fetch',
+  path: '/fetch',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof authenticatedIndexRoute
   '/about': typeof AboutRoute
+  '/fetch': typeof authenticatedFetchRoute
   '/me': typeof authenticatedMeRoute
+  '/styles': typeof authenticatedStylesRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
+  '/fetch': typeof authenticatedFetchRoute
   '/me': typeof authenticatedMeRoute
+  '/styles': typeof authenticatedStylesRoute
   '/': typeof authenticatedIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(authenticated)': typeof authenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/(authenticated)/fetch': typeof authenticatedFetchRoute
   '/(authenticated)/me': typeof authenticatedMeRoute
+  '/(authenticated)/styles': typeof authenticatedStylesRoute
   '/(authenticated)/': typeof authenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/me'
+  fullPaths: '/' | '/about' | '/fetch' | '/me' | '/styles'
   fileRoutesByTo: FileRoutesByTo
-  to: '/about' | '/me' | '/'
+  to: '/about' | '/fetch' | '/me' | '/styles' | '/'
   id:
     | '__root__'
     | '/(authenticated)'
     | '/about'
+    | '/(authenticated)/fetch'
     | '/(authenticated)/me'
+    | '/(authenticated)/styles'
     | '/(authenticated)/'
   fileRoutesById: FileRoutesById
 }
@@ -92,6 +112,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedIndexRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/styles': {
+      id: '/(authenticated)/styles'
+      path: '/styles'
+      fullPath: '/styles'
+      preLoaderRoute: typeof authenticatedStylesRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
     '/(authenticated)/me': {
       id: '/(authenticated)/me'
       path: '/me'
@@ -99,16 +126,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedMeRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/fetch': {
+      id: '/(authenticated)/fetch'
+      path: '/fetch'
+      fullPath: '/fetch'
+      preLoaderRoute: typeof authenticatedFetchRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
   }
 }
 
 interface authenticatedRouteRouteChildren {
+  authenticatedFetchRoute: typeof authenticatedFetchRoute
   authenticatedMeRoute: typeof authenticatedMeRoute
+  authenticatedStylesRoute: typeof authenticatedStylesRoute
   authenticatedIndexRoute: typeof authenticatedIndexRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
+  authenticatedFetchRoute: authenticatedFetchRoute,
   authenticatedMeRoute: authenticatedMeRoute,
+  authenticatedStylesRoute: authenticatedStylesRoute,
   authenticatedIndexRoute: authenticatedIndexRoute,
 }
 
