@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { fetchJson } from '../../lib/api.ts';
+import { DataTable } from '../../shared/dataTable.tsx';
+import { ColumnDef } from '@tanstack/react-table';
 
 // this route is at `/` and protected by the (authenticated) layout route
 export const Route = createFileRoute('/(authenticated)/')({
@@ -13,6 +15,29 @@ interface Forecast {
   temperatureC: number;
   temperatureF: number;
 }
+
+const columns: ColumnDef<Forecast>[] = [
+  {
+    accessorKey: 'date',
+    cell: (info) => info.getValue(),
+    header: 'Date',
+  },
+  {
+    accessorKey: 'temperatureC',
+    cell: (info) => info.getValue(),
+    header: 'Temp. (C)',
+  },
+  {
+    accessorKey: 'temperatureF',
+    cell: (info) => info.getValue(),
+    header: 'Temp. (F)',
+  },
+  {
+    accessorKey: 'summary',
+    cell: (info) => info.getValue(),
+    header: 'Summary',
+  },
+];
 
 function Dashboard() {
   // usually you would define the query in a separate file but this is just a demo page
@@ -40,47 +65,11 @@ function Dashboard() {
         </div>
       </div>
     ) : (
-      <div className="overflow-x-auto shadow-lg rounded-lg">
-        <table className="min-w-full bg-white">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Temp. (C)
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Temp. (F)
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Summary
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {weatherQuery.data?.map((forecast, index) => (
-              <tr
-                className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                key={forecast.date}
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {forecast.date}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {forecast.temperatureC}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {forecast.temperatureF}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {forecast.summary}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable
+        columns={columns}
+        data={weatherQuery.data}
+        initialState={{ pagination: { pageSize: 5 } }}
+      />
     );
 
   return (
