@@ -36,14 +36,14 @@ function RouteComponent() {
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <div className="card bg-base-100 shadow-md">
               <div className="card-body">
-                <h3 className="card-title">Style Guide</h3>
+                <h3 className="card-title">Data Table Fetch Example</h3>
                 <p className="text-base-content/70">
-                  Explore the design system and UI components available in this
-                  template.
+                  This page demonstrates the DataTable component with sample
+                  data and different data types, loaded from the backend API
                 </p>
                 <div className="card-actions justify-end">
-                  <Link className="btn btn-primary" to="/styles">
-                    Go to Style Guide
+                  <Link className="btn btn-primary" to="/table">
+                    Go to Table Page
                   </Link>
                 </div>
               </div>
@@ -64,14 +64,14 @@ function RouteComponent() {
             </div>
             <div className="card bg-base-100 shadow-md">
               <div className="card-body">
-                <h3 className="card-title">Data Table Example</h3>
+                <h3 className="card-title">Style Guide</h3>
                 <p className="text-base-content/70">
-                  This page demonstrates the DataTable component with sample
-                  data and different data types.
+                  Explore the design system and UI components available in this
+                  template.
                 </p>
                 <div className="card-actions justify-end">
-                  <Link className="btn btn-primary" to="/table">
-                    Go to Table Page
+                  <Link className="btn btn-primary" to="/styles">
+                    Go to Style Guide
                   </Link>
                 </div>
               </div>
@@ -85,34 +85,6 @@ function RouteComponent() {
                 <div className="card-actions justify-end">
                   <Link className="btn btn-primary" to="/protected">
                     Go to Protected Page
-                  </Link>
-                </div>
-              </div>
-            </div>
-            <div className="card bg-base-100 shadow-md">
-              <div className="card-body">
-                <h3 className="card-title">Queries: Prefetching Example</h3>
-                <p className="text-base-content/70">
-                  This page demonstrates data prefetching with TanStack Query
-                  and React Query.
-                </p>
-                <div className="card-actions justify-end">
-                  <Link className="btn btn-primary" to="/prefetch">
-                    Go to Prefetch Page
-                  </Link>
-                </div>
-              </div>
-            </div>
-            <div className="card bg-base-100 shadow-md">
-              <div className="card-body">
-                <h3 className="card-title">Queries: Client-Side Example</h3>
-                <p className="text-base-content/70">
-                  This page shows how to handle client-side data fetching and
-                  form submission.
-                </p>
-                <div className="card-actions justify-end">
-                  <Link className="btn btn-primary" to="/client">
-                    Go to Client Page
                   </Link>
                 </div>
               </div>
