@@ -42,7 +42,7 @@ function RouteComponent() {
                   data and different data types, loaded from the backend API
                 </p>
                 <div className="card-actions justify-end">
-                  <Link className="btn btn-primary" to="/table">
+                  <Link className="btn btn-primary" to="/fetch">
                     Go to Table Page
                   </Link>
                 </div>
@@ -78,13 +78,13 @@ function RouteComponent() {
             </div>
             <div className="card bg-base-100 shadow-md">
               <div className="card-body">
-                <h3 className="card-title">Login Example</h3>
+                <h3 className="card-title">Anonymous About Page</h3>
                 <p className="text-base-content/70">
-                  This page requires login to access.
+                  This page is accessible without a login.
                 </p>
                 <div className="card-actions justify-end">
-                  <Link className="btn btn-primary" to="/protected">
-                    Go to Protected Page
+                  <Link className="btn btn-primary" to="/about">
+                    Go to About Page
                   </Link>
                 </div>
               </div>
