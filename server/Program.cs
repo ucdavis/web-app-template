@@ -57,6 +57,11 @@ var conn = builder.Configuration.GetConnectionString("DefaultConnection")
 
 builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
 
+// TODO: we can add db health checks if we want
+// builder.Services.AddHealthChecks().AddSqlServer(conn);
+// and then map health checks endpoint
+// app.MapHealthChecks("/health");
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
