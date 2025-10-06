@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
+using server.core.Data;
 using server.Helpers;
 
 DotNetEnv.Env.Load(); // load environment variables from .env file
@@ -17,7 +19,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
-// Add services to the container.
+// Add auth config
 builder.Services
     .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(options =>
@@ -41,13 +43,33 @@ builder.Services
             return Task.CompletedTask;
         };
     });
+
 builder.Services.AddControllers();
+
+// add scoped services here
+// add auth policies here
+
+// add db context
+// TODO: do we want to default to localhost or throw?
+var conn = builder.Configuration.GetConnectionString("DefaultConnection")
+           ?? Environment.GetEnvironmentVariable("DB_CONNECTION")
+           ?? "Server=localhost;Database=AppDb;Trusted_Connection=True;Encrypt=False";
+
+builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// do db migrations at startup
+using (var scope = app.Services.CreateScope())
+{
+    var init = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
+    var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
+    await init.InitializeAsync(env.IsDevelopment());
+}
 
 app.UseForwardedHeaders();
 

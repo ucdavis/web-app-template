@@ -26,6 +26,7 @@
     <ProjectReference Include="..\client\client.esproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
+    <ProjectReference Include="..\server.core\server.core.csproj" />
   </ItemGroup>
 
 </Project>
