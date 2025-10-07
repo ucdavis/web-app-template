@@ -45,10 +45,9 @@ Tools manifest lives at `.config/dotnet-tools.json`. The container runs:
 
 ```
 dotnet tool restore
-dotnet ef database update
 ```
 
-on start to keep schema synced.
+on create so it'll be ready to use.
 
 Add a migration:
 

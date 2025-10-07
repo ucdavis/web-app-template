@@ -5,9 +5,15 @@ using Microsoft.Identity.Web;
 using server.core.Data;
 using server.Helpers;
 
-DotNetEnv.Env.Load(); // load environment variables from .env file
-
 var builder = WebApplication.CreateBuilder(args);
+
+// setup configuration sources (last one wins)
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvFile(".env", optional: true) // secrets stored here
+    .AddEnvFile($".env.{builder.Environment.EnvironmentName}", optional: true) // env-specific secrets
+    .AddEnvironmentVariables(); // OS env vars override everything
 
 // setup logging and telemetry
 TelemetryHelper.ConfigureLogging(builder.Logging);
@@ -49,10 +55,10 @@ builder.Services.AddControllers();
 // add scoped services here
 // add auth policies here
 
-// add db context
-// TODO: do we want to default to localhost or throw?
-var conn = builder.Configuration.GetConnectionString("DefaultConnection")
-           ?? Environment.GetEnvironmentVariable("DB_CONNECTION")
+// add db context (check secrets first, then config, then default)
+// TODO: do we want to default to localhost or throw if no db conn?
+var conn = builder.Configuration["DB_CONNECTION"] 
+            ?? builder.Configuration.GetConnectionString("DefaultConnection")
            ?? "Server=localhost;Database=AppDb;Trusted_Connection=True;Encrypt=False";
 
 builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
