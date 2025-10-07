@@ -1,13 +1,20 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using server.core.Data;
 using server.Helpers;
 
-DotNetEnv.Env.Load(); // load environment variables from .env file
-
 var builder = WebApplication.CreateBuilder(args);
+
+// setup configuration sources (last one wins)
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true)
+    .AddEnvFile(".env", optional: true) // secrets stored here
+    .AddEnvFile($".env.{builder.Environment.EnvironmentName}", optional: true) // env-specific secrets
+    .AddEnvironmentVariables(); // OS env vars override everything
 
 // setup logging and telemetry
 TelemetryHelper.ConfigureLogging(builder.Logging);
@@ -19,7 +26,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
-// Add auth config
+// Add auth config (entra)
 builder.Services
     .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(options =>
@@ -47,19 +54,32 @@ builder.Services
 builder.Services.AddControllers();
 
 // add scoped services here
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 // add auth policies here
 
-// add db context
-// TODO: do we want to default to localhost or throw?
-var conn = builder.Configuration.GetConnectionString("DefaultConnection")
-           ?? Environment.GetEnvironmentVariable("DB_CONNECTION")
+// add db context (check secrets first, then config, then default)
+// TODO: do we want to default to localhost or throw if no db conn?
+var conn = builder.Configuration["DB_CONNECTION"]
+            ?? builder.Configuration.GetConnectionString("DefaultConnection")
            ?? "Server=localhost;Database=AppDb;Trusted_Connection=True;Encrypt=False";
 
 builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
 
+// TODO: we can add db health checks if we want
+// builder.Services.AddHealthChecks().AddSqlServer(conn);
+// and then map health checks endpoint
+// app.MapHealthChecks("/health");
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// configure data protection (generated keys for auth and such)
+var keysPath = Path.Combine(builder.Environment.ContentRootPath, "..", ".aspnet", "DataProtection-Keys");
+Directory.CreateDirectory(keysPath);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 
 var app = builder.Build();
 
@@ -79,6 +99,7 @@ app.UseStaticFiles();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    // swagger only in development
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -95,7 +116,7 @@ app.UseAuthorization();
 // enrich every log with request context
 app.UseRequestContextLogging();
 
-// app.UseHttpLogging(); // TODO: decide if we want this extra logging
+// app.UseHttpLogging(); // if you want extra logging. It's a little overkill though with the current logging setup
 
 app.MapControllers();
 

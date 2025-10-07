@@ -1,0 +1,45 @@
+services:
+  devcontainer:
+    build:
+      context: ..
+      dockerfile: .devcontainer/dev.Dockerfile
+    volumes:
+      - ..:/workspace:cached
+    depends_on:
+      - sql
+    networks:
+      - dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: sleep infinity
+    # ports: # let vscode handle port forwarding
+    #   - "5173:5173"
+    #   - "5165:5165"
+
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    user: root
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "LocalDev123!"
+      MSSQL_PID: "Developer" # can also use "Express" but Developer has more features
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "LocalDev123!", "-Q", "SELECT 1"]
+      interval: 6s
+      timeout: 4s
+      retries: 30
+    volumes:
+      - sql-data:/var/opt/mssql
+    networks:
+      - dev
+    ports:
+      - "14333:1433"
+
+volumes:
+  sql-data:
+  devcontainer-node-modules:
+  devcontainer-dotnet-tools:
+
+networks:
+  dev:
+    driver: bridge

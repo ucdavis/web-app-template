@@ -1,0 +1,53 @@
+{
+    "name": "web-app-template (React + .NET + SQL)",
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "devcontainer",
+    "workspaceFolder": "/workspace",
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "22"
+        },
+        "ghcr.io/devcontainers/features/dotnet:2": {
+            "version": "8.0",
+            "sdk": true
+        },
+        "ghcr.io/devcontainers/features/git:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csdevkit",
+                "ms-azuretools.vscode-docker",
+                "ms-vscode.vscode-node-azure-pack",
+                "ms-vscode.js-debug",
+                "esbenp.prettier-vscode",
+                "dbaeumer.vscode-eslint",
+                "bradlc.vscode-tailwindcss"
+            ],
+            "settings": {
+                "terminal.integrated.defaultProfile.linux": "bash",
+                "editor.formatOnSave": true,
+                "files.insertFinalNewline": true
+            }
+        }
+    },
+    "containerEnv": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://0.0.0.0:5165"
+    },
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+    "postStartCommand": "bash .devcontainer/wait-for-sql.sh",
+    "remoteUser": "vscode",
+    "forwardPorts": [
+        5173,
+        5165
+    ],
+    "portsAttributes": {
+        "5173": {
+            "label": "Vite Dev Server"
+        },
+        "5165": {
+            "label": "ASP.NET HTTP API"
+        }
+    }
+}
