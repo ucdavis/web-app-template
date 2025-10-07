@@ -34,7 +34,7 @@
     "containerEnv": {
         "ASPNETCORE_ENVIRONMENT": "Development"
     },
-    "postCreateCommand": "bash .devcontainer/wait-for-sql.sh && (cd server && dotnet restore && dotnet tool restore) && (cd client && npm install)",
+    "postCreateCommand": "bash .devcontainer/setup.sh",
     "postStartCommand": "bash .devcontainer/wait-for-sql.sh",
     "remoteUser": "vscode",
     "forwardPorts": [
