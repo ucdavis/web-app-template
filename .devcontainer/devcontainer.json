@@ -16,7 +16,7 @@
     "customizations": {
         "vscode": {
             "extensions": [
-                "ms-dotnettools.csharp",
+                "ms-dotnettools.csdevkit",
                 "ms-azuretools.vscode-docker",
                 "ms-vscode.vscode-node-azure-pack",
                 "ms-vscode.js-debug",
