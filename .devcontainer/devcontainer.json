@@ -37,9 +37,6 @@
     "postCreateCommand": "bash .devcontainer/wait-for-sql.sh && (cd server && dotnet restore && dotnet tool restore) && (cd client && npm install)",
     "postStartCommand": "bash .devcontainer/wait-for-sql.sh && (cd server && dotnet ef database update || echo 'Skipping EF migrations')",
     "remoteUser": "vscode",
-    "mounts": [
-        "source=${localEnv:HOME}/.nuget/packages,target=/home/vscode/.nuget/packages,type=bind"
-    ],
     "forwardPorts": [
         5173,
         5165

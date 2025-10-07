@@ -5,8 +5,6 @@ services:
       dockerfile: .devcontainer/dev.Dockerfile
     volumes:
       - ..:/workspace:cached
-      - devcontainer-node-modules:/workspace/client/node_modules
-      - devcontainer-dotnet-tools:/home/vscode/.dotnet/tools
     depends_on:
       - sql
     networks:

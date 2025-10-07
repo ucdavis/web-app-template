@@ -1,14 +1,10 @@
-# Simple base image layering Node + .NET (devcontainers handles features also)
 FROM mcr.microsoft.com/devcontainers/base:ubuntu
 
-# (Optional) Install utilities
+# Base utilities only (removed 'sqlcmd' – it was invalid)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl jq bash-completion procps sqlcmd iputils-ping \
+    curl jq bash-completion procps iputils-ping netcat-traditional \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root (devcontainers may adjust later)
-ARG USERNAME=vscode
-RUN usermod -aG sudo ${USERNAME} || true
-
-USER ${USERNAME}
+# base image already has user 'vscode' with good perms
+USER vscode
 WORKDIR /workspace
