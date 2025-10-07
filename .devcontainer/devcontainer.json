@@ -35,7 +35,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
     },
     "postCreateCommand": "bash .devcontainer/wait-for-sql.sh && (cd server && dotnet restore && dotnet tool restore) && (cd client && npm install)",
-    "postStartCommand": "bash .devcontainer/wait-for-sql.sh && (cd server && dotnet ef database update || echo 'Skipping EF migrations')",
+    "postStartCommand": "bash .devcontainer/wait-for-sql.sh",
     "remoteUser": "vscode",
     "forwardPorts": [
         5173,
