@@ -53,11 +53,12 @@ builder.Services
 builder.Services.AddControllers();
 
 // add scoped services here
+builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 // add auth policies here
 
 // add db context (check secrets first, then config, then default)
 // TODO: do we want to default to localhost or throw if no db conn?
-var conn = builder.Configuration["DB_CONNECTION"] 
+var conn = builder.Configuration["DB_CONNECTION"]
             ?? builder.Configuration.GetConnectionString("DefaultConnection")
            ?? "Server=localhost;Database=AppDb;Trusted_Connection=True;Encrypt=False";
 
