@@ -12,6 +12,9 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     command: sleep infinity
+    # ports: # let vscode handle port forwarding
+    #   - "5173:5173"
+    #   - "5165:5165"
 
   sql:
     image: mcr.microsoft.com/mssql/server:2022-latest
