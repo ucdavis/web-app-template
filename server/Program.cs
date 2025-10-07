@@ -26,7 +26,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
     o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
-// Add auth config
+// Add auth config (entra)
 builder.Services
     .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
     .AddMicrosoftIdentityWebApp(options =>
@@ -99,6 +99,7 @@ app.UseStaticFiles();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    // swagger only in development
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -115,7 +116,7 @@ app.UseAuthorization();
 // enrich every log with request context
 app.UseRequestContextLogging();
 
-// app.UseHttpLogging(); // TODO: decide if we want this extra logging
+// app.UseHttpLogging(); // if you want extra logging. It's a little overkill though with the current logging setup
 
 app.MapControllers();
 
