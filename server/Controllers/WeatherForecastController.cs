@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using server.core.Data;
+using server.core.Domain;
 
 namespace Server.Controllers
 {
