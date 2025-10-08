@@ -38,6 +38,11 @@ If you want to access endpoints individually, you can do so at the following URL
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:5165
 - API Documentation (Swagger): http://localhost:5165/swagger/index.html
+- Health check: http://localhost:5165/health
+
+### Health check
+
+The health check endpoint (`/health`) is configured to return the status of the application and its dependencies. It includes a database health check to ensure the SQL Server connection is healthy. See [Health Checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks?view=aspnetcore-9.0#entity-framework-core-dbcontext-probe).
 
 ### Database configuration
 

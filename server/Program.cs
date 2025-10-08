@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Identity.Web;
 using server.core.Data;
 using server.Helpers;
@@ -53,6 +55,10 @@ builder.Services
 
 builder.Services.AddControllers();
 
+// Add response caching for pages that opt-in
+// https://learn.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-9.0
+builder.Services.AddResponseCaching();
+
 // add scoped services here
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 // add auth policies here
@@ -72,10 +78,9 @@ if (string.IsNullOrWhiteSpace(conn))
 
 builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
 
-// TODO: we can add db health checks if we want
-// builder.Services.AddHealthChecks().AddSqlServer(conn);
-// and then map health checks endpoint
-// app.MapHealthChecks("/health");
+builder.Services
+    .AddHealthChecks() 
+    .AddDbContextCheck<AppDbContext>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -103,6 +108,8 @@ app.UseForwardedHeaders();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+app.UseResponseCaching();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -126,6 +133,17 @@ app.UseRequestContextLogging();
 // app.UseHttpLogging(); // if you want extra logging. It's a little overkill though with the current logging setup
 
 app.MapControllers();
+
+var healthEndpoint = app.MapHealthChecks("/health");
+
+// Cache the health check response for 10 seconds to protect the database from rapid polling.
+healthEndpoint.WithMetadata(new ResponseCacheAttribute
+{
+    Duration = 10,
+    Location = ResponseCacheLocation.Any,
+    NoStore = false,
+});
+
 
 app.MapFallbackToFile("/index.html");
 
