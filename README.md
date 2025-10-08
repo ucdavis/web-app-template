@@ -10,23 +10,6 @@ A full-stack web application template featuring a .NET 8 backend with React/Vite
 - **Styling**: Tailwind CSS
 - **Development**: Hot reload for both frontend and backend
 
-## Features
-
-- ✅ OIDC authentication with Microsoft Entra ID
-- ✅ Same-site cookie sharing between frontend and backend
-- ✅ API proxy from frontend to backend
-- ✅ Hot reload development experience
-- ✅ TypeScript support
-- ✅ Modern React patterns with TanStack libraries
-- ✅ OpenTelemetry integration
-- ✅ ESLint and Prettier configuration
-
-## Prerequisites
-
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Node.js](https://nodejs.org/) (v18 or later)
-- npm (comes with Node.js)
-
 ## Quick Start
 
 1. **Clone the repository**
@@ -44,13 +27,25 @@ A full-stack web application template featuring a .NET 8 backend with React/Vite
 
    This command automatically installs dependencies and starts both the .NET backend and Vite frontend with hot reload enabled.
 
-   _Optional: If dependencies change, you can manually reinstall with `npm install && cd client && npm install && cd ..`_
+   _Optional: If dependencies change, you can manually reinstall with `npm install && cd client && npm install && cd ..` but you shouldn't have to, the `npm start` should handle it._
 
 3. **Access the application**
 
-   - Frontend: http://localhost:5173
-   - Backend API: http://localhost:5165
-   - API Documentation (Swagger): http://localhost:5165/swagger/index.html
+The application will auto launch in your browser (to http://localhost:5173).
+
+If you want to access endpoints individually, you can do so at the following URLs:
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:5165
+- API Documentation (Swagger): http://localhost:5165/swagger/index.html
+
+### Database configuration
+
+The backend requires a SQL Server connection string. Provide it by setting the `DB_CONNECTION` environment variable (for example in a `.env` file) or by updating `ConnectionStrings:DefaultConnection` in `appsettings.*.json`. `.env` is recommended but using appsettings is fine for local development, and provided so it'll work easily out of the box. When running against the included containerized SQL Server instance, use:
+
+```
+Server=sql,1433;Database=AppDb;User ID=sa;Password=LocalDev123!;Encrypt=False;TrustServerCertificate=True;
+```
 
 ## Development
 
@@ -142,21 +137,13 @@ The frontend uses Vite's hot module replacement (HMR). Changes to React componen
 
 2. **Configure production settings**
 
-   - Update `appsettings.json` with production values
+   - Update `appsettings.json` with production values (non-secrets)
+   - Update `.env` with secrets
    - Ensure proper CORS and security headers
-   - Configure proper redirect URIs in Azure AD
+   - Configure proper redirect URIs in Entra
 
 3. **Deploy**
-   - The built frontend files are included in the .NET publish output
-   - Deploy the published application to your hosting platform
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
+   - TBD, will use Azure DevOps
 
 ## License
 

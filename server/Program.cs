@@ -58,10 +58,17 @@ builder.Services.AddScoped<IDbInitializer, DbInitializer>();
 // add auth policies here
 
 // add db context (check secrets first, then config, then default)
-// TODO: do we want to default to localhost or throw if no db conn?
 var conn = builder.Configuration["DB_CONNECTION"]
-            ?? builder.Configuration.GetConnectionString("DefaultConnection")
-           ?? "Server=localhost;Database=AppDb;Trusted_Connection=True;Encrypt=False";
+            ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+if (string.IsNullOrWhiteSpace(conn))
+{
+    const string message = "No database connection string configured. Set the DB_CONNECTION environment variable or " +
+                           "configure ConnectionStrings:DefaultConnection. For local containers use " +
+                           "Server=sql,1433;Database=AppDb;User ID=sa;Password=LocalDev123!;Encrypt=False;TrustServerCertificate=True;.";
+
+    throw new InvalidOperationException(message);
+}
 
 builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
 
