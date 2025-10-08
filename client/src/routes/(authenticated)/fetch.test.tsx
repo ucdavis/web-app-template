@@ -1,9 +1,8 @@
-import { expect, it } from 'vitest';
-import { describe } from 'node:test';
+import { describe, expect, it } from 'vitest';
 import { screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { server } from '@/test/msw-setup.ts';
-import { renderRoute } from '@/test/router-utils.tsx';
+import { server } from '@/test/mswUtils.ts';
+import { renderRoute } from '@/test/routerUtils.tsx';
 
 describe('fetch route', () => {
   it('renders weather data returned by the API', async () => {
