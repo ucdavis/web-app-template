@@ -83,6 +83,20 @@ The frontend uses Vite's hot module replacement (HMR). Changes to React componen
 4. Frontend API calls automatically include the authentication cookie
 5. Backend validates the cookie for protected endpoints
 
+## Testing
+
+### Client tests
+
+- Run `cd client && npm test` to execute the Vitest suite once.
+- Use `npm run test:watch` inside `client/` for red/green feedback while you work.
+- Tests run against a jsdom environment with Testing Library so you do not need the backend running.
+
+### Server tests
+
+- Run `dotnet test` from the repository root to execute the .NET test project included in `app.sln`.
+- Alternatively, target the project directly with `dotnet test tests/server.tests/server.tests.csproj`.
+- The tests use EF Core's in-memory provider (see `tests/server.tests/TestDbContextFactory.cs`) so no SQL Server instance is required.
+
 ## Project Structure
 
 ```
