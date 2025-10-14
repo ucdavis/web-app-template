@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { Link } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/(authenticated)/form')({
-  component: RouteComponent,
+  component: FormComponent,
 });
 
 // Let's pretend we have a person type somewhere and we want to create a contact form for them
@@ -42,7 +42,7 @@ const contactFormSchema = z.object({
 /**
  * Form sample page demonstrating the custom form components with TanStack Form
  */
-export default function RouteComponent() {
+function FormComponent() {
   const form = useAppForm({
     defaultValues: {
       email: '',
