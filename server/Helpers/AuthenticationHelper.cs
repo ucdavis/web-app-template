@@ -38,7 +38,16 @@ public static class AuthenticationHelper
         {
             options.Events = new CookieAuthenticationEvents
             {
-                OnValidatePrincipal = OnValidatePrincipal
+                OnValidatePrincipal = OnValidatePrincipal,
+                OnRedirectToAccessDenied = ctx =>
+                {
+                    // If the request is for an API endpoint, don't redirect to the access denied page
+                    if (ctx.Request.Path.StartsWithSegments("/api"))
+                    {
+                        ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    }
+                    return Task.CompletedTask;
+                }
             };
         });
 
