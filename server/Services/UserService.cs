@@ -24,7 +24,7 @@ public class UserService : IUserService
     public async Task<List<string>> GetRolesForUser(string userId)
     {
         // fake role strings but use _dbContext to get real roles later
-        var roles = new List<string> { "User", "Admin" };
+        var roles = new List<string> { "User", "SampleRole" };
 
         return await Task.FromResult(roles);
     }

@@ -1,12 +1,8 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Identity.Web;
 using server.core.Data;
 using server.Helpers;
 using Server.Services;
@@ -32,77 +28,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 });
 
 // Add auth config (entra)
-builder.Services
-    .AddAuthentication(options =>
-    {
-        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-    })
-    .AddMicrosoftIdentityWebApp(options =>
-    {
-        builder.Configuration.Bind("Auth", options);
-
-        options.TokenValidationParameters = new()
-        {
-            NameClaimType = "name",
-            RoleClaimType = ClaimTypes.Role
-        };
-
-        options.Events ??= new OpenIdConnectEvents();
-        options.Events.OnRedirectToIdentityProvider = ctx =>
-        {
-            // If the request is for an API endpoint, don't redirect to the login page
-            if (ctx.Request.Path.StartsWithSegments("/api"))
-            {
-                ctx.Response.StatusCode = 401;
-                ctx.HandleResponse();
-                return Task.CompletedTask;
-            }
-
-            ctx.ProtocolMessage.DomainHint = "ucdavis.edu";
-
-            return Task.CompletedTask;
-        };
-        options.Events.OnTokenValidated = async ctx =>
-        {
-            // load up the roles on first login (can also change other user info/claims here if needed)
-            var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
-            var userId = ctx.Principal!.FindFirst("oid")?.Value
-                    ?? ctx.Principal!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId)) return;
-
-            var roles = await userService.GetRolesForUser(userId);
-
-            System.Console.WriteLine("Token validated, initial roles added");
-
-            var id = (ClaimsIdentity)ctx.Principal.Identity!;
-            foreach (var role in roles)
-            {
-                id.AddClaim(new Claim(ClaimTypes.Role, role));
-            }
-        };
-    });
-
-builder.Services.PostConfigure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-{
-    options.Events = new CookieAuthenticationEvents
-    {
-        OnValidatePrincipal = async ctx =>
-        {
-            // on every request with a cookie, check if the user's roles/claims need updating
-            // we could use a cache here or roleVersion or timestamp or something, but for simplicity we'll just hit the DB every time
-            var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
-            var updated = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
-
-            System.Console.WriteLine("Validating cookie principal");
-            if (updated != null)
-            {
-                ctx.ReplacePrincipal(updated);
-                ctx.ShouldRenew = true; // renew the cookie with the new principal
-            }
-        }
-    };
-});
+builder.Services.AddAuthenticationServices(builder.Configuration);
 
 builder.Services.AddControllers();
 
