@@ -80,8 +80,7 @@ public static class AuthenticationHelper
     {
         // Load up the roles on first login (can also change other user info/claims here if needed)
         var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
-        var userId = ctx.Principal!.FindFirst("oid")?.Value
-                ?? ctx.Principal!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userId = ctx.Principal!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         if (string.IsNullOrEmpty(userId)) return;
 
