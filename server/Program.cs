@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -7,6 +9,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Identity.Web;
 using server.core.Data;
 using server.Helpers;
+using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,11 +32,48 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 });
 
 // Add auth config (entra)
+// using cookies to store user session, OIDC for the auth (via MS Entra)
 builder.Services
-    .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+    .AddAuthentication(options =>
+    {
+        options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+    })
+    .AddCookie(options =>
+    {
+        options.SlidingExpiration = true;
+        options.Cookie.HttpOnly = true; // don't let JS access the cookie
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+
+        options.Events ??= new CookieAuthenticationEvents
+        {
+            OnValidatePrincipal = async ctx =>
+            {
+                // we want to add user roles to the cookie to make authz decisions easier
+                // for simplicity we'll just re-query the user on every request, but we could cache or set a rolesVersion claim to optimize
+                var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
+
+                var updatedPrincipal = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
+
+                if (updatedPrincipal != null)
+                {
+                    ctx.ReplacePrincipal(updatedPrincipal);
+                    ctx.ShouldRenew = true; // make sure the cookie is updated
+                }
+            }
+        };
+
+    })
     .AddMicrosoftIdentityWebApp(options =>
     {
         builder.Configuration.Bind("Auth", options);
+
+        options.TokenValidationParameters = new()
+        {
+            NameClaimType = "name",
+            RoleClaimType = ClaimTypes.Role
+        };
 
         options.Events ??= new OpenIdConnectEvents();
         options.Events.OnRedirectToIdentityProvider = ctx =>
@@ -51,6 +91,18 @@ builder.Services
 
             return Task.CompletedTask;
         };
+        options.Events.OnTokenValidated = async ctx =>
+        {
+            // load up the roles on first login
+            var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
+
+            var updatedPrincipal = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
+
+            if (updatedPrincipal != null)
+            {
+                ctx.Principal = updatedPrincipal;
+            }
+        };
     });
 
 builder.Services.AddControllers();
@@ -61,6 +113,7 @@ builder.Services.AddResponseCaching();
 
 // add scoped services here
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+builder.Services.AddScoped<IUserService, UserService>();
 // add auth policies here
 
 // add db context (check secrets first, then config, then default)
@@ -79,7 +132,7 @@ if (string.IsNullOrWhiteSpace(conn))
 builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
 
 builder.Services
-    .AddHealthChecks() 
+    .AddHealthChecks()
     .AddDbContextCheck<AppDbContext>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
