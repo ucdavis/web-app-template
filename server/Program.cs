@@ -32,38 +32,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 });
 
 // Add auth config (entra)
-// using cookies to store user session, OIDC for the auth (via MS Entra)
 builder.Services
     .AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
-    })
-    .AddCookie(options =>
-    {
-        options.SlidingExpiration = true;
-        options.Cookie.HttpOnly = true; // don't let JS access the cookie
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-
-        options.Events ??= new CookieAuthenticationEvents
-        {
-            OnValidatePrincipal = async ctx =>
-            {
-                // we want to add user roles to the cookie to make authz decisions easier
-                // for simplicity we'll just re-query the user on every request, but we could cache or set a rolesVersion claim to optimize
-                var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
-
-                var updatedPrincipal = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
-
-                if (updatedPrincipal != null)
-                {
-                    ctx.ReplacePrincipal(updatedPrincipal);
-                    ctx.ShouldRenew = true; // make sure the cookie is updated
-                }
-            }
-        };
-
     })
     .AddMicrosoftIdentityWebApp(options =>
     {
@@ -86,24 +59,50 @@ builder.Services
                 return Task.CompletedTask;
             }
 
-            // Send the domain hint so users are routed straight to your org’s HRD
-            ctx.ProtocolMessage.DomainHint = "ucdavis.edu"; // or "organizations"/"consumers" in other cases
+            ctx.ProtocolMessage.DomainHint = "ucdavis.edu";
 
             return Task.CompletedTask;
         };
         options.Events.OnTokenValidated = async ctx =>
         {
-            // load up the roles on first login
+            // load up the roles on first login (can also change other user info/claims here if needed)
             var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
+            var userId = ctx.Principal!.FindFirst("oid")?.Value
+                    ?? ctx.Principal!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return;
 
-            var updatedPrincipal = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
+            var roles = await userService.GetRolesForUser(userId);
 
-            if (updatedPrincipal != null)
+            System.Console.WriteLine("Token validated, initial roles added");
+
+            var id = (ClaimsIdentity)ctx.Principal.Identity!;
+            foreach (var role in roles)
             {
-                ctx.Principal = updatedPrincipal;
+                id.AddClaim(new Claim(ClaimTypes.Role, role));
             }
         };
     });
+
+builder.Services.PostConfigure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+{
+    options.Events = new CookieAuthenticationEvents
+    {
+        OnValidatePrincipal = async ctx =>
+        {
+            // on every request with a cookie, check if the user's roles/claims need updating
+            // we could use a cache here or roleVersion or timestamp or something, but for simplicity we'll just hit the DB every time
+            var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
+            var updated = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
+
+            System.Console.WriteLine("Validating cookie principal");
+            if (updated != null)
+            {
+                ctx.ReplacePrincipal(updated);
+                ctx.ShouldRenew = true; // renew the cookie with the new principal
+            }
+        }
+    };
+});
 
 builder.Services.AddControllers();
 
