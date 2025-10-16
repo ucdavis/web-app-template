@@ -12,6 +12,8 @@ public class UserController : ApiControllerBase
         var userName = User.FindFirst("name")?.Value;
         var userEmail = User.FindFirst("preferred_username")?.Value;
 
+        var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+
         if (userId == null)
         {
             return Unauthorized();
@@ -22,7 +24,7 @@ public class UserController : ApiControllerBase
             Id = userId,
             Name = userName,
             Email = userEmail,
-            Claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList()
+            Roles = userRoles,
         };
 
         return Ok(userInfo);

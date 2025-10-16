@@ -1,12 +1,11 @@
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Identity.Web;
 using server.core.Data;
 using server.Helpers;
+using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,29 +28,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 });
 
 // Add auth config (entra)
-builder.Services
-    .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(options =>
-    {
-        builder.Configuration.Bind("Auth", options);
-
-        options.Events ??= new OpenIdConnectEvents();
-        options.Events.OnRedirectToIdentityProvider = ctx =>
-        {
-            // If the request is for an API endpoint, don't redirect to the login page
-            if (ctx.Request.Path.StartsWithSegments("/api"))
-            {
-                ctx.Response.StatusCode = 401;
-                ctx.HandleResponse();
-                return Task.CompletedTask;
-            }
-
-            // Send the domain hint so users are routed straight to your org’s HRD
-            ctx.ProtocolMessage.DomainHint = "ucdavis.edu"; // or "organizations"/"consumers" in other cases
-
-            return Task.CompletedTask;
-        };
-    });
+builder.Services.AddAuthenticationServices(builder.Configuration);
 
 builder.Services.AddControllers();
 
@@ -61,6 +38,7 @@ builder.Services.AddResponseCaching();
 
 // add scoped services here
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+builder.Services.AddScoped<IUserService, UserService>();
 // add auth policies here
 
 // add db context (check secrets first, then config, then default)
@@ -79,7 +57,7 @@ if (string.IsNullOrWhiteSpace(conn))
 builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
 
 builder.Services
-    .AddHealthChecks() 
+    .AddHealthChecks()
     .AddDbContextCheck<AppDbContext>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

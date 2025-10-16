@@ -1,3 +1,4 @@
+import { useUser } from '@/shared/auth/UserContext.tsx';
 import { createFileRoute, Link } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/(authenticated)/')({
@@ -5,6 +6,7 @@ export const Route = createFileRoute('/(authenticated)/')({
 });
 
 function RouteComponent() {
+  const user = useUser();
   return (
     <div className="min-h-screen bg-base-100">
       <div className="container mx-auto px-4 py-16">
@@ -22,7 +24,7 @@ function RouteComponent() {
 
           {/* Hero Message */}
           <div className="mb-8">
-            <h1 className="text-5xl font-bold mb-4">Hello</h1>
+            <h1 className="text-5xl font-bold mb-4">Hello {user.name}!</h1>
             <p className="text-xl max-w-2xl mx-auto text-base-content/70">
               Welcome to your modern app template. Built with Vite, React,
               TypeScript, and TanStack Router for rapid development.
