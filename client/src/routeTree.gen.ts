@@ -1,4 +1,4 @@
-/* eslint-disable */
+/* eslint-disable @typescript-eslint/no-explicit-any, perfectionist/sort-interfaces, perfectionist/sort-object-types, perfectionist/sort-objects, object-shorthand -- generated file */
 
 // @ts-nocheck
 
