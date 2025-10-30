@@ -97,6 +97,12 @@ The frontend uses Vite's hot module replacement (HMR). Changes to React componen
 - Alternatively, target the project directly with `dotnet test tests/server.tests/server.tests.csproj`.
 - The tests use EF Core's in-memory provider (see `tests/server.tests/TestDbContextFactory.cs`) so no SQL Server instance is required.
 
+## Updating Dependencies
+
+- JavaScript/TypeScript packages: run `npm outdated` at the repository root and inside `client/` to see what can be updated. Use `npm update` in each location for compatible updates, or `npm install <package>@latest` when you need to jump to a new major version.
+- After updating Node packages, reinstall if needed (`npm install`, `cd client && npm install`) and rerun key checks like `npm run lint`, `cd client && npm test`, and `dotnet test`.
+- .NET packages: _Placeholder for update process._
+
 ## Project Structure
 
 ```
