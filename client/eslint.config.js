@@ -7,7 +7,7 @@ export default [
   ...pluginRouter.configs['flat/recommended'],
   ...nkzw,
   {
-    ignores: ['dist/', 'vite.config.ts.timestamp-*'],
+    ignores: ['dist/', 'vite.config.ts.timestamp-*', 'src/routeTree.gen.ts'],
   },
   {
     settings: {

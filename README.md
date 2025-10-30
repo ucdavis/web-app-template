@@ -97,9 +97,36 @@ The frontend uses Vite's hot module replacement (HMR). Changes to React componen
 - Alternatively, target the project directly with `dotnet test tests/server.tests/server.tests.csproj`.
 - The tests use EF Core's in-memory provider (see `tests/server.tests/TestDbContextFactory.cs`) so no SQL Server instance is required.
 
-## Project Structure
+## Updating Dependencies
+
+### Client
+
+- JavaScript/TypeScript packages: run `npm outdated` at the repository root and inside `client/` to see what can be updated. Use `npm update` in each location for compatible updates, or `npm install <package>@latest` when you need to jump to a new major version.
+- After updating Node packages, reinstall if needed (`npm install`, `cd client && npm install`) and rerun key checks like `npm run lint`, `cd client && npm test`, and `dotnet test`.
+
+### Server
+
+.Net is a bit more complicated, but we're going to use the dotnet-outdated tool to help.
+
+Run the following command from the repository root:
 
 ```
+dotnet-outdated
+```
+
+and it'll show you a nice table of what can be updated. Be careful when updating major versions, especially with packages that are pinned to the .net version.
+
+You can update individual packages or you can use the `--upgrade` flag to update all at once. Here's a nice way to do it and only update minor/patch versions:
+
+```
+dotnet-outdated --upgrade --version-lock Major
+```
+
+If you update `Microsoft.EntityFrameworkCore.Design` or another package that a tool depends on, you'll want to update that tool as well to match, ex: `dotnet tool update dotnet-ef --local --version 8.0.21`. That will update it for you but also set the value in our `dotnet-tools.json` so it's consistent for everyone.
+
+And as always, after updating dependencies, make sure to run `dotnet build` and `dotnet test` to verify everything is working.
+
+## Project Structure
 
 ├── client/ # React frontend
 │ ├── src/
@@ -140,3 +167,4 @@ The frontend uses Vite's hot module replacement (HMR). Changes to React componen
 - `dotnet watch` - Start with hot reload
 - `dotnet build` - Build the application
 - `dotnet test` - Run tests
+```
