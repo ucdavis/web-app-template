@@ -145,6 +145,12 @@ This is a full-stack web application template using modern React and .NET techno
 - `npm run build` - Build for production
 - `npm run lint` - Run ESLint
 
+### Testing
+
+- `cd client && npm test` - Run the client Vitest suite once
+- `cd client && npm run test:watch` - Watch client tests while developing
+- `dotnet test` - Execute the .NET server test project
+
 ## Code Generation Preferences
 
 1. **Always use TypeScript** - No plain JavaScript files

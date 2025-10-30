@@ -1,0 +1,15 @@
+## Line endings
+# Default to LF checkouts for cross-platform consistency
+* text=auto eol=lf
+
+# Keep Windows-friendly endings for Visual Studio artifacts and batch files
+*.sln text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+## Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
