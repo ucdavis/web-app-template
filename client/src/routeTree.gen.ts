@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, perfectionist/sort-interfaces, perfectionist/sort-object-types, perfectionist/sort-objects, object-shorthand -- generated file */
+/* eslint-disable */
 
 // @ts-nocheck
 
@@ -53,12 +53,12 @@ const authenticatedFetchRoute = authenticatedFetchRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof authenticatedIndexRoute
   '/about': typeof AboutRoute
   '/fetch': typeof authenticatedFetchRoute
   '/form': typeof authenticatedFormRoute
   '/me': typeof authenticatedMeRoute
   '/styles': typeof authenticatedStylesRoute
+  '/': typeof authenticatedIndexRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
@@ -80,7 +80,7 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/fetch' | '/form' | '/me' | '/styles'
+  fullPaths: '/about' | '/fetch' | '/form' | '/me' | '/styles' | '/'
   fileRoutesByTo: FileRoutesByTo
   to: '/about' | '/fetch' | '/form' | '/me' | '/styles' | '/'
   id:
@@ -110,8 +110,8 @@ declare module '@tanstack/react-router' {
     }
     '/(authenticated)': {
       id: '/(authenticated)'
-      path: '/'
-      fullPath: '/'
+      path: ''
+      fullPath: ''
       preLoaderRoute: typeof authenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
