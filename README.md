@@ -1,10 +1,10 @@
 # Web App Template
 
-A full-stack web application template featuring a .NET 8 backend with React/Vite frontend, using OIDC authentication with Microsoft Entra ID.
+A full-stack web application template featuring a .NET 10 backend with React/Vite frontend, using OIDC authentication with Microsoft Entra ID.
 
 ## Architecture
 
-- **Backend**: .NET 8 Web API with ASP.NET Core
+- **Backend**: .NET 10 Web API with ASP.NET Core
 - **Frontend**: React 19 with Vite, TypeScript, and TanStack Router/Query/Table
 - **Authentication**: OIDC with Microsoft Entra ID (Azure AD)
 - **Styling**: Tailwind CSS

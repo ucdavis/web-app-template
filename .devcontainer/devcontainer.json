@@ -8,7 +8,7 @@
             "version": "22"
         },
         "ghcr.io/devcontainers/features/dotnet:2": {
-            "version": "8.0",
+            "version": "10.0",
             "sdk": true
         },
         "ghcr.io/devcontainers/features/git:1": {}
@@ -44,10 +44,12 @@
     ],
     "portsAttributes": {
         "5173": {
-            "label": "Vite Dev Server"
+            "label": "Vite Dev Server",
+            "onAutoForward": "openBrowser"
         },
         "5165": {
-            "label": "ASP.NET HTTP API"
+            "label": "ASP.NET HTTP API",
+            "onAutoForward": "notify"
         }
     }
 }
