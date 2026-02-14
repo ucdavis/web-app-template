@@ -10,11 +10,12 @@ Use this checklist right after cloning the template to ensure every new project 
 
 ## 2. Dev Ports & SPA Proxy Wiring (optional)
 
-If you need the app to run on ports other than the default `5165` (API) and `5173` (Vite), change the values in all three places so hot reload keeps working:
+If you need the app to run on ports other than the default `5165` (API) and `5173` (Vite), change the values in all four places so hot reload keeps working:
 
 1. `server/Properties/launchSettings.json` → update `profiles.http.applicationUrl` (and IIS Express URL if you use it).
 2. `server/server.csproj` → adjust `<SpaProxyServerUrl>` so the .NET SPA proxy opens the correct Vite address.
 3. `client/vite.config.ts` → change `server.port` and update every proxy target pointing at `http://localhost:5165`.
+4. `.devcontainer/devcontainer.json` → update `containerEnv.ASPNETCORE_URLS`, `forwardPorts`, and `portsAttributes` so port auto-forwarding stays in sync.
 
 ## 3. Microsoft Entra ID (Azure AD) Setup
 
