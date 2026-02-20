@@ -5,7 +5,8 @@
     "workspaceFolder": "/workspace",
     "features": {
         "ghcr.io/devcontainers/features/node:1": {
-            "version": "22"
+            "version": "22",
+            "npmVersion": "latest"
         },
         "ghcr.io/devcontainers/features/dotnet:2": {
             "version": "10.0",
@@ -36,20 +37,26 @@
         "ASPNETCORE_URLS": "http://0.0.0.0:5165"
     },
     "postCreateCommand": "bash .devcontainer/setup.sh",
-    "postStartCommand": "bash .devcontainer/wait-for-sql.sh",
+    "postStartCommand": "bash .devcontainer/wait-for-sql.sh && npm run dev",
     "remoteUser": "vscode",
     "forwardPorts": [
-        5173,
         5165
     ],
     "portsAttributes": {
-        "5173": {
-            "label": "Vite Dev Server",
+        "5165": {
+            "label": "Web App (ASP.NET + Vite Proxy)",
             "onAutoForward": "openBrowser"
         },
-        "5165": {
-            "label": "ASP.NET HTTP API",
-            "onAutoForward": "notify"
+        "5173": {
+            "label": "Vite Dev Server (Internal - Use 5165)",
+            "onAutoForward": "ignore"
+        },
+        "14333": {
+            "label": "SQL Server (Internal)",
+            "onAutoForward": "ignore"
         }
+    },
+    "otherPortsAttributes": {
+        "onAutoForward": "ignore"
     }
 }

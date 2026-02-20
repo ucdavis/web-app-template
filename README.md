@@ -9,6 +9,7 @@ A full-stack web application template featuring a .NET 10 backend with React/Vit
 - **Authentication**: OIDC with Microsoft Entra ID (Azure AD)
 - **Styling**: Tailwind CSS
 - **Development**: Hot reload for both frontend and backend
+- **Dev Proxy**: YARP reverse proxy routes frontend requests to Vite dev server (development only)
 
 ## Quick Start
 
@@ -28,24 +29,24 @@ _Using the DevContainer is optional, but it will get you the right version of do
 
 3. **Start the application**
 
+   **Inside DevContainer**: The application starts automatically via `postStartCommand`
+   
+   **Outside DevContainer**:
    ```bash
-   npm start
+   npm run dev
    ```
-
-   This command automatically installs dependencies (if needed) and starts both the .NET backend and Vite frontend with hot reload enabled.
-
-   _Optional: If dependencies change, you can manually reinstall with `npm install && cd client && npm install && cd ..` but you shouldn't have to, the `npm start` should handle it._
+   
+   This starts both the .NET backend (port 5165) and Vite dev server (port 5173) concurrently. The backend proxies all non-API requests to Vite in development mode.
 
 4. **Access the application**
 
-The application will auto launch in your browser (to http://localhost:5173).
+The application will be available at **http://localhost:5165** (the backend, which proxies to Vite).
 
-If you want to access endpoints individually, you can do so at the following URLs:
-
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:5165 (nothing to see, but /api/\* has the direct API endpoints)
-- API Documentation (Swagger): http://localhost:5165/swagger/index.html
-- Health check: http://localhost:5165/health
+- **Main App**: http://localhost:5165 (backend proxies to Vite for frontend assets)
+- **Backend API**: http://localhost:5165/api/* (direct API endpoints)
+- **API Documentation (Swagger)**: http://localhost:5165/swagger
+- **Health Check**: http://localhost:5165/health
+- **Vite Dev Server** (internal): http://localhost:5173 (accessed via proxy, no need to visit directly)
 
 ### Database configuration
 
@@ -67,13 +68,24 @@ The health check endpoint (`/health`) is configured to return the status of the 
 
 ## Development
 
+### Development Architecture
+
+In development mode, the .NET backend (port 5165) uses YARP reverse proxy to forward non-API requests to the Vite dev server (port 5173). This provides:
+
+- Single port access (5165) for the entire application
+- Proper same-origin cookies for authentication
+- Hot module replacement from Vite
+- Backend API on `/api/*` routes
+
+In production, the backend serves pre-built static files from `wwwroot/` (no proxy).
+
 ### Backend Development
 
 The backend is configured with hot reload via `dotnet watch`. Any changes to C# files will automatically restart the server.
 
 ### Frontend Development
 
-The frontend uses Vite's hot module replacement (HMR). Changes to React components, TypeScript files, and CSS will be reflected immediately.
+The frontend uses Vite's hot module replacement (HMR). Changes to React components, TypeScript files, and CSS will be reflected immediately through the proxy.
 
 ### Authentication Flow
 
@@ -151,7 +163,8 @@ And as always, after updating dependencies, make sure to run `dotnet build` and 
 
 ### Root Level
 
-- `npm start` - Starts both backend and frontend with hot reload
+- `npm run dev` - Starts both backend and frontend with hot reload (recommended for development)
+- `npm start` - Alternative script using npm-run-all (legacy)
 
 ### Client Directory
 

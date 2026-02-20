@@ -6,7 +6,9 @@ This is a full-stack web application template using modern React and .NET techno
 
 - **Frontend**: React 19 with TypeScript in Vite development environment
 - **Backend**: ASP.NET Core 10.0 Web API
-- **Development**: SPA proxy setup with hot reload
+- **Development Proxy**: YARP reverse proxy routes requests to Vite dev server (development only)
+- **Development**: Hot reload for both frontend (HMR) and backend (dotnet watch)
+- **Single Port Development**: All traffic flows through port 5165 in development
 
 ## Frontend Technology Stack
 
@@ -84,8 +86,35 @@ This is a full-stack web application template using modern React and .NET techno
 
 - **Swashbuckle** (`^6.4.0`) - Swagger/OpenAPI documentation
 - **DotNetEnv** (`^3.1.1`) - Environment variable management
+- **YARP.ReverseProxy** (`^2.3.0`) - Development proxy for Vite integration
 
 ## Development Patterns
+
+### Development Request Flow
+
+**Development mode**:
+```
+Browser → :5165 (ASP.NET Core)
+            ↓
+    ┌───────┴────────┐
+    │                │
+/api/*          everything else
+    │                │
+    ↓                ↓
+Controllers    YARP Proxy → :5173 (Vite)
+```
+
+**Production mode**:
+```
+Browser → :5165 (ASP.NET Core)
+            ↓
+    ┌───────┴────────┐
+    │                │
+/api/*          everything else
+    │                │
+    ↓                ↓
+Controllers    Static Files (wwwroot/)
+```
 
 ### Project Structure
 
@@ -100,7 +129,8 @@ This is a full-stack web application template using modern React and .NET techno
 └── server/          # ASP.NET Core API
     ├── Controllers/
     ├── Helpers/
-    └── Properties/
+    ├── Properties/
+    └── Program.cs   # YARP proxy configuration in Development mode
 ```
 
 ### Routing Conventions
@@ -133,17 +163,21 @@ This is a full-stack web application template using modern React and .NET techno
 
 ### API Integration
 
-- API endpoints proxy through Vite dev server
-- Backend serves from `/api` routes
+- **Development mode**: Backend (port 5165) uses YARP to proxy non-API requests to Vite (port 5173)
+- **Production mode**: Backend serves static files from `wwwroot/`
+- Backend serves from `/api` routes (both modes)
 - Authentication handled via Microsoft Identity Web
 - Use type-safe API client patterns
+- All requests go through port 5165 (single-origin, cookies work correctly)
 
 ### Development Commands
 
-- `npm run dev` - Start Vite development server
-- `npm start` - Start .NET backend with watch mode
+- `npm run dev` - Start both backend and Vite dev server concurrently (recommended)
+- `npm start` - Alternative command using npm-run-all (legacy)
 - `npm run build` - Build for production
 - `npm run lint` - Run ESLint
+- `dotnet watch --project server/server.csproj` - Start backend only (port 5165)
+- `cd client && npm run dev` - Start Vite only (port 5173)
 
 ### Testing
 
@@ -179,6 +213,7 @@ export const Route = createFileRoute("/(authenticated)/example")({
 function ExampleComponent() {
   const { data } = useQuery({
     queryKey: ["example"],
+    // API calls go to same origin (:5165) - authentication cookies work automatically
     queryFn: () => fetch("/api/example").then((res) => res.json()),
   });
 
@@ -204,5 +239,35 @@ public class ExampleController : ApiControllerBase
     }
 }
 ```
+
+## Important Development Notes
+
+1. **Port Usage**:
+   - Primary port: **5165** (ASP.NET Core - use this for all development)
+   - Internal port: **5173** (Vite dev server - proxied, don't access directly)
+   - Access the app at `http://localhost:5165` (not 5173)
+
+2. **API Calls**:
+   - Always use relative paths like `/api/example` (never `http://localhost:5165/api/...`)
+   - Same-origin requests mean authentication cookies work automatically
+   - No CORS configuration needed
+
+3. **YARP Proxy Configuration**:
+   - Located in `server/Program.cs`
+   - Only active in Development environment
+   - Routes all non-API/health/swagger requests to Vite
+   - Catch-all route has `Order = int.MaxValue` (lowest priority)
+
+4. **Hot Module Replacement**:
+   - Vite HMR works through the proxy
+   - WebSocket connections are properly proxied
+   - Frontend changes reflect immediately
+   - Backend changes trigger `dotnet watch` restart
+
+5. **Production Build**:
+   - Run `cd client && npm run build` to generate static files in `client/dist/`
+   - Copy contents to `server/wwwroot/`
+   - Backend serves static files directly (no proxy)
+   - Fallback to `index.html` enables client-side routing
 
 When generating code, ensure it follows these patterns and integrates well with the existing technology stack.

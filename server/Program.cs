@@ -6,6 +6,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using server.core.Data;
 using server.Helpers;
 using Server.Services;
+using Yarp.ReverseProxy.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +72,32 @@ Directory.CreateDirectory(keysPath);
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(keysPath));
 
+// configure reverse proxy for Vite in development
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddReverseProxy()
+        .LoadFromMemory(
+            [
+                new()
+                {
+                    RouteId = "vite-proxy",
+                    ClusterId = "vite-cluster",
+                    Match = new() { Path = "{**catch-all}" },
+                    Order = int.MaxValue // lowest priority - everything else goes first
+                }
+            ],
+            [
+                new()
+                {
+                    ClusterId = "vite-cluster",
+                    Destinations = new Dictionary<string, DestinationConfig>
+                    {
+                        { "vite", new() { Address = "http://localhost:5173" } }
+                    }
+                }
+            ]);
+}
+
 var app = builder.Build();
 
 // do db migrations at startup
@@ -83,8 +110,16 @@ using (var scope = app.Services.CreateScope())
 
 app.UseForwardedHeaders();
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
+// In development, proxy to Vite dev server
+if (app.Environment.IsDevelopment())
+{
+    app.MapReverseProxy();
+}
+else
+{
+    app.UseDefaultFiles();
+    app.UseStaticFiles();
+}
 
 app.UseResponseCaching();
 
@@ -123,6 +158,10 @@ healthEndpoint.WithMetadata(new ResponseCacheAttribute
 });
 
 
-app.MapFallbackToFile("/index.html");
+// In production, fallback to index.html for SPA routing
+if (!app.Environment.IsDevelopment())
+{
+    app.MapFallbackToFile("/index.html");
+}
 
 app.Run();
