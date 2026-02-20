@@ -41,7 +41,7 @@ Provides shorthand commands for local development:
 }
 ```
 
-**Why**: Makes it easy to run both processes with a single command outside of DevContainer.
+**Why**: Makes it easy to run both processes with a single command outside DevContainer.
 
 ## Request Flow
 

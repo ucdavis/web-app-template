@@ -83,7 +83,7 @@ if (builder.Environment.IsDevelopment())
                     RouteId = "vite-proxy",
                     ClusterId = "vite-cluster",
                     Match = new() { Path = "{**catch-all}" },
-                    Order = int.MaxValue // lowest priority - everything else goes first
+                    Order = int.MaxValue // lowest priority - controllers, health, swagger, and auth callbacks go first
                 }
             ],
             [
