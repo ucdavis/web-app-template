@@ -63,7 +63,7 @@ You might also want to set the publisher domain to ucdavis.edu and fill in the o
 
 ### Google Analytics (GA4)
 
-This template includes GA4 wiring in the same style as Walter/Readable:
+This template includes GA4 wiring:
 
 - GA bootstrap script is in `client/index.html`
 - Route-change page view tracking is in `client/src/shared/analytics/AnalyticsListener.tsx`
