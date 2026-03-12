@@ -27,7 +27,7 @@ export default defineConfig({
   },
   server: {
     host: true,
-    open: false, // Disabled for Docker - VS Code will handle opening
+    open: true,
     port: 5173,
     proxy: {
       '/health': {
