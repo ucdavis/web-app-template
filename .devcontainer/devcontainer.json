@@ -23,7 +23,8 @@
     },
     "containerEnv": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://0.0.0.0:5165"
+        "ASPNETCORE_URLS": "http://0.0.0.0:5165",
+        "DB_CONNECTION": "Server=sql,1433;Database=AppDb;User ID=sa;Password=LocalDev123!;Encrypt=False;TrustServerCertificate=True;"
     },
     "postCreateCommand": "bash .devcontainer/setup.sh",
     "postStartCommand": "bash .devcontainer/wait-for-sql.sh && npm run dev",

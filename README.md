@@ -33,10 +33,11 @@ _Using the DevContainer is optional, but it will get you the right version of do
    
    **Outside DevContainer**:
    ```bash
+   npm run db:up
    npm run dev
    ```
    
-   This starts both the .NET backend (port 5165) and Vite dev server (port 5173) concurrently. The backend proxies all non-API requests to Vite in development mode.
+   `npm run db:up` starts the SQL Server container from the same Compose file used by the DevContainer. `npm run dev` starts both the .NET backend (port 5165) and Vite dev server (port 5173) concurrently. The backend proxies all non-API requests to Vite in development mode.
 
 4. **Access the application**
 
@@ -50,9 +51,25 @@ The application will be available at **http://localhost:5165** (the backend, whi
 
 ### Database configuration
 
-The backend requires a SQL Server connection string. By default `appsettings.Development.json` has a connection string configured for the local SQL Server instance.
+The backend requires a SQL Server connection string.
+
+- Outside DevContainer, the default development connection points to the SQL Server container published on `localhost:14333`.
+- Inside DevContainer, `devcontainer.json` overrides `DB_CONNECTION` to use the internal Docker hostname `sql:1433`.
 
 When you want to specify your own DB connection, provide it by setting the `DB_CONNECTION` environment variable (for example in a `.env` file) or by updating `ConnectionStrings:DefaultConnection` in `appsettings.*.json` (`.env` is recommended)
+
+To run only the database outside DevContainer:
+
+```bash
+npm run db:up
+```
+
+This runs the `sql` service from `.devcontainer/docker-compose.yml` and exposes SQL Server on `localhost:14333`.
+
+Useful companion commands:
+
+- `npm run db:logs` to watch SQL Server startup logs
+- `npm run db:down` to stop the container when you're done
 
 ### Auth Configuration
 

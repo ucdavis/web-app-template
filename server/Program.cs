@@ -48,8 +48,9 @@ var conn = builder.Configuration["DB_CONNECTION"]
 if (string.IsNullOrWhiteSpace(conn))
 {
     const string message = "No database connection string configured. Set the DB_CONNECTION environment variable or " +
-                           "configure ConnectionStrings:DefaultConnection. For local containers use " +
-                           "Server=sql,1433;Database=AppDb;User ID=sa;Password=LocalDev123!;Encrypt=False;TrustServerCertificate=True;.";
+                           "configure ConnectionStrings:DefaultConnection. For host-based local development use " +
+                           "Server=localhost,14333;Database=AppDb;User ID=sa;Password=LocalDev123!;Encrypt=False;TrustServerCertificate=True;. " +
+                           "Inside the DevContainer use Server=sql,1433;Database=AppDb;User ID=sa;Password=LocalDev123!;Encrypt=False;TrustServerCertificate=True;.";
 
     throw new InvalidOperationException(message);
 }
@@ -83,7 +84,6 @@ using (var scope = app.Services.CreateScope())
 
 app.UseForwardedHeaders();
 
-app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.UseResponseCaching();
@@ -97,6 +97,8 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
+    app.UseDefaultFiles();
+
     // only use HTTPS redirection in non-development environments
     app.UseHttpsRedirection();
 }
@@ -123,7 +125,10 @@ healthEndpoint.WithMetadata(new ResponseCacheAttribute
 });
 
 
-// In production, fallback to index.html for SPA routing
-app.MapFallbackToFile("/index.html");
+if (!app.Environment.IsDevelopment())
+{
+    // In production, fallback to index.html for SPA routing
+    app.MapFallbackToFile("/index.html");
+}
 
 app.Run();
