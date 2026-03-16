@@ -29,6 +29,10 @@ _Using the DevContainer is optional, but it will get you the right version of do
 
 3. **Start the application**
 
+   **Prerequisites outside DevContainer**:
+   - Install the .NET 10 SDK.
+   - For Visual Studio on Windows, use Visual Studio 2026 version 18.0 or later for `net10.0` support.
+
    **Inside DevContainer**: The application starts automatically via `postStartCommand`
    
    **Outside DevContainer**:

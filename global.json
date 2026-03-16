@@ -1,7 +1,8 @@
 {
   "sdk": {
     "version": "10.0.100",
-    "rollForward": "latestPatch",
-    "allowPrerelease": false
+    "rollForward": "latestFeature",
+    "allowPrerelease": false,
+    "errorMessage": "This repository requires the .NET 10 SDK. Install a .NET 10 SDK or use Visual Studio 2026 18.0+ for net10.0 support."
   }
 }
