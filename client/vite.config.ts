@@ -29,7 +29,9 @@ export default defineConfig({
   },
   server: {
     host: true,
-    open: true,
+    // Let the caller decide whether to open a browser. This avoids a second
+    // tab when Visual Studio launches through ASP.NET Core SpaProxy.
+    open: false,
     port: 5173,
     proxy: {
       '/health': {

@@ -7,7 +7,7 @@
     "db:logs": "docker compose -p web-app-template_devcontainer -f .devcontainer/docker-compose.yml logs -f sql",
     "start": "npm-run-all --parallel start:server start:client:when-server-ready",
     "start:server": "dotnet watch --project server/server.csproj",
-    "start:client": "cd client && npm run dev",
+    "start:client": "cd client && npm run dev:open",
     "start:client:when-server-ready": "wait-on http-get://127.0.0.1:5165/health && npm run start:client"
   },
   "devDependencies": {

@@ -204,6 +204,7 @@ And as always, after updating dependencies, make sure to run `dotnet build` and 
 ### Client Directory
 
 - `npm run dev` - Start Vite development server
+- `npm run dev:open` - Start Vite development server and open the browser
 - `npm run build` - Build for production
 - `npm run lint` - Run ESLint
 - `npm run preview` - Preview production build
