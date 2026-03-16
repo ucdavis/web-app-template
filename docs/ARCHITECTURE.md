@@ -2,260 +2,177 @@
 
 ## Overview
 
-This template uses a clean separation of concerns between project dependencies and development orchestration.
+This template uses:
 
-## Components
+- ASP.NET Core on port `5165` for API, auth, health checks, and Swagger
+- Vite on port `5173` for the React frontend during development
+- ASP.NET Core `SpaProxy` so Visual Studio can launch the frontend without a separate `.esproj`
+- Vite proxy rules so frontend requests to `/api`, `/login`, `/signin-oidc`, and `/health` are forwarded to ASP.NET Core
 
-### 1. Project-Level Dependencies (Source Control)
+In production, ASP.NET Core serves the built frontend from `server/wwwroot`.
 
-**Location**: `server/server.csproj`
+## Development Request Flow
 
-The project declares its runtime dependencies, including:
-- YARP.ReverseProxy (for development proxy)
-- ASP.NET Core packages
-- Authentication libraries
-- Database providers
+### Visual Studio startup flow
 
-**Why**: These are **intrinsic to the application** and must be version-controlled. Any developer cloning the repository needs these dependencies to build and run the project.
-
-### 2. Development Orchestration (DevContainer)
-
-**Location**: `.devcontainer/devcontainer.json`
-
-The DevContainer is responsible for:
-- Installing Node.js runtime
-- Installing dependencies (`postCreateCommand`)
-- Starting both processes simultaneously (`postStartCommand`)
-- Port forwarding configuration
-
-**Why**: This is **environment setup**, not application logic. DevContainer ensures all developers have a consistent development environment.
-
-### 3. Developer Convenience (Root package.json)
-
-**Location**: `package.json` (root)
-
-Provides shorthand commands for local development:
-```json
-{
-  "dev": "concurrently \"dotnet watch\" \"cd client && npm run dev\""
-}
+```text
+Visual Studio F5
+    ↓
+ASP.NET Core profile (:5165)
+    ↓
+SpaProxy ensures Vite is running
+    ↓
+Browser is redirected to :5173
 ```
 
-**Why**: Makes it easy to run both processes with a single command outside DevContainer.
+### Runtime request flow
 
-## Request Flow
-
-### Development Mode
-
-```
-User Browser → :5165 (ASP.NET Core)
-                 ↓
-        ┌────────┴────────┐
-        │                 │
-    /api/*            everything else
-        │                 │
-        ↓                 ↓
-   Controllers      YARP Proxy → :5173 (Vite)
-                                    ↓
-                                React App
+```text
+Browser → :5173 (Vite)
+            ↓
+    ┌───────┴──────────────┐
+    │                      │
+frontend assets/routes   /api, /login, /signin-oidc, /health
+    │                      │
+    ↓                      ↓
+ React + HMR         Proxy to :5165 (ASP.NET Core)
 ```
 
-1. Developer visits `http://localhost:5165`
-2. ASP.NET Core receives the request
-3. Request routing:
-   - `/api/*`, `/health`, `/swagger` → Backend controllers
-   - Everything else → YARP proxy → Vite dev server (`:5173`)
-4. Vite returns React app with HMR enabled
-5. Frontend makes API calls to `/api/*` (same origin, cookies work)
+This keeps frontend hot reload fast while leaving backend auth and API behavior inside ASP.NET Core.
 
-### Production Mode
+## Production Request Flow
 
+```text
+Browser → :5165 (ASP.NET Core)
+            ↓
+    ┌───────┴────────┐
+    │                │
+ /api, auth, health  static files + SPA fallback
+    │                │
+    ↓                ↓
+ Controllers      wwwroot/index.html + assets
 ```
-User Browser → :5165 (ASP.NET Core)
-                 ↓
-        ┌────────┴────────┐
-        │                 │
-    /api/*            everything else
-        │                 │
-        ↓                 ↓
-   Controllers      Static Files (wwwroot/)
-                                    ↓
-                              index.html (SPA)
-```
-
-1. User visits production URL
-2. ASP.NET Core receives the request
-3. Request routing:
-   - `/api/*` → Backend controllers
-   - Static assets → Served from `wwwroot/`
-   - Everything else → Falls back to `index.html` for client-side routing
 
 ## Key Files
 
-### server/Program.cs
+### `server/server.csproj`
 
-**Responsibilities**:
-- Configure YARP in development mode
-- Serve static files in production mode
-- Define routing logic (controllers vs. proxy)
+Responsibilities:
 
-**Development-specific code**:
-```csharp
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddReverseProxy()
-        .LoadFromMemory([...]);  // Proxy config
-}
+- Declares backend dependencies
+- Configures `SpaProxy`
+- Includes the `client/` tree as project items so frontend files appear in Visual Studio without a separate JavaScript project
+- Runs the client build during `dotnet publish` and copies `client/dist` into `wwwroot`
+
+Important settings:
+
+```xml
+<SpaRoot>..\client\</SpaRoot>
+<SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+<SpaProxyServerUrl>http://localhost:5173</SpaProxyServerUrl>
 ```
 
-**Production-specific code**:
-```csharp
-if (!app.Environment.IsDevelopment())
-{
-    app.UseDefaultFiles();
-    app.UseStaticFiles();
-    app.MapFallbackToFile("/index.html");
-}
-```
+### `server/Properties/launchSettings.json`
 
-### .devcontainer/devcontainer.json
+Responsibilities:
 
-**Responsibilities**:
-- Install Node.js and .NET runtimes
-- Run setup scripts
-- Start both processes concurrently
-- Forward port 5165 to host
+- Enables `Microsoft.AspNetCore.SpaProxy` for the development profiles
+- Defines the backend application URLs used by `dotnet run`, `dotnet watch`, and Visual Studio
 
-**Key settings**:
-```json
-{
-  "postCreateCommand": "bash .devcontainer/setup.sh",
-  "postStartCommand": "bash .devcontainer/wait-for-sql.sh && npm run dev",
-  "forwardPorts": [5165]
-}
-```
+### `client/vite.config.ts`
 
-### package.json (root)
+Responsibilities:
 
-**Responsibilities**:
-- Define convenience scripts for developers
-- Declare orchestration dependencies (concurrently)
+- Runs the frontend dev server on port `5173`
+- Proxies backend routes to ASP.NET Core
+- Detects either `ASPNETCORE_URLS` or `ASPNETCORE_HTTPS_PORT` so the same config works for normal `dotnet watch` and IIS Express
 
-**Key scripts**:
-```json
-{
-  "dev": "concurrently \"dotnet watch\" \"cd client && npm run dev\""
-}
-```
+### `server/Program.cs`
 
-## Benefits of This Architecture
+Responsibilities:
 
-### 1. Clean Separation of Concerns
+- Configures the ASP.NET Core middleware pipeline
+- Serves static files in all environments
+- Reserves SPA fallback behavior for production, where the built frontend lives in `wwwroot`
 
-| Layer | Responsibility | Committed to Git |
-|-------|---------------|------------------|
-| server.csproj | YARP dependency | ✅ |
-| Program.cs | Routing + proxy logic | ✅ |
-| DevContainer | Process orchestration | ✅ |
-| Root package.json | Developer convenience | ✅ |
+## Development Workflows
 
-### 2. Cross-Platform Compatibility
+### Visual Studio on Windows
 
-- **Visual Studio users**: Can run backend and frontend separately or use `npm run dev`
-- **VS Code + DevContainer users**: Everything starts automatically
-- **Command-line users**: `npm run dev` works everywhere
+1. Open the solution.
+2. Set `server` as the startup project.
+3. Press `F5`.
 
-### 3. Single Port Development
+`SpaProxy` starts Vite if needed and redirects the browser to `http://localhost:5173`.
 
-- All requests go through `:5165`
-- Same-origin authentication cookies work correctly
-- No CORS configuration needed
-- Simulates production routing
+### Command line
 
-### 4. Production Parity
+Run both processes:
 
-Development proxy mimics production serving behavior:
-- API routes work identically
-- Static file serving is production-like
-- Client-side routing fallback is consistent
-
-### 5. No Magic Process Spawning
-
-The backend doesn't start Vite (unlike ASP.NET SPA Proxy). This is more stable and predictable:
-- Each process is independently manageable
-- Better error reporting
-- Works with all IDEs and editors
-- Easier to debug
-
-## Troubleshooting
-
-### Frontend not loading
-
-**Check**: Is Vite running?
 ```bash
-curl http://localhost:5173
+npm start
 ```
 
-If not, start it manually:
-```bash
-cd client && npm run dev
-```
+Run only the backend:
 
-### API calls failing
-
-**Check**: Is the backend running?
-```bash
-curl http://localhost:5165/health
-```
-
-If not, start it manually:
 ```bash
 dotnet watch --project server/server.csproj
 ```
 
-### Changes not hot-reloading
+Run only the frontend:
 
-**Frontend**: Check the browser console for HMR connection errors. Vite HMR connects via WebSocket to `:5173`, which is proxied through `:5165`.
-
-**Backend**: `dotnet watch` should automatically restart on file changes. Check the terminal for compilation errors.
-
-### Port conflicts
-
-If `:5165` or `:5173` are in use:
-- Change `ASPNETCORE_URLS` in `.devcontainer/devcontainer.json` or `.env`
-- Update Vite port in `client/vite.config.ts`
-- Update YARP proxy target in `server/Program.cs`
-
-## Future Considerations
-
-### Alternative: Docker Compose
-
-For teams preferring Docker Compose over DevContainer, the same principles apply:
-```yaml
-services:
-  backend:
-    build: ./server
-    ports:
-      - "5165:5165"
-  
-  frontend:
-    build: ./client
-    ports:
-      - "5173:5173"
+```bash
+cd client
+npm run dev
 ```
 
-Backend would still proxy to `frontend:5173` using YARP.
+## Why This Replaced `.esproj`
 
-### Alternative: Standalone Proxy
+The previous `.esproj` setup published correctly, but it caused `dotnet watch` failures because the .NET CLI still tried to traverse the JavaScript project type during watch runs.
 
-Instead of embedding the proxy in the backend, you could use a standalone reverse proxy (nginx, Caddy, Traefik). However, this adds complexity and reduces parity with production (which doesn't have a separate proxy).
+The current approach keeps the useful parts:
 
-### Alternative: Vite Proxy (Not Recommended)
+- Visual Studio can still launch Vite automatically
+- Publish still builds and includes the frontend assets
+- Frontend files still appear in Visual Studio
 
-Vite can proxy API requests to the backend, but this inverts the architecture:
-- Frontend is the entry point (`:5173`)
-- Breaks authentication cookies (different origins)
-- Requires CORS configuration
-- Doesn't match production routing
+And removes the CLI pain point:
 
-This approach is **not recommended** for this template.
+- `dotnet watch --project server/server.csproj` no longer fails on a referenced `.esproj`
+
+## Troubleshooting
+
+### Visual Studio starts the backend but not the frontend
+
+Check:
+
+- Node.js is installed and available on `PATH`
+- `server` is the startup project
+- the launch profile includes `ASPNETCORE_HOSTINGSTARTUPASSEMBLIES=Microsoft.AspNetCore.SpaProxy`
+
+### Frontend loads but API calls fail
+
+Check:
+
+- ASP.NET Core is running on `:5165`
+- the proxy targets in `client/vite.config.ts` still match the backend URL
+- `/health` responds on the backend
+
+### Backend exits immediately during startup
+
+This template runs database initialization at startup. If SQL Server is not available, the app exits before the browser handoff completes.
+
+Common local fix:
+
+```bash
+npm run db:up
+```
+
+### Changing ports
+
+If you change the development ports, update all of these together:
+
+1. `server/Properties/launchSettings.json`
+2. `server/server.csproj` (`<SpaProxyServerUrl>`)
+3. `client/vite.config.ts`
+4. `.devcontainer/devcontainer.json`

@@ -21,7 +21,9 @@ If you need the app to run on ports other than the default `5165` (API) and `517
 
 1. Visit https://entra.microsoft.com → **App registrations** → **New registration**.
 2. Give the app a friendly name, pick the correct supported account types, and add the following redirect URIs. Use HTTPS in production and match whatever port you configured above:
-   - `http://localhost:5165/signin-oidc` (or your new callback path)
+   - `http://localhost:5173/signin-oidc` for the default Vite development flow
+   - `http://localhost:5165/signin-oidc` if you also test directly against the backend origin
+   - `https://localhost:44322/signin-oidc` if you use the default IIS Express profile
    - Any additional public endpoints your hosting environment will expose.
 3. Under **Authentication**, enable ID tokens and add logout URLs if needed.
 4. Copy the **Directory (tenant) ID**, **Application (client) ID**, and your verified domain. At UCD tenant is always the same.
@@ -68,7 +70,7 @@ Remove or rewrite sample artifacts so they do not ship:
   - Review `UserController` and shape the `/api/user/me` payload/claims to match your app.
 - **Frontend**
   - Remove the showcase routes in `client/src/routes/(authenticated)/*`, `client/src/routes/about.tsx`, and related components in `client/src/shared/` once you no longer need them.
-  - Regenerate the router tree (`client/src/routeTree.gen.ts`) by re-running `npm run dev` after deleting/adding routes.
+  - Regenerate the router tree (`client/src/routeTree.gen.ts`) by re-running `cd client && npm run dev` after deleting or adding routes.
   - Update or drop showcase-specific queries (`client/src/queries/*`) so TanStack Query only exposes real endpoints.
 
 Discard unused assets, tests, and mock data that referenced the template demos.

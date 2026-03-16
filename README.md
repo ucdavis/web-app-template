@@ -9,7 +9,7 @@ A full-stack web application template featuring a .NET 10 backend with React/Vit
 - **Authentication**: OIDC with Microsoft Entra ID (Azure AD)
 - **Styling**: Tailwind CSS
 - **Development**: Hot reload for both frontend and backend
-- **Dev Proxy**: YARP reverse proxy routes frontend requests to Vite dev server (development only)
+- **Development Integration**: ASP.NET Core `SpaProxy` launches Vite for Visual Studio users, while Vite proxies API and auth routes back to ASP.NET Core during development
 
 ## Quick Start
 
@@ -34,20 +34,26 @@ _Using the DevContainer is optional, but it will get you the right version of do
    **Outside DevContainer**:
    ```bash
    npm run db:up
-   npm run dev
+   npm start
    ```
    
-   `npm run db:up` starts the SQL Server container from the same Compose file used by the DevContainer. `npm run dev` starts both the .NET backend (port 5165) and Vite dev server (port 5173) concurrently. The backend proxies all non-API requests to Vite in development mode.
+   `npm run db:up` starts the SQL Server container from the same Compose file used by the DevContainer. `npm start` starts the .NET backend on port `5165`, waits for it to become healthy, and then starts the Vite dev server on port `5173`.
+
+   **Visual Studio (Windows)**:
+   - Open `app.sln`.
+   - Set the `server` project as the startup project.
+   - Press `F5`.
+   - `SpaProxy` starts Vite if needed and redirects the browser to the frontend dev server.
 
 4. **Access the application**
 
-The application will be available at **http://localhost:5165** (the backend, which proxies to Vite).
+In development, the frontend runs from **http://localhost:5173** and proxies backend requests to ASP.NET Core on **http://localhost:5165**.
 
-- **Main App**: http://localhost:5165 (backend proxies to Vite for frontend assets)
-- **Backend API**: http://localhost:5165/api/* (direct API endpoints)
+- **Main App**: http://localhost:5173
+- **Backend API**: http://localhost:5165/api/*
 - **API Documentation (Swagger)**: http://localhost:5165/swagger
 - **Health Check**: http://localhost:5165/health
-- **Vite Dev Server** (internal): http://localhost:5173 (accessed via proxy, no need to visit directly)
+- **Visual Studio F5**: launches through the backend profile, then redirects to the Vite dev server on `:5173`
 
 ### Database configuration
 
@@ -75,7 +81,13 @@ Useful companion commands:
 
 We use OIDC with Microsoft Entra ID (Azure AD) for authentication. The auth flow doesn't use any secrets and the settings in `appsettings.*.json` are sufficient for local development.
 
-When you are ready to get your own, go to [Microsoft Entra ID](https://entra.microsoft.com/) and create a new application registration. Set the redirect url to `http://localhost:5165/signin-oidc` and check the box for "ID tokens".
+When you are ready to get your own, go to [Microsoft Entra ID](https://entra.microsoft.com/) and create a new application registration. For local development, set the redirect URL to the origin you actually launch from:
+
+- `http://localhost:5173/signin-oidc` for the default Vite dev flow
+- `http://localhost:5165/signin-oidc` if you are testing directly against the backend origin
+- `https://localhost:44322/signin-oidc` if you use the default IIS Express profile
+
+Check the box for "ID tokens".
 
 You might also want to set the publisher domain to ucdavis.edu and fill in the other general branding info.
 
@@ -87,22 +99,22 @@ The health check endpoint (`/health`) is configured to return the status of the 
 
 ### Development Architecture
 
-In development mode, the .NET backend (port 5165) uses YARP reverse proxy to forward non-API requests to the Vite dev server (port 5173). This provides:
+In development mode:
 
-- Single port access (5165) for the entire application
-- Proper same-origin cookies for authentication
-- Hot module replacement from Vite
-- Backend API on `/api/*` routes
+- ASP.NET Core runs on port `5165`
+- Vite serves the frontend on port `5173`
+- Visual Studio uses `SpaProxy` to start Vite and redirect the browser to it
+- Vite proxies `/api`, `/login`, `/signin-oidc`, and `/health` back to ASP.NET Core
 
-In production, the backend serves pre-built static files from `wwwroot/` (no proxy).
+This keeps frontend HMR fast while preserving the backend's auth and API pipeline. In production, the backend serves pre-built static files from `wwwroot/`.
 
 ### Backend Development
 
-The backend is configured with hot reload via `dotnet watch`. Any changes to C# files will automatically restart the server.
+The backend is configured with hot reload via `dotnet watch`. Any changes to C# files automatically restart the server. Visual Studio users can also run the `server` project directly with `SpaProxy`.
 
 ### Frontend Development
 
-The frontend uses Vite's hot module replacement (HMR). Changes to React components, TypeScript files, and CSS will be reflected immediately through the proxy.
+The frontend uses Vite's hot module replacement (HMR). Changes to React components, TypeScript files, and CSS are reflected immediately by the Vite dev server.
 
 ### Authentication Flow
 
@@ -157,31 +169,33 @@ And as always, after updating dependencies, make sure to run `dotnet build` and 
 
 ## Project Structure
 
-├── client/ # React frontend
-│ ├── src/
-│ │ ├── routes/ # TanStack Router routes
-│ │ ├── queries/ # TanStack Query hooks
-│ │ ├── lib/ # API client and utilities
-│ │ └── shared/ # Shared components
-│ ├── package.json
-│ └── vite.config.ts
-├── server/ # .NET backend
-│ ├── Controllers/ # API controllers
-│ ├── Helpers/ # Utility classes
-│ ├── Properties/ # Launch settings
-│ ├── Program.cs # Application entry point
-│ └── server.csproj
-├── package.json # Root package.json with start script
-└── app.sln # Visual Studio solution file
-
+```text
+.
+├── client/                  # React frontend
+│   ├── src/
+│   │   ├── routes/          # TanStack Router routes
+│   │   ├── queries/         # TanStack Query hooks
+│   │   ├── lib/             # API client and utilities
+│   │   └── shared/          # Shared components
+│   ├── package.json
+│   └── vite.config.ts
+├── server/                  # .NET backend
+│   ├── Controllers/         # API controllers
+│   ├── Helpers/             # Utility classes
+│   ├── Properties/          # Launch settings
+│   ├── Program.cs           # Application entry point
+│   └── server.csproj        # SpaProxy + publish integration
+├── package.json             # Root dev orchestration scripts
+└── app.sln                  # Visual Studio solution file
 ```
 
 ## Available Scripts
 
 ### Root Level
 
-- `npm run dev` - Starts both backend and frontend with hot reload (recommended for development)
-- `npm start` - Alternative script using npm-run-all (legacy)
+- `npm start` - Starts both backend and frontend with hot reload
+- `npm run start:server` - Starts only the ASP.NET Core backend
+- `npm run start:client` - Starts only the Vite dev server
 
 ### Client Directory
 
@@ -197,4 +211,3 @@ And as always, after updating dependencies, make sure to run `dotnet build` and 
 - `dotnet watch` - Start with hot reload
 - `dotnet build` - Build the application
 - `dotnet test` - Run tests
-```

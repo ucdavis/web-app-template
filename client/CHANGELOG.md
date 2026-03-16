@@ -1,16 +1,15 @@
-This file explains how Visual Studio created the project.
+This file records how the frontend is wired into the template.
 
-The following tools were used to generate this project:
-- create-vite
+The client app was originally created with:
 
-The following steps were used to generate this project:
-- Create react project with create-vite: `npm init --yes vite@latest web_app_template.client -- --template=react-ts`.
-- Update `vite.config.ts` to set up proxying and certs.
-- Add `@type/node` for `vite.config.js` typing.
-- Update `App` component to fetch and display weather information.
-- Create project file (`web_app_template.client.esproj`).
-- Create `launch.json` to enable debugging.
-- Add project to solution.
-- Update proxy endpoint to be the backend server endpoint.
-- Add project to the startup projects list.
-- Write this file.
+- `create-vite`
+- the `react-ts` template
+
+The template now integrates the frontend like this:
+
+- Vite serves the React app on port `5173` during development.
+- `client/vite.config.ts` proxies `/api`, `/login`, `/signin-oidc`, and `/health` to the ASP.NET Core backend.
+- `server/server.csproj` uses ASP.NET Core `SpaProxy` so Visual Studio can start Vite without a separate `.esproj`.
+- `server/server.csproj` also builds `client/dist` during publish and copies the output into `server/wwwroot`.
+
+There is intentionally no standalone JavaScript project file in the solution anymore.
