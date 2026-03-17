@@ -27,7 +27,7 @@
         "DB_CONNECTION": "Server=sql,1433;Database=AppDb;User ID=sa;Password=LocalDev123!;Encrypt=False;TrustServerCertificate=True;"
     },
     "postCreateCommand": "bash .devcontainer/setup.sh",
-    "postStartCommand": "bash .devcontainer/wait-for-sql.sh && npm run dev",
+    "postStartCommand": "bash .devcontainer/wait-for-sql.sh && npm run start",
     "remoteUser": "vscode",
     "forwardPorts": [
         5165
