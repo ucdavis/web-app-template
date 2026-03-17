@@ -9,6 +9,9 @@ project.lock.json
 # Visual Studio Code
 .vscode
 
+# Node
+node_modules/
+
 # User-specific files
 *.suo
 *.user

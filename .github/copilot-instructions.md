@@ -5,7 +5,7 @@ This is a full-stack web application template using modern React and .NET techno
 ## Architecture Overview
 
 - **Frontend**: React 19 with TypeScript in Vite development environment
-- **Backend**: ASP.NET Core 8.0 Web API
+- **Backend**: ASP.NET Core 10.0 Web API
 - **Development**: SPA proxy setup with hot reload
 
 ## Frontend Technology Stack
@@ -65,8 +65,8 @@ This is a full-stack web application template using modern React and .NET techno
 
 ### Framework & Runtime
 
-- **ASP.NET Core 8.0** - Web API framework
-- **.NET 8.0** - Target framework
+- **ASP.NET Core 10.0** - Web API framework
+- **.NET 10.0** - Target framework
 - **C#** with nullable reference types enabled
 
 ### Authentication & Authorization

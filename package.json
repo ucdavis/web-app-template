@@ -2,9 +2,16 @@
   "name": "web-app-template",
   "private": true,
   "scripts": {
-    "start": "dotnet watch --project server/server.csproj"
+    "db:up": "docker compose -p web-app-template_devcontainer -f .devcontainer/docker-compose.yml up -d sql",
+    "db:down": "docker compose -p web-app-template_devcontainer -f .devcontainer/docker-compose.yml stop sql",
+    "db:logs": "docker compose -p web-app-template_devcontainer -f .devcontainer/docker-compose.yml logs -f sql",
+    "start": "npm-run-all --parallel start:server start:client:when-server-ready",
+    "start:server": "dotnet watch --project server/server.csproj",
+    "start:client": "cd client && npm run dev:open",
+    "start:client:when-server-ready": "wait-on http-get://127.0.0.1:5165/health && npm run start:client"
   },
   "devDependencies": {
-    "npm-run-all": "^4.1.5"
+    "npm-run-all": "^4.1.5",
+    "wait-on": "^9.0.4"
   }
 }

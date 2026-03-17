@@ -8,7 +8,9 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 
 const target = env.ASPNETCORE_URLS
   ? env.ASPNETCORE_URLS.split(';')[0]
-  : 'http://localhost:5165';
+  : env.ASPNETCORE_HTTPS_PORT
+    ? `https://localhost:${env.ASPNETCORE_HTTPS_PORT}`
+    : 'http://localhost:5165';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -27,7 +29,9 @@ export default defineConfig({
   },
   server: {
     host: true,
-    open: true,
+    // Let the caller decide whether to open a browser. This avoids a second
+    // tab when Visual Studio launches through ASP.NET Core SpaProxy.
+    open: false,
     port: 5173,
     proxy: {
       '/health': {
