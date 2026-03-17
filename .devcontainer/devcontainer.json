@@ -35,11 +35,11 @@
     "portsAttributes": {
         "5165": {
             "label": "Web App (ASP.NET + Vite Proxy)",
-            "onAutoForward": "openBrowser"
+            "onAutoForward": "ignore"
         },
         "5173": {
             "label": "Vite Dev Server (Internal - Use 5165)",
-            "onAutoForward": "ignore"
+            "onAutoForward": "openBrowser"
         },
         "14333": {
             "label": "SQL Server (Internal)",
