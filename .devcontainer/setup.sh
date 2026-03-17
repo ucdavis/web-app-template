@@ -3,9 +3,6 @@ set -e
 
 echo "🔧 Running post-create setup..."
 
-# Upgrade npm to latest
-echo "⬆️  Upgrading npm to latest..."
-npm install -g npm@latest
 
 # Wait for SQL to be ready
 bash .devcontainer/wait-for-sql.sh
