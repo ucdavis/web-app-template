@@ -1,5 +1,6 @@
 'use no memo';
 
+import type { ReactNode } from 'react';
 import {
   ColumnDef,
   flexRender,
@@ -8,22 +9,30 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   InitialTableState,
+  type Table,
   useReactTable,
 } from '@tanstack/react-table';
+
+type TableActionsRenderer<TData extends object> =
+  | ReactNode
+  | ((table: Table<TData>) => ReactNode);
 
 interface DataTableProps<TData extends object> {
   columns: ColumnDef<TData>[];
   data: TData[];
+  filterPlaceholder?: string;
   globalFilter?: 'left' | 'right' | 'none'; // Controls the position of the search box
   initialState?: InitialTableState; // Optional initial state for the table, use for stuff like setting page size or sorting
-  // ...any other props, initial state?, export? pages? filter? sorting?
+  tableActions?: TableActionsRenderer<TData>;
 }
 
 export const DataTable = <TData extends object>({
   columns,
   data,
+  filterPlaceholder = 'Search all columns...',
   globalFilter = 'right',
   initialState,
+  tableActions,
 }: DataTableProps<TData>) => {
   // see note in https://tanstack.com/table/latest/docs/installation#react-table.  Added "use no memo" just to be safe but it's unnecessary.
   // once tanstack updates their docs and makes sure it works w/ react compiler (even though we aren't using it yet), we can remove this comment
@@ -40,53 +49,67 @@ export const DataTable = <TData extends object>({
     },
   });
 
-  return (
-    <div className="space-y-4">
-      {globalFilter !== 'none' && (
-        <div
-          className={`flex items-center ${globalFilter === 'right' ? 'justify-end' : 'justify-start'}`}
+  const filterControl =
+    globalFilter === 'none' ? null : (
+      <label className="input input-bordered flex items-center gap-2 w-full max-w-sm">
+        <svg
+          className="h-[1em] opacity-50"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
         >
-          <label className="input input-bordered flex items-center gap-2 w-full max-w-sm">
+          <g
+            fill="none"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2.5"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </g>
+        </svg>
+        <input
+          className="grow"
+          onChange={(e) => table.setGlobalFilter(e.target.value)}
+          placeholder={filterPlaceholder}
+          type="text"
+          value={table.getState().globalFilter ?? ''}
+        />
+        {table.getState().globalFilter && (
+          <button
+            className="btn btn-ghost btn-sm btn-circle"
+            onClick={() => table.setGlobalFilter('')}
+            type="button"
+          >
             <svg
-              className="h-[1em] opacity-50"
-              viewBox="0 0 24 24"
+              className="h-4 w-4"
+              fill="currentColor"
+              viewBox="0 0 16 16"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <g
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.5"
-              >
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.3-4.3"></path>
-              </g>
+              <path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z" />
             </svg>
-            <input
-              className="grow"
-              onChange={(e) => table.setGlobalFilter(e.target.value)}
-              placeholder="Search all columns..."
-              type="text"
-              value={table.getState().globalFilter ?? ''}
-            />
-            {table.getState().globalFilter && (
-              <button
-                className="btn btn-ghost btn-sm btn-circle"
-                onClick={() => table.setGlobalFilter('')}
-                type="button"
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill="currentColor"
-                  viewBox="0 0 16 16"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M5.28 4.22a.75.75 0 0 0-1.06 1.06L6.94 8l-2.72 2.72a.75.75 0 1 0 1.06 1.06L8 9.06l2.72 2.72a.75.75 0 1 0 1.06-1.06L9.06 8l2.72-2.72a.75.75 0 0 0-1.06-1.06L8 6.94 5.28 4.22Z" />
-                </svg>
-              </button>
-            )}
-          </label>
+          </button>
+        )}
+      </label>
+    );
+
+  const resolvedTableActions =
+    typeof tableActions === 'function' ? tableActions(table) : tableActions;
+
+  const toolbarItems =
+    globalFilter === 'left'
+      ? [filterControl, resolvedTableActions]
+      : [resolvedTableActions, filterControl];
+  const hasToolbar = toolbarItems.some(Boolean);
+
+  return (
+    <div className="space-y-4">
+      {hasToolbar && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {toolbarItems.map((item, index) =>
+            item ? <div key={index}>{item}</div> : null
+          )}
         </div>
       )}
 

@@ -52,6 +52,21 @@ function RouteComponent() {
             </div>
             <div className="card bg-base-100 shadow-md">
               <div className="card-body">
+                <h3 className="card-title">Data Table Export Example</h3>
+                <p className="text-base-content/70">
+                  This page demonstrates a Walter-style export flow, with table
+                  actions separated from the DataTable and CSV columns defined
+                  alongside the data model.
+                </p>
+                <div className="card-actions justify-end">
+                  <Link className="btn btn-primary" to="/table-export">
+                    Go to Export Page
+                  </Link>
+                </div>
+              </div>
+            </div>
+            <div className="card bg-base-100 shadow-md">
+              <div className="card-body">
                 <h3 className="card-title">Form Example</h3>
                 <p className="text-base-content/70">
                   This page demonstrates custom form components with TanStack

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)/route'
 import { Route as authenticatedIndexRouteImport } from './routes/(authenticated)/index'
+import { Route as authenticatedTableExportRouteImport } from './routes/(authenticated)/table-export'
 import { Route as authenticatedStylesRouteImport } from './routes/(authenticated)/styles'
 import { Route as authenticatedMeRouteImport } from './routes/(authenticated)/me'
 import { Route as authenticatedFormRouteImport } from './routes/(authenticated)/form'
@@ -31,6 +32,12 @@ const authenticatedIndexRoute = authenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
+const authenticatedTableExportRoute =
+  authenticatedTableExportRouteImport.update({
+    id: '/table-export',
+    path: '/table-export',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 const authenticatedStylesRoute = authenticatedStylesRouteImport.update({
   id: '/styles',
   path: '/styles',
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/form': typeof authenticatedFormRoute
   '/me': typeof authenticatedMeRoute
   '/styles': typeof authenticatedStylesRoute
+  '/table-export': typeof authenticatedTableExportRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
@@ -66,6 +74,7 @@ export interface FileRoutesByTo {
   '/form': typeof authenticatedFormRoute
   '/me': typeof authenticatedMeRoute
   '/styles': typeof authenticatedStylesRoute
+  '/table-export': typeof authenticatedTableExportRoute
   '/': typeof authenticatedIndexRoute
 }
 export interface FileRoutesById {
@@ -76,13 +85,21 @@ export interface FileRoutesById {
   '/(authenticated)/form': typeof authenticatedFormRoute
   '/(authenticated)/me': typeof authenticatedMeRoute
   '/(authenticated)/styles': typeof authenticatedStylesRoute
+  '/(authenticated)/table-export': typeof authenticatedTableExportRoute
   '/(authenticated)/': typeof authenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/fetch' | '/form' | '/me' | '/styles'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/fetch'
+    | '/form'
+    | '/me'
+    | '/styles'
+    | '/table-export'
   fileRoutesByTo: FileRoutesByTo
-  to: '/about' | '/fetch' | '/form' | '/me' | '/styles' | '/'
+  to: '/about' | '/fetch' | '/form' | '/me' | '/styles' | '/table-export' | '/'
   id:
     | '__root__'
     | '/(authenticated)'
@@ -91,6 +108,7 @@ export interface FileRouteTypes {
     | '/(authenticated)/form'
     | '/(authenticated)/me'
     | '/(authenticated)/styles'
+    | '/(authenticated)/table-export'
     | '/(authenticated)/'
   fileRoutesById: FileRoutesById
 }
@@ -120,6 +138,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof authenticatedIndexRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
+    '/(authenticated)/table-export': {
+      id: '/(authenticated)/table-export'
+      path: '/table-export'
+      fullPath: '/table-export'
+      preLoaderRoute: typeof authenticatedTableExportRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
     '/(authenticated)/styles': {
@@ -158,6 +183,7 @@ interface authenticatedRouteRouteChildren {
   authenticatedFormRoute: typeof authenticatedFormRoute
   authenticatedMeRoute: typeof authenticatedMeRoute
   authenticatedStylesRoute: typeof authenticatedStylesRoute
+  authenticatedTableExportRoute: typeof authenticatedTableExportRoute
   authenticatedIndexRoute: typeof authenticatedIndexRoute
 }
 
@@ -166,6 +192,7 @@ const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedFormRoute: authenticatedFormRoute,
   authenticatedMeRoute: authenticatedMeRoute,
   authenticatedStylesRoute: authenticatedStylesRoute,
+  authenticatedTableExportRoute: authenticatedTableExportRoute,
   authenticatedIndexRoute: authenticatedIndexRoute,
 }
 
