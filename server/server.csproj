@@ -29,6 +29,7 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.6" NoWarn="NU1510" />
   </ItemGroup>
 
   <ItemGroup>

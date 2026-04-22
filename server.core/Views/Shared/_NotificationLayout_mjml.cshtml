@@ -1,0 +1,46 @@
+@model server.core.Notifications.DefaultNotificationTemplateModel
+<!doctype html>
+<mjml>
+  <mj-head>
+    <mj-preview>@Model.AppName notification</mj-preview>
+    <mj-attributes>
+      <mj-all font-family="Helvetica, Arial, sans-serif" />
+      <mj-text color="#172033" font-size="16px" line-height="1.65" />
+      <mj-button background-color="#0b5fff"
+                 color="#ffffff"
+                 border-radius="999px"
+                 font-size="16px"
+                 font-weight="600"
+                 inner-padding="14px 30px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#eef3f8">
+    <mj-section padding-top="40px" padding-bottom="16px">
+      <mj-column>
+        <mj-text align="center"
+                 font-size="28px"
+                 font-weight="700"
+                 color="#172033"
+                 padding="0px">
+          @Model.AppName
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section background-color="#ffffff"
+                border-radius="20px"
+                padding="0px">
+      <mj-column padding="0px">
+        @RenderBody()
+      </mj-column>
+    </mj-section>
+
+    <mj-section padding-top="16px" padding-bottom="32px">
+      <mj-column>
+        <mj-text align="center" font-size="12px" line-height="1.5" color="#5d6b82">
+          This email was automatically generated. Please do not reply to it.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

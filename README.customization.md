@@ -60,7 +60,29 @@ If you change `CallbackPath`, remember to mirror it in the Entra redirect URIs.
 
 Confirm your observability backend (Grafana, New Relic, Azure Monitor) receives traffic by temporarily setting `OTEL_LOG_LEVEL=debug` and checking the startup output.
 
-## 6. Clean Up Sample Code
+## 6. Email Notifications
+
+The template includes a reusable email notification stack in `server.core`:
+
+- Shared services live in `server.core/Notifications/`.
+- Razor + MJML templates live in `server.core/Views/Emails/` and `server.core/Views/Shared/`.
+- The notification UI lives at `client/src/routes/(authenticated)/notifications.tsx`.
+- The default notification trigger lives at `POST /api/notifications/default` and is development-only.
+
+For local development, point the `Email` settings in `server/.env.Development` or `server/appsettings.Development.json` at your Mailtrap SMTP inbox. At minimum, review:
+
+- `Email__Host`
+- `Email__Port`
+- `Email__UseSsl`
+- `Email__Username`
+- `Email__Password`
+- `Email__FromEmail`
+- `Email__FromName`
+- `Email__BaseUrl`
+
+When you start replacing the default notification flow with real notifications, keep app-specific composition in your own core services. Follow `NotificationService` as the pattern for rendering templates with `INotificationRenderer`, then hand the final text/html message to `IEmailService` for delivery.
+
+## 7. Clean Up Sample Code
 
 Remove or rewrite sample artifacts so they do not ship:
 
@@ -75,14 +97,14 @@ Remove or rewrite sample artifacts so they do not ship:
 
 Discard unused assets, tests, and mock data that referenced the template demos.
 
-## 7. Polish the UX & Tooling
+## 8. Polish the UX & Tooling
 
 - Turn off dev-only tooling—`ReactQueryDevtools` and `TanStackRouterDevtools` in `client/src/routes/__root.tsx`—for production builds or gate them behind `import.meta.env.DEV`.
 - Update Swagger metadata (title, description, contact) inside `Program.cs` when calling `builder.Services.AddSwaggerGen(...)` or remove entirely.
 - Review `.devcontainer/devcontainer.json`, CI workflows, and deployment manifests (if you add them) to ensure they use your new names, ports, and environment variables.
 - Re-run `npm install`, `cd client && npm install`, and `dotnet restore` after updating Node/.NET versions (`global.json`) so everyone builds with the intended SDKs.
 
-## 8. Final Verification Checklist
+## 9. Final Verification Checklist
 
 - [ ] `npm start` launches both servers on the expected ports.
 - [ ] `dotnet test` and `cd client && npm test` succeed.

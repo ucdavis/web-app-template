@@ -95,6 +95,20 @@ function RouteComponent() {
             </div>
             <div className="card bg-base-100 shadow-md">
               <div className="card-body">
+                <h3 className="card-title">Notifications</h3>
+                <p className="text-base-content/70">
+                  See how server.core renders Razor templates into MJML-based
+                  email HTML and sends them through SMTP.
+                </p>
+                <div className="card-actions justify-end">
+                  <Link className="btn btn-primary" to="/notifications">
+                    Go to Notifications
+                  </Link>
+                </div>
+              </div>
+            </div>
+            <div className="card bg-base-100 shadow-md">
+              <div className="card-body">
                 <h3 className="card-title">Anonymous About Page</h3>
                 <p className="text-base-content/70">
                   This page is accessible without a login.
