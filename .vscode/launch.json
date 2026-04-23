@@ -1,0 +1,75 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Server: ASP.NET Core (http-cli)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: server",
+      "program": "${workspaceFolder}/server/bin/Debug/net10.0/server.dll",
+      "cwd": "${workspaceFolder}/server",
+      "launchSettingsFilePath": "${workspaceFolder}/server/Properties/launchSettings.json",
+      "launchSettingsProfile": "http-cli",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "presentation": {
+        "hidden": true
+      }
+    },
+    {
+      "name": "Backend: ASP.NET Core + Swagger",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build: server",
+      "program": "${workspaceFolder}/server/bin/Debug/net10.0/server.dll",
+      "cwd": "${workspaceFolder}/server",
+      "launchSettingsFilePath": "${workspaceFolder}/server/Properties/launchSettings.json",
+      "launchSettingsProfile": "http-cli",
+      "console": "internalConsole",
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+http://\\S+:([0-9]+)",
+        "uriFormat": "http://localhost:%s/swagger"
+      },
+      "presentation": {
+        "order": 2
+      }
+    },
+    {
+      "name": "Client: Vite Dev Server",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "start:client:debug"
+      ],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "Local:\\s+(https?://\\S+)"
+      },
+      "presentation": {
+        "hidden": true
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack: VS Code",
+      "configurations": [
+        "Server: ASP.NET Core (http-cli)",
+        "Client: Vite Dev Server"
+      ],
+      "stopAll": true,
+      "presentation": {
+        "order": 1
+      }
+    }
+  ]
+}

@@ -6,8 +6,12 @@ project.lock.json
 .DS_Store
 *.pyc
 
-# Visual Studio Code
-.vscode
+# Visual Studio Code items unrelated to launching and debugging
+.vscode/*
+!.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
 
 # Node
 node_modules/

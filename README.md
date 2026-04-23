@@ -49,6 +49,13 @@ _Using the DevContainer is optional, but it will get you the right version of do
    - Press `F5`.
    - `SpaProxy` starts Vite if needed and redirects the browser to the frontend dev server.
 
+   **Visual Studio Code**:
+   - Install the recommended extensions when prompted, or at minimum the Microsoft C# extension.
+   - Open the repo root in VS Code.
+   - In **Run and Debug**, choose `Full Stack: VS Code` and press `F5`.
+   - VS Code builds and launches the backend with the `http-cli` launch profile, starts Vite after the backend health check passes, and opens the app in your default external browser at `http://localhost:5173`.
+   - For backend-only debugging, choose `Backend: ASP.NET Core + Swagger`.
+
 4. **Access the application**
 
 In development, the frontend runs from **http://localhost:5173** and proxies backend requests to ASP.NET Core on **http://localhost:5165**.
@@ -135,6 +142,15 @@ The backend is configured with hot reload via `dotnet watch`. Any changes to C# 
 ### Frontend Development
 
 The frontend uses Vite's hot module replacement (HMR). Changes to React components, TypeScript files, and CSS are reflected immediately by the Vite dev server.
+
+### VS Code Debugging
+
+The repository includes `.vscode/launch.json` and `.vscode/tasks.json` so the standard VS Code workflow works out of the box:
+
+- `Full Stack: VS Code` launches the backend debugger, starts the Vite dev server, and opens the frontend in your default external browser.
+- `Backend: ASP.NET Core + Swagger` launches only the backend and opens Swagger when Kestrel is ready.
+
+The VS Code flow intentionally uses the `http-cli` launch profile instead of the `SpaProxy` profile so terminal and editor-driven debugging both avoid the duplicate browser-launch behavior from the ASP.NET Core side.
 
 ### Authentication Flow
 

@@ -8,6 +8,7 @@
     "start": "npm-run-all --parallel start:server start:client:when-server-ready",
     "start:server": "dotnet watch run --project server/server.csproj --launch-profile http-cli",
     "start:client": "cd client && npm run dev:open",
+    "start:client:debug": "wait-on http-get://127.0.0.1:5165/health && cd client && npm run dev",
     "start:client:when-server-ready": "wait-on http-get://127.0.0.1:5165/health && npm run start:client"
   },
   "devDependencies": {
