@@ -41,7 +41,7 @@ _Using the DevContainer is optional, but it will get you the right version of do
    npm start
    ```
    
-   `npm run db:up` starts the SQL Server container from the same Compose file used by the DevContainer. `npm start` starts the .NET backend on port `5165`, waits for it to become healthy, and then starts the Vite dev server on port `5173`.
+   `npm run db:up` starts the SQL Server container from the same Compose file used by the DevContainer. `npm start` starts the .NET backend on port `5165` with a CLI-specific launch profile, waits for health check, and then starts the Vite dev server on port `5173` which opens the browser.
 
    **Visual Studio (Windows)**:
    - Open `app.sln`.
