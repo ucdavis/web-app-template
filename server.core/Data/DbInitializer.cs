@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using server.core.Data;
-using server.core.Domain;
+using Server.Core.Data;
+using Server.Core.Domain;
 
 public interface IDbInitializer
 {

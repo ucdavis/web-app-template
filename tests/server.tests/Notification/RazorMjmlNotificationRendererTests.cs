@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using server.core.Notification;
+using Server.Core.Notification;
 
-namespace server.tests.Notification;
+namespace Server.Tests.Notification;
 
 public class RazorMjmlNotificationRendererTests
 {

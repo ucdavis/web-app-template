@@ -2,7 +2,7 @@ using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-namespace server.Helpers;
+namespace Server.Helpers;
 
 public static class TelemetryHelper
 {

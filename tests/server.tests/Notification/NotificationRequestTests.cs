@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using FluentAssertions;
 using Server.Models.Notification;
 
-namespace server.tests.Notification;
+namespace Server.Tests.Notification;
 
 public class NotificationRequestTests
 {

@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using FluentAssertions;
-using server.core.Notification;
+using Server.Core.Notification;
 
-namespace server.tests.Notification;
+namespace Server.Tests.Notification;
 
 public class EmailRecipientsTests
 {

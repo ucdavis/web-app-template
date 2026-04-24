@@ -1,6 +1,6 @@
 using MailKit.Security;
 
-namespace server.core.Notification;
+namespace Server.Core.Notification;
 
 internal static class EmailTransportSecurity
 {

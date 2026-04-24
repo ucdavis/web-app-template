@@ -6,9 +6,9 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Server.Controllers;
 using Server.Models.Notification;
-using server.core.Notification;
+using Server.Core.Notification;
 
-namespace server.tests.Notification;
+namespace Server.Tests.Notification;
 
 public class NotificationControllerTests
 {

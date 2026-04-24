@@ -1,4 +1,4 @@
-@model server.core.Notification.DefaultNotificationTemplateModel
+@model Server.Core.Notification.DefaultNotificationTemplateModel
 
 @{
     Layout = "/Views/Shared/_NotificationLayout_mjml.cshtml";
@@ -23,5 +23,5 @@
 
 @if (!string.IsNullOrWhiteSpace(Model.ButtonText) && !string.IsNullOrWhiteSpace(Model.ButtonUrl))
 {
-  @await Html.PartialAsync("/Views/Shared/_NotificationButton_mjml.cshtml", new server.core.Notification.NotificationButtonModel(Model.ButtonText, Model.ButtonUrl))
+  @await Html.PartialAsync("/Views/Shared/_NotificationButton_mjml.cshtml", new Server.Core.Notification.NotificationButtonModel(Model.ButtonText, Model.ButtonUrl))
 }

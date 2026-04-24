@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace server.Helpers;
+namespace Server.Helpers;
 
 public static class LoggingMiddlewareHelper
 {

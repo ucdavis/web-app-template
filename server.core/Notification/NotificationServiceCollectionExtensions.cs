@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Razor.Templating.Core;
 
-namespace server.core.Notification;
+namespace Server.Core.Notification;
 
 public static class NotificationServiceCollectionExtensions
 {

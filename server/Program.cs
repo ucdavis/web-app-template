@@ -3,9 +3,9 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using server.core.Data;
-using server.core.Notification;
-using server.Helpers;
+using Server.Core.Data;
+using Server.Core.Notification;
+using Server.Helpers;
 using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);

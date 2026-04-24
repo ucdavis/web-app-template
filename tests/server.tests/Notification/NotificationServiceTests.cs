@@ -1,8 +1,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
-using server.core.Notification;
+using Server.Core.Notification;
 
-namespace server.tests.Notification;
+namespace Server.Tests.Notification;
 
 public class NotificationServiceTests
 {

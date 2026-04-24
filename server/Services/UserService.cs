@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using server.core.Data;
+using Server.Core.Data;
 
 namespace Server.Services;
 

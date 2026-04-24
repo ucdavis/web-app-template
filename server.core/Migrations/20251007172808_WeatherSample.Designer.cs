@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using server.core.Data;
+using Server.Core.Data;
 
 #nullable disable
 
-namespace server.core.Migrations
+namespace Server.Core.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20251007172808_WeatherSample")]
