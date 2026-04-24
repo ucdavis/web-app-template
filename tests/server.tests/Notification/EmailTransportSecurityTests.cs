@@ -1,8 +1,8 @@
 using FluentAssertions;
 using MailKit.Security;
-using server.core.Notifications;
+using server.core.Notification;
 
-namespace server.tests.Notifications;
+namespace server.tests.Notification;
 
 public class EmailTransportSecurityTests
 {
@@ -17,7 +17,7 @@ public class EmailTransportSecurityTests
         int port,
         SecureSocketOptions expected)
     {
-        var options = new EmailOptions
+        var options = new SmtpOptions
         {
             Port = port,
             UseSsl = useSsl,

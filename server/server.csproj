@@ -29,6 +29,9 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
+    <!-- Intentionally override the in-box .NET 10 System.Security.Cryptography.Xml version to pick up
+         critical security fixes for CVE-2026-26171 and CVE-2026-33116 (EncryptedXml DoS, CVSS 7.5).
+         Revisit when .NET 10.1 ships or when the shared runtime includes 10.0.6+ so this override can be removed. -->
     <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.6" NoWarn="NU1510" />
   </ItemGroup>
 

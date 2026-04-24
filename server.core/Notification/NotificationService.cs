@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Options;
 
-namespace server.core.Notifications;
+namespace server.core.Notification;
 
 public interface INotificationService
 {
@@ -18,17 +18,20 @@ public sealed class NotificationService : INotificationService
     private const string DefaultTemplatePath = "/Views/Emails/DefaultNotification_mjml.cshtml";
 
     private readonly IEmailService _emailService;
+    private readonly NotificationOptions _notificationOptions;
     private readonly INotificationRenderer _notificationRenderer;
-    private readonly EmailOptions _emailOptions;
+    private readonly SmtpOptions _smtpOptions;
 
     public NotificationService(
         IEmailService emailService,
         INotificationRenderer notificationRenderer,
-        IOptions<EmailOptions> emailOptions)
+        IOptions<NotificationOptions> notificationOptions,
+        IOptions<SmtpOptions> smtpOptions)
     {
         _emailService = emailService;
         _notificationRenderer = notificationRenderer;
-        _emailOptions = emailOptions.Value;
+        _notificationOptions = notificationOptions.Value;
+        _smtpOptions = smtpOptions.Value;
     }
 
     public async Task SendAsync(
@@ -55,9 +58,9 @@ public sealed class NotificationService : INotificationService
 
         EmailValidation.ValidateRecipients(recipients);
 
-        var appName = string.IsNullOrWhiteSpace(_emailOptions.FromName)
-            ? "Application"
-            : _emailOptions.FromName;
+        var appName = string.IsNullOrWhiteSpace(_notificationOptions.DefaultAppName)
+            ? _smtpOptions.FromName
+            : _notificationOptions.DefaultAppName;
 
         var model = new DefaultNotificationTemplateModel
         {
@@ -67,8 +70,8 @@ public sealed class NotificationService : INotificationService
             [
                 message,
             ],
-            ButtonText = string.IsNullOrWhiteSpace(_emailOptions.BaseUrl) ? string.Empty : "Open the application",
-            ButtonUrl = _emailOptions.BaseUrl,
+            ButtonText = string.IsNullOrWhiteSpace(_notificationOptions.BaseUrl) ? string.Empty : _notificationOptions.DefaultButtonText,
+            ButtonUrl = _notificationOptions.BaseUrl,
         };
 
         var textBody = $"{header}{Environment.NewLine}{Environment.NewLine}{message}";

@@ -4,19 +4,21 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Razor.Templating.Core;
 
-namespace server.core.Notifications;
+namespace server.core.Notification;
 
 public static class NotificationServiceCollectionExtensions
 {
-    public static IServiceCollection AddEmailNotifications(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddNotificationServices(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
 
-        services.AddSingleton<IValidateOptions<EmailOptions>, EmailOptionsValidator>();
-        services.AddOptions<EmailOptions>()
-            .Bind(configuration)
+        services.AddSingleton<IValidateOptions<SmtpOptions>, SmtpOptionsValidator>();
+        services.AddOptions<SmtpOptions>()
+            .Bind(configuration.GetSection(SmtpOptions.SectionName))
             .ValidateOnStart();
+        services.AddOptions<NotificationOptions>()
+            .Bind(configuration.GetSection(NotificationOptions.SectionName));
 
         services.AddSingleton<MjmlRenderer>();
         services.AddScoped<IEmailService, EmailService>();

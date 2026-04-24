@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using server.core.Data;
-using server.core.Notifications;
+using server.core.Notification;
 using server.Helpers;
 using Server.Services;
 
@@ -32,7 +32,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 builder.Services.AddAuthenticationServices(builder.Configuration);
 
 builder.Services.AddControllers();
-builder.Services.AddEmailNotifications(builder.Configuration.GetSection("Email"));
+builder.Services.AddNotificationServices(builder.Configuration);
 
 // Add response caching for pages that opt-in
 // https://learn.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-9.0

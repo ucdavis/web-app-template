@@ -1,8 +1,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
-using server.core.Notifications;
+using server.core.Notification;
 
-namespace server.tests.Notifications;
+namespace server.tests.Notification;
 
 public class NotificationServiceTests
 {
@@ -14,9 +14,14 @@ public class NotificationServiceTests
         var service = new NotificationService(
             emailService,
             notificationRenderer,
-            Options.Create(new EmailOptions
+            Options.Create(new NotificationOptions
             {
                 BaseUrl = "https://example.test",
+                DefaultAppName = "Notification Center",
+                DefaultButtonText = "Review notification",
+            }),
+            Options.Create(new SmtpOptions
+            {
                 FromName = "Template App",
             }));
 
@@ -29,10 +34,10 @@ public class NotificationServiceTests
         notificationRenderer.Model.Should().BeOfType<DefaultNotificationTemplateModel>();
 
         var model = (DefaultNotificationTemplateModel)notificationRenderer.Model!;
-        model.AppName.Should().Be("Template App");
+        model.AppName.Should().Be("Notification Center");
         model.Header.Should().Be("Notification header");
         model.Paragraphs.Should().Contain("Notification message");
-        model.ButtonText.Should().Be("Open the application");
+        model.ButtonText.Should().Be("Review notification");
         model.ButtonUrl.Should().Be("https://example.test");
 
         emailService.Message.Should().NotBeNull();

@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using FluentAssertions;
-using Server.Models.Notifications;
+using Server.Models.Notification;
 
-namespace server.tests.Notifications;
+namespace server.tests.Notification;
 
 public class NotificationRequestTests
 {

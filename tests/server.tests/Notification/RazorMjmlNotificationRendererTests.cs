@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using server.core.Notifications;
+using server.core.Notification;
 
-namespace server.tests.Notifications;
+namespace server.tests.Notification;
 
 public class RazorMjmlNotificationRendererTests
 {
@@ -14,17 +14,17 @@ public class RazorMjmlNotificationRendererTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Host"] = "sandbox.smtp.mailtrap.io",
-                ["Port"] = "587",
-                ["Username"] = "smtp-user",
-                ["Password"] = "smtp-password",
-                ["FromEmail"] = "no-reply@example.test",
-                ["FromName"] = "Template App",
+                [$"{SmtpOptions.SectionName}:Host"] = "sandbox.smtp.mailtrap.io",
+                [$"{SmtpOptions.SectionName}:Port"] = "587",
+                [$"{SmtpOptions.SectionName}:Username"] = "smtp-user",
+                [$"{SmtpOptions.SectionName}:Password"] = "smtp-password",
+                [$"{SmtpOptions.SectionName}:FromEmail"] = "no-reply@example.test",
+                [$"{SmtpOptions.SectionName}:FromName"] = "Template App",
             })
             .Build();
 
         services.AddLogging();
-        services.AddEmailNotifications(configuration);
+        services.AddNotificationServices(configuration);
 
         using var serviceProvider = services.BuildServiceProvider();
         using var scope = serviceProvider.CreateScope();

@@ -1,17 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using server.core.Notifications;
-using Server.Models.Notifications;
+using server.core.Notification;
+using Server.Models.Notification;
 
 namespace Server.Controllers;
 
-public sealed class NotificationsController : ApiControllerBase
+public sealed class NotificationController : ApiControllerBase
 {
     private readonly IHostEnvironment _environment;
     private readonly INotificationService _notificationService;
 
-    public NotificationsController(
+    public NotificationController(
         IHostEnvironment environment,
         INotificationService notificationService)
     {
@@ -20,6 +20,9 @@ public sealed class NotificationsController : ApiControllerBase
     }
 
     [HttpPost("default")]
+    [ProducesResponseType(typeof(SendSampleNotificationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> SendSample(
         [FromBody] NotificationRequest request,
         CancellationToken cancellationToken)
@@ -47,9 +50,9 @@ public sealed class NotificationsController : ApiControllerBase
             return BadRequest(ex.Message);
         }
 
-        return Ok(new
+        return Ok(new SendSampleNotificationResponse
         {
-            to = resolvedRecipient,
+            To = resolvedRecipient,
         });
     }
 

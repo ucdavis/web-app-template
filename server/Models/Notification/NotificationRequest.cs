@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Server.Models.Notifications;
+namespace Server.Models.Notification;
 
 public sealed class NotificationRequest
 {

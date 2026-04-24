@@ -1,4 +1,4 @@
-namespace server.core.Notifications;
+namespace server.core.Notification;
 
 public sealed class DefaultNotificationTemplateModel
 {

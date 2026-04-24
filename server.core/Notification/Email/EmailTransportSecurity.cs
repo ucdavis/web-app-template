@@ -1,10 +1,10 @@
 using MailKit.Security;
 
-namespace server.core.Notifications;
+namespace server.core.Notification;
 
 internal static class EmailTransportSecurity
 {
-    public static SecureSocketOptions GetSocketOptions(EmailOptions options)
+    public static SecureSocketOptions GetSocketOptions(SmtpOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
 

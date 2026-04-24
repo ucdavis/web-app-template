@@ -14,7 +14,7 @@ import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)
 import { Route as authenticatedIndexRouteImport } from './routes/(authenticated)/index'
 import { Route as authenticatedTableExportRouteImport } from './routes/(authenticated)/table-export'
 import { Route as authenticatedStylesRouteImport } from './routes/(authenticated)/styles'
-import { Route as authenticatedNotificationsRouteImport } from './routes/(authenticated)/notifications'
+import { Route as authenticatedNotificationRouteImport } from './routes/(authenticated)/notification'
 import { Route as authenticatedMeRouteImport } from './routes/(authenticated)/me'
 import { Route as authenticatedFormRouteImport } from './routes/(authenticated)/form'
 import { Route as authenticatedFetchRouteImport } from './routes/(authenticated)/fetch'
@@ -44,10 +44,10 @@ const authenticatedStylesRoute = authenticatedStylesRouteImport.update({
   path: '/styles',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
-const authenticatedNotificationsRoute =
-  authenticatedNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
+const authenticatedNotificationRoute =
+  authenticatedNotificationRouteImport.update({
+    id: '/notification',
+    path: '/notification',
     getParentRoute: () => authenticatedRouteRoute,
   } as any)
 const authenticatedMeRoute = authenticatedMeRouteImport.update({
@@ -71,7 +71,7 @@ export interface FileRoutesByFullPath {
   '/fetch': typeof authenticatedFetchRoute
   '/form': typeof authenticatedFormRoute
   '/me': typeof authenticatedMeRoute
-  '/notifications': typeof authenticatedNotificationsRoute
+  '/notification': typeof authenticatedNotificationRoute
   '/styles': typeof authenticatedStylesRoute
   '/table-export': typeof authenticatedTableExportRoute
   '/': typeof authenticatedIndexRoute
@@ -81,7 +81,7 @@ export interface FileRoutesByTo {
   '/fetch': typeof authenticatedFetchRoute
   '/form': typeof authenticatedFormRoute
   '/me': typeof authenticatedMeRoute
-  '/notifications': typeof authenticatedNotificationsRoute
+  '/notification': typeof authenticatedNotificationRoute
   '/styles': typeof authenticatedStylesRoute
   '/table-export': typeof authenticatedTableExportRoute
   '/': typeof authenticatedIndexRoute
@@ -93,7 +93,7 @@ export interface FileRoutesById {
   '/(authenticated)/fetch': typeof authenticatedFetchRoute
   '/(authenticated)/form': typeof authenticatedFormRoute
   '/(authenticated)/me': typeof authenticatedMeRoute
-  '/(authenticated)/notifications': typeof authenticatedNotificationsRoute
+  '/(authenticated)/notification': typeof authenticatedNotificationRoute
   '/(authenticated)/styles': typeof authenticatedStylesRoute
   '/(authenticated)/table-export': typeof authenticatedTableExportRoute
   '/(authenticated)/': typeof authenticatedIndexRoute
@@ -105,7 +105,7 @@ export interface FileRouteTypes {
     | '/fetch'
     | '/form'
     | '/me'
-    | '/notifications'
+    | '/notification'
     | '/styles'
     | '/table-export'
     | '/'
@@ -115,7 +115,7 @@ export interface FileRouteTypes {
     | '/fetch'
     | '/form'
     | '/me'
-    | '/notifications'
+    | '/notification'
     | '/styles'
     | '/table-export'
     | '/'
@@ -126,7 +126,7 @@ export interface FileRouteTypes {
     | '/(authenticated)/fetch'
     | '/(authenticated)/form'
     | '/(authenticated)/me'
-    | '/(authenticated)/notifications'
+    | '/(authenticated)/notification'
     | '/(authenticated)/styles'
     | '/(authenticated)/table-export'
     | '/(authenticated)/'
@@ -174,11 +174,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedStylesRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
-    '/(authenticated)/notifications': {
-      id: '/(authenticated)/notifications'
-      path: '/notifications'
-      fullPath: '/notifications'
-      preLoaderRoute: typeof authenticatedNotificationsRouteImport
+    '/(authenticated)/notification': {
+      id: '/(authenticated)/notification'
+      path: '/notification'
+      fullPath: '/notification'
+      preLoaderRoute: typeof authenticatedNotificationRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
     '/(authenticated)/me': {
@@ -209,7 +209,7 @@ interface authenticatedRouteRouteChildren {
   authenticatedFetchRoute: typeof authenticatedFetchRoute
   authenticatedFormRoute: typeof authenticatedFormRoute
   authenticatedMeRoute: typeof authenticatedMeRoute
-  authenticatedNotificationsRoute: typeof authenticatedNotificationsRoute
+  authenticatedNotificationRoute: typeof authenticatedNotificationRoute
   authenticatedStylesRoute: typeof authenticatedStylesRoute
   authenticatedTableExportRoute: typeof authenticatedTableExportRoute
   authenticatedIndexRoute: typeof authenticatedIndexRoute
@@ -219,7 +219,7 @@ const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedFetchRoute: authenticatedFetchRoute,
   authenticatedFormRoute: authenticatedFormRoute,
   authenticatedMeRoute: authenticatedMeRoute,
-  authenticatedNotificationsRoute: authenticatedNotificationsRoute,
+  authenticatedNotificationRoute: authenticatedNotificationRoute,
   authenticatedStylesRoute: authenticatedStylesRoute,
   authenticatedTableExportRoute: authenticatedTableExportRoute,
   authenticatedIndexRoute: authenticatedIndexRoute,

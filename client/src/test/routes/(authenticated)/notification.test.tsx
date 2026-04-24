@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw';
 import { server } from '@/test/mswUtils.ts';
 import { renderRoute } from '@/test/routerUtils.tsx';
 
-describe('notifications route', () => {
+describe('notification route', () => {
   it('renders the notification pipeline details and sends a notification email', async () => {
     let postedBody: Record<string, unknown> | undefined;
 
@@ -17,13 +17,13 @@ describe('notifications route', () => {
           roles: [],
         })
       ),
-      http.post('/api/notifications/default', async ({ request }) => {
+      http.post('/api/notification/default', async ({ request }) => {
         postedBody = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json({ to: 'preview@example.com' });
       })
     );
 
-    const { cleanup } = renderRoute({ initialPath: '/notifications' });
+    const { cleanup } = renderRoute({ initialPath: '/notification' });
 
     try {
       expect(
@@ -77,7 +77,7 @@ describe('notifications route', () => {
         })
       ),
       http.post(
-        '/api/notifications/default',
+        '/api/notification/default',
         () =>
           new HttpResponse(
             'The notification endpoint is only available in development.',
@@ -88,7 +88,7 @@ describe('notifications route', () => {
       )
     );
 
-    const { cleanup } = renderRoute({ initialPath: '/notifications' });
+    const { cleanup } = renderRoute({ initialPath: '/notification' });
 
     try {
       await screen.findByText('Razor templates, MJML, and SMTP in one shared flow');

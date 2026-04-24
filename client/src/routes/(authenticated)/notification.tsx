@@ -5,8 +5,8 @@ import { HttpError, fetchJson } from '@/lib/api.ts';
 import { useAppForm } from '@/shared/forms/formContext.tsx';
 import { useUser } from '@/shared/auth/UserContext.tsx';
 
-export const Route = createFileRoute('/(authenticated)/notifications')({
-  component: NotificationsRoute,
+export const Route = createFileRoute('/(authenticated)/notification')({
+  component: NotificationRoute,
 });
 
 type NotificationForm = {
@@ -30,12 +30,12 @@ const notificationSchema = z.object({
   ]),
 }) satisfies z.ZodType<NotificationForm>;
 
-function NotificationsRoute() {
+function NotificationRoute() {
   const user = useUser();
 
   const sendNotificationMutation = useMutation({
     mutationFn: async (value: NotificationForm) =>
-      fetchJson<NotificationResponse>('/api/notifications/default', {
+      fetchJson<NotificationResponse>('/api/notification/default', {
         body: JSON.stringify(value),
         method: 'POST',
       }),
@@ -43,7 +43,7 @@ function NotificationsRoute() {
 
   const form = useAppForm({
     defaultValues: {
-      header: 'Email notifications are ready',
+      header: 'Email notification is ready',
       message:
         'This notification shows how server.core can render a Razor template, convert MJML into responsive HTML, and send the final message through SMTP.',
       subject: 'Notification from your template app',
@@ -74,7 +74,7 @@ function NotificationsRoute() {
       <div className="container mx-auto px-4 py-16">
         <header className="mx-auto mb-16 max-w-4xl text-center">
           <div className="badge badge-primary badge-outline mb-4">
-            Notifications
+            Notification
           </div>
           <h1 className="mb-4 text-5xl font-bold">
             Razor templates, MJML, and SMTP in one shared flow
@@ -159,7 +159,7 @@ function NotificationsRoute() {
                     <p>
                       Shared services:
                       <br />
-                      <code>server.core/Notifications</code>
+                      <code>server.core/Notification</code>
                     </p>
                   </div>
                 </div>

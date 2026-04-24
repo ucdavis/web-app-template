@@ -60,27 +60,35 @@ If you change `CallbackPath`, remember to mirror it in the Entra redirect URIs.
 
 Confirm your observability backend (Grafana, New Relic, Azure Monitor) receives traffic by temporarily setting `OTEL_LOG_LEVEL=debug` and checking the startup output.
 
-## 6. Email Notifications
+## 6. Email Notification
 
 The template includes a reusable email notification stack in `server.core`:
 
-- Shared services live in `server.core/Notifications/`.
+- Shared services live in `server.core/Notification/`.
 - Razor + MJML templates live in `server.core/Views/Emails/` and `server.core/Views/Shared/`.
-- The notification UI lives at `client/src/routes/(authenticated)/notifications.tsx`.
-- The default notification trigger lives at `POST /api/notifications/default` and is development-only.
+- The notification UI lives at `client/src/routes/(authenticated)/notification.tsx`.
+- The default notification trigger lives at `POST /api/notification/default` and is development-only.
 
-For local development, point the `Email` settings in `server/.env.Development` or `server/appsettings.Development.json` at your Mailtrap SMTP inbox. At minimum, review:
+For local development, point the `Smtp` settings in `server/.env.Development` or `server/appsettings.Development.json` at your Mailtrap SMTP inbox. At minimum, review:
 
-- `Email__Host`
-- `Email__Port`
-- `Email__UseSsl`
-- `Email__Username`
-- `Email__Password`
-- `Email__FromEmail`
-- `Email__FromName`
-- `Email__BaseUrl`
+- `Smtp__Host`
+- `Smtp__Port`
+- `Smtp__UseSsl`
+- `Smtp__Username`
+- `Smtp__Password`
+- `Smtp__FromEmail`
+- `Smtp__FromName`
+- `Notification__BaseUrl`
 
-When you start replacing the default notification flow with real notifications, keep app-specific composition in your own core services. Follow `NotificationService` as the pattern for rendering templates with `INotificationRenderer`, then hand the final text/html message to `IEmailService` for delivery.
+Optional SMTP and notification settings you may also want to customize:
+
+- `Smtp__Timeout`
+- `Smtp__ReplyToEmail`
+- `Smtp__BccEmail`
+- `Notification__DefaultAppName`
+- `Notification__DefaultButtonText`
+
+When you start replacing the default notification flow with real notification use cases, keep app-specific composition in your own core services. Follow `NotificationService` as the pattern for rendering templates with `INotificationRenderer`, then hand the final text/html message to `IEmailService` for delivery.
 
 ## 7. Clean Up Sample Code
 

@@ -5,12 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Server.Controllers;
-using Server.Models.Notifications;
-using server.core.Notifications;
+using Server.Models.Notification;
+using server.core.Notification;
 
-namespace server.tests.Notifications;
+namespace server.tests.Notification;
 
-public class NotificationsControllerTests
+public class NotificationControllerTests
 {
     [Fact]
     public async Task Default_endpoint_returns_not_found_outside_development()
@@ -71,10 +71,8 @@ public class NotificationsControllerTests
         }, CancellationToken.None);
 
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        okResult.Value.Should().BeEquivalentTo(new
-        {
-            to = "person@example.com",
-        });
+        okResult.Value.Should().BeOfType<SendSampleNotificationResponse>()
+            .Which.To.Should().Be("person@example.com");
 
         notificationService.Invocations.Should().ContainSingle();
         notificationService.Invocations[0].Recipients.To.Should().Equal("person@example.com");
@@ -83,12 +81,12 @@ public class NotificationsControllerTests
         notificationService.Invocations[0].Message.Should().Be("Message");
     }
 
-    private static NotificationsController CreateController(
+    private static NotificationController CreateController(
         string environmentName,
         INotificationService notificationService,
         Claim[]? claims = null)
     {
-        var controller = new NotificationsController(
+        var controller = new NotificationController(
             new FakeHostEnvironment(environmentName),
             notificationService);
 
