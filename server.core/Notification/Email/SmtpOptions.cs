@@ -27,6 +27,12 @@ public sealed class SmtpOptionsValidator : IValidateOptions<SmtpOptions>
     {
         ArgumentNullException.ThrowIfNull(options);
 
+        // Treat an empty host as "SMTP disabled" — skip all validation.
+        if (string.IsNullOrWhiteSpace(options.Host))
+        {
+            return ValidateOptionsResult.Success;
+        }
+
         var failures = new List<string>();
 
         static void Require(List<string> errors, string key, string value)

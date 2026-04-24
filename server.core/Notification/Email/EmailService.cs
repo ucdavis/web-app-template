@@ -44,7 +44,7 @@ public sealed class EmailService : IEmailService
         {
             try
             {
-                await smtpClient.DisconnectAsync(true, cancellationToken);
+                await smtpClient.DisconnectAsync(true, CancellationToken.None);
             }
             catch (ServiceNotConnectedException)
             {
@@ -87,11 +87,18 @@ public sealed class EmailService : IEmailService
         return mimeMessage;
     }
 
-    private static void AddMailboxRange(InternetAddressList addresses, IEnumerable<string> emails)
+    private void AddMailboxRange(InternetAddressList addresses, IEnumerable<string> emails)
     {
         foreach (var email in emails)
         {
-            addresses.Add(MailboxAddress.Parse(email));
+            if (MailboxAddress.TryParse(email, out var mailboxAddress) && mailboxAddress is not null)
+            {
+                addresses.Add(mailboxAddress);
+            }
+            else
+            {
+                _logger.LogWarning("Skipping malformed email address '{Email}' that could not be parsed by MimeKit.", email);
+            }
         }
     }
 

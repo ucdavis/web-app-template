@@ -6,7 +6,7 @@ namespace Server.Core.Notification;
 public sealed class EmailAddressListAttribute : ValidationAttribute
 {
     private readonly bool _nonEmpty;
-    private readonly EmailAddressAttribute _emailAddressAttribute = new();
+    private static readonly EmailAddressAttribute _emailAddressAttribute = new();
 
     public EmailAddressListAttribute(bool nonEmpty = false)
     {

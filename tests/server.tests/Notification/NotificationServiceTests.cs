@@ -53,6 +53,36 @@ public class NotificationServiceTests
         emailService.Message.HtmlBody.Should().Be(CaptureNotificationRenderer.RenderedHtml);
     }
 
+    [Fact]
+    public async Task SendAsync_falls_back_to_smtp_from_name_when_app_name_is_empty()
+    {
+        var emailService = new CaptureEmailService();
+        var notificationRenderer = new CaptureNotificationRenderer();
+        var service = new NotificationService(
+            emailService,
+            notificationRenderer,
+            Options.Create(new NotificationOptions
+            {
+                BaseUrl = "",
+                DefaultAppName = "",
+                DefaultButtonText = "Open the application",
+            }),
+            Options.Create(new SmtpOptions
+            {
+                FromName = "Fallback App Name",
+            }));
+
+        await service.SendAsync(new EmailRecipients
+        {
+            To = ["person@example.com"],
+        }, "Subject", "Header", "Message");
+
+        var model = notificationRenderer.Model.Should().BeOfType<DefaultNotificationTemplateModel>().Subject;
+        model.AppName.Should().Be("Fallback App Name");
+        model.ButtonText.Should().BeEmpty();
+        model.ButtonUrl.Should().BeEmpty();
+    }
+
     private sealed class CaptureEmailService : IEmailService
     {
         public EmailMessage? Message { get; private set; }

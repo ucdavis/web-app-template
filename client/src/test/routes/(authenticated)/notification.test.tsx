@@ -66,6 +66,57 @@ describe('notification route', () => {
     }
   });
 
+  it('sends an explicit recipient when the to field is filled in', async () => {
+    let postedBody: Record<string, unknown> | undefined;
+
+    server.use(
+      http.get('/api/user/me', () =>
+        HttpResponse.json({
+          email: 'signed-in@example.com',
+          id: 'user-1',
+          name: 'Taylor',
+          roles: [],
+        })
+      ),
+      http.post('/api/notification/default', async ({ request }) => {
+        postedBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ to: 'explicit@example.com' });
+      })
+    );
+
+    const { cleanup } = renderRoute({ initialPath: '/notification' });
+
+    try {
+      await screen.findByText('Razor templates, MJML, and SMTP in one shared flow');
+
+      fireEvent.input(
+        screen.getByPlaceholderText('Leave blank to use the current user'),
+        { target: { value: 'explicit@example.com' } }
+      );
+      fireEvent.input(screen.getByPlaceholderText('Enter subject'), {
+        target: { value: 'Test subject' },
+      });
+      fireEvent.input(screen.getByPlaceholderText('Enter email header'), {
+        target: { value: 'Test header' },
+      });
+      fireEvent.input(
+        screen.getByPlaceholderText('Write the body of the notification email'),
+        { target: { value: 'Test message' } }
+      );
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Send Notification Email' })
+      );
+
+      expect(await screen.findByText('explicit@example.com')).toBeInTheDocument();
+      expect(postedBody).toMatchObject({
+        to: 'explicit@example.com',
+      });
+    } finally {
+      cleanup();
+    }
+  });
+
   it('surfaces API errors from the notification endpoint', async () => {
     server.use(
       http.get('/api/user/me', () =>

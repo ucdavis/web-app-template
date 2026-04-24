@@ -9,13 +9,16 @@ namespace Server.Controllers;
 public sealed class NotificationController : ApiControllerBase
 {
     private readonly IHostEnvironment _environment;
+    private readonly ILogger<NotificationController> _logger;
     private readonly INotificationService _notificationService;
 
     public NotificationController(
         IHostEnvironment environment,
+        ILogger<NotificationController> logger,
         INotificationService notificationService)
     {
         _environment = environment;
+        _logger = logger;
         _notificationService = notificationService;
     }
 
@@ -48,6 +51,16 @@ public sealed class NotificationController : ApiControllerBase
         catch (ValidationException ex)
         {
             return BadRequest(ex.Message);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to deliver notification email to {Recipient}.", resolvedRecipient);
+            return StatusCode(StatusCodes.Status502BadGateway,
+                "The notification email could not be sent due to a delivery error.");
         }
 
         return Ok(new SendSampleNotificationResponse

@@ -4,7 +4,7 @@ public sealed class DefaultNotificationTemplateModel
 {
     public string AppName { get; init; } = string.Empty;
     public string Header { get; init; } = string.Empty;
-    public List<string> Paragraphs { get; init; } = [];
+    public IReadOnlyList<string> Paragraphs { get; init; } = [];
     public string ButtonText { get; init; } = string.Empty;
     public string ButtonUrl { get; init; } = string.Empty;
 }

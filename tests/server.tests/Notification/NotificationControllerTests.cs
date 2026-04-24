@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using Server.Controllers;
 using Server.Models.Notification;
 using Server.Core.Notification;
@@ -81,6 +82,89 @@ public class NotificationControllerTests
         notificationService.Invocations[0].Message.Should().Be("Message");
     }
 
+    [Fact]
+    public async Task Default_endpoint_uses_email_claim_when_preferred_username_is_absent()
+    {
+        var notificationService = new FakeNotificationService();
+        var controller = CreateController(
+            environmentName: Environments.Development,
+            notificationService: notificationService,
+            claims:
+            [
+                new Claim(ClaimTypes.Email, "email-claim@example.com"),
+            ]);
+
+        var result = await controller.SendSample(new NotificationRequest
+        {
+            Subject = "Subject",
+            Header = "Header",
+            Message = "Message",
+            To = "",
+        }, CancellationToken.None);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeOfType<SendSampleNotificationResponse>()
+            .Which.To.Should().Be("email-claim@example.com");
+
+        notificationService.Invocations.Should().ContainSingle();
+        notificationService.Invocations[0].Recipients.To.Should().Equal("email-claim@example.com");
+    }
+
+    [Fact]
+    public async Task Default_endpoint_uses_explicit_to_when_provided()
+    {
+        var notificationService = new FakeNotificationService();
+        var controller = CreateController(
+            environmentName: Environments.Development,
+            notificationService: notificationService,
+            claims:
+            [
+                new Claim("preferred_username", "signed-in@example.com"),
+            ]);
+
+        var result = await controller.SendSample(new NotificationRequest
+        {
+            Subject = "Subject",
+            Header = "Header",
+            Message = "Message",
+            To = "explicit@example.com",
+        }, CancellationToken.None);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeOfType<SendSampleNotificationResponse>()
+            .Which.To.Should().Be("explicit@example.com");
+
+        notificationService.Invocations.Should().ContainSingle();
+        notificationService.Invocations[0].Recipients.To.Should().Equal("explicit@example.com");
+        notificationService.Invocations[0].Subject.Should().Be("Subject");
+        notificationService.Invocations[0].Header.Should().Be("Header");
+        notificationService.Invocations[0].Message.Should().Be("Message");
+    }
+
+    [Fact]
+    public async Task Default_endpoint_returns_bad_request_when_service_throws_validation_exception()
+    {
+        var notificationService = new ThrowingNotificationService(
+            new System.ComponentModel.DataAnnotations.ValidationException("Notification subject is required."));
+        var controller = CreateController(
+            environmentName: Environments.Development,
+            notificationService: notificationService,
+            claims:
+            [
+                new Claim("preferred_username", "person@example.com"),
+            ]);
+
+        var result = await controller.SendSample(new NotificationRequest
+        {
+            Subject = "",
+            Header = "Header",
+            Message = "Message",
+        }, CancellationToken.None);
+
+        var badRequestResult = result.Should().BeOfType<BadRequestObjectResult>().Subject;
+        badRequestResult.Value.Should().Be("Notification subject is required.");
+    }
+
     private static NotificationController CreateController(
         string environmentName,
         INotificationService notificationService,
@@ -88,6 +172,7 @@ public class NotificationControllerTests
     {
         var controller = new NotificationController(
             new FakeHostEnvironment(environmentName),
+            NullLogger<NotificationController>.Instance,
             notificationService);
 
         controller.ControllerContext = new ControllerContext
@@ -114,6 +199,26 @@ public class NotificationControllerTests
         {
             Invocations.Add(new Invocation(recipients, subject, header, message));
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class ThrowingNotificationService : INotificationService
+    {
+        private readonly Exception _exception;
+
+        public ThrowingNotificationService(Exception exception)
+        {
+            _exception = exception;
+        }
+
+        public Task SendAsync(
+            EmailRecipients recipients,
+            string subject,
+            string header,
+            string message,
+            CancellationToken cancellationToken = default)
+        {
+            throw _exception;
         }
     }
 

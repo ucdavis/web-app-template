@@ -6,17 +6,31 @@ namespace Server.Tests.Notification;
 public class SmtpOptionsValidatorTests
 {
     [Fact]
-    public void Validate_requires_smtp_fields()
+    public void Validate_succeeds_when_host_is_empty_treating_smtp_as_disabled()
     {
         var validator = new SmtpOptionsValidator();
 
+        // When Host is empty/absent, SMTP is treated as disabled and all validation is skipped.
         var result = validator.Validate(name: null, new SmtpOptions
         {
             Port = 0,
         });
 
+        result.Failed.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Validate_requires_smtp_fields_when_host_is_set()
+    {
+        var validator = new SmtpOptionsValidator();
+
+        var result = validator.Validate(name: null, new SmtpOptions
+        {
+            Host = "smtp.example.test",
+            Port = 0,
+        });
+
         result.Failed.Should().BeTrue();
-        result.Failures.Should().Contain(error => error.Contains("Smtp:Host"));
         result.Failures.Should().Contain(error => error.Contains("Smtp:Username"));
         result.Failures.Should().Contain(error => error.Contains("Smtp:Password"));
         result.Failures.Should().Contain(error => error.Contains("Smtp:FromEmail"));

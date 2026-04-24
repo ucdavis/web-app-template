@@ -42,7 +42,7 @@ public sealed class RazorMjmlNotificationRenderer : INotificationRenderer
         {
             var errorMessage = string.Join(Environment.NewLine, errors.Select(error => error.ToString()));
             _logger.LogError("MJML rendering failed for template {TemplatePath}: {Errors}", templatePath, errorMessage);
-            throw new InvalidOperationException($"Failed to render MJML email template '{templatePath}'.");
+            throw new InvalidOperationException($"Failed to render MJML email template '{templatePath}': {errorMessage}");
         }
 
         return html;
