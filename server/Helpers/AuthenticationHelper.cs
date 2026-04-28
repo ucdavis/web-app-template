@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
 using Server.Services;
 
-namespace server.Helpers;
+namespace Server.Helpers;
 
 public static class AuthenticationHelper
 {

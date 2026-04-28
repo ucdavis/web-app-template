@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using server.core.Data;
-using server.core.Domain;
+using Server.Core.Data;
+using Server.Core.Domain;
 
 namespace Server.Controllers
 {

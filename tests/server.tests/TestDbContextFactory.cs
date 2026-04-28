@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using server.core.Data;
+using Server.Core.Data;
 
 namespace Server.Tests;
 

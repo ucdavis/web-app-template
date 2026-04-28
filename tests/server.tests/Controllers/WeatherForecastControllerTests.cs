@@ -1,11 +1,11 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Server.Controllers;
-using server.core.Data;
-using server.core.Domain;
+using Server.Core.Data;
+using Server.Core.Domain;
 using Server.Tests;
 
-namespace server.tests.Controllers;
+namespace Server.Tests.Controllers;
 
 public class WeatherForecastControllerTests
 {

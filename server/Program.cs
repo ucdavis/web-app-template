@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using server.core.Data;
-using server.Helpers;
+using Server.Core.Data;
+using Server.Core.Notification;
+using Server.Helpers;
 using Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,6 +32,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 builder.Services.AddAuthenticationServices(builder.Configuration);
 
 builder.Services.AddControllers();
+builder.Services.AddNotificationServices(builder.Configuration);
 
 // Add response caching for pages that opt-in
 // https://learn.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-9.0

@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace server.core.Domain;
+namespace Server.Core.Domain;
 
 public class WeatherForecast
 {
