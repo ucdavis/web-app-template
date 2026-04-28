@@ -263,7 +263,7 @@ function NotificationRoute() {
               {sendNotificationMutation.isSuccess ? (
                 <div className="alert alert-success mt-6">
                   <span>
-                    Notification email queued for{' '}
+                    Notification email sent to{' '}
                     <strong>{sendNotificationMutation.data.to}</strong>.
                   </span>
                 </div>
