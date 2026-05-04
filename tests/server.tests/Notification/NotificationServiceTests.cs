@@ -129,6 +129,7 @@ public class NotificationServiceTests
         var model = (TableNotificationTemplateModel)notificationRenderer.Model!;
         model.AppName.Should().Be("Notification Center");
         model.Header.Should().Be("Weekly project summary");
+        model.LayoutWidth.Should().Be("800px");
         model.Message.Should().Be("Five sample rows are rendered into the MJML table.");
         model.Rows.Should().HaveCount(2);
         model.TotalAmount.Should().Be(465.50m);

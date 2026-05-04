@@ -140,6 +140,7 @@ public sealed class NotificationService : INotificationService
         {
             AppName = appName,
             Header = header,
+            LayoutWidth = "800px",
             Message = message,
             Rows = rows,
             TotalAmount = totalAmount,

@@ -75,6 +75,7 @@ public class RazorMjmlNotificationRendererTests
         {
             AppName = "Template App",
             Header = "Statement",
+            LayoutWidth = "640px",
             Message = "A dynamic table is rendered below.",
             Rows =
             [
@@ -99,6 +100,7 @@ public class RazorMjmlNotificationRendererTests
         html.Should().Contain("Design");
         html.Should().Contain("Wireframes and feedback");
         html.Should().Contain("$330.00");
+        html.Should().Contain("width:640px");
         html.Should().NotContain("border-collapse:collapse;width:100%;");
         html.Should().NotContain("<mjml");
     }

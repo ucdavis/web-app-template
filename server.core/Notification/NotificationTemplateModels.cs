@@ -5,6 +5,7 @@ public abstract class NotificationTemplateModelBase
     public string AppName { get; init; } = string.Empty;
     public string ButtonText { get; init; } = string.Empty;
     public string ButtonUrl { get; init; } = string.Empty;
+    public string? LayoutWidth { get; init; }
 }
 
 public sealed class DefaultNotificationTemplateModel : NotificationTemplateModelBase
