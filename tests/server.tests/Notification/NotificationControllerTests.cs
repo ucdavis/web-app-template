@@ -165,6 +165,54 @@ public class NotificationControllerTests
         badRequestResult.Value.Should().Be("Notification subject is required.");
     }
 
+    [Fact]
+    public async Task Table_endpoint_uses_current_user_email_and_passes_rows_and_total()
+    {
+        var notificationService = new FakeNotificationService();
+        var controller = CreateController(
+            environmentName: Environments.Development,
+            notificationService: notificationService,
+            claims:
+            [
+                new Claim("preferred_username", "person@example.com"),
+            ]);
+
+        var result = await controller.SendTableSample(new TableNotificationRequest
+        {
+            Subject = "Subject",
+            Header = "Header",
+            Message = "Summary message",
+            Rows =
+            [
+                new TableNotificationRowRequest
+                {
+                    Title = "Design",
+                    Details = "Initial exploration",
+                    Amount = 75m,
+                },
+                new TableNotificationRowRequest
+                {
+                    Title = "Build",
+                    Details = "Implementation",
+                    Amount = 125m,
+                },
+            ],
+            TotalAmount = 200m,
+        }, CancellationToken.None);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeOfType<SendSampleNotificationResponse>()
+            .Which.To.Should().Be("person@example.com");
+
+        notificationService.TableInvocations.Should().ContainSingle();
+        notificationService.TableInvocations[0].Recipients.To.Should().Equal("person@example.com");
+        notificationService.TableInvocations[0].Subject.Should().Be("Subject");
+        notificationService.TableInvocations[0].Header.Should().Be("Header");
+        notificationService.TableInvocations[0].Message.Should().Be("Summary message");
+        notificationService.TableInvocations[0].Rows.Should().ContainSingle(row => row.Title == "Design" && row.Details == "Initial exploration" && row.Amount == 75m);
+        notificationService.TableInvocations[0].TotalAmount.Should().Be(200m);
+    }
+
     private static NotificationController CreateController(
         string environmentName,
         INotificationService notificationService,
@@ -189,6 +237,7 @@ public class NotificationControllerTests
     private sealed class FakeNotificationService : INotificationService
     {
         public List<Invocation> Invocations { get; } = [];
+        public List<TableInvocation> TableInvocations { get; } = [];
 
         public Task SendAsync(
             EmailRecipients recipients,
@@ -198,6 +247,19 @@ public class NotificationControllerTests
             CancellationToken cancellationToken = default)
         {
             Invocations.Add(new Invocation(recipients, subject, header, message));
+            return Task.CompletedTask;
+        }
+
+        public Task SendTableAsync(
+            EmailRecipients recipients,
+            string subject,
+            string header,
+            string message,
+            IReadOnlyList<NotificationTableRow> rows,
+            decimal totalAmount,
+            CancellationToken cancellationToken = default)
+        {
+            TableInvocations.Add(new TableInvocation(recipients, subject, header, message, rows, totalAmount));
             return Task.CompletedTask;
         }
     }
@@ -216,6 +278,18 @@ public class NotificationControllerTests
             string subject,
             string header,
             string message,
+            CancellationToken cancellationToken = default)
+        {
+            throw _exception;
+        }
+
+        public Task SendTableAsync(
+            EmailRecipients recipients,
+            string subject,
+            string header,
+            string message,
+            IReadOnlyList<NotificationTableRow> rows,
+            decimal totalAmount,
             CancellationToken cancellationToken = default)
         {
             throw _exception;
@@ -240,4 +314,12 @@ public class NotificationControllerTests
         string Subject,
         string Header,
         string Message);
+
+    private sealed record TableInvocation(
+        EmailRecipients Recipients,
+        string Subject,
+        string Header,
+        string Message,
+        IReadOnlyList<NotificationTableRow> Rows,
+        decimal TotalAmount);
 }

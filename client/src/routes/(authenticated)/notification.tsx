@@ -20,14 +20,26 @@ type NotificationResponse = {
   to: string;
 };
 
+type TableNotificationRow = {
+  title: string;
+  details: string;
+  amount: number;
+};
+
+type TableNotificationRequest = {
+  header: string;
+  message: string;
+  rows: TableNotificationRow[];
+  subject: string;
+  to: string;
+  totalAmount: number;
+};
+
 const notificationSchema = z.object({
   header: z.string().min(1, 'Header is required'),
   message: z.string().min(1, 'Message is required'),
   subject: z.string().min(1, 'Subject is required'),
-  to: z.union([
-    z.literal(''),
-    z.email('Please enter a valid email address'),
-  ]),
+  to: z.union([z.literal(''), z.email('Please enter a valid email address')]),
 }) satisfies z.ZodType<NotificationForm>;
 
 function NotificationRoute() {
@@ -36,6 +48,14 @@ function NotificationRoute() {
   const sendNotificationMutation = useMutation({
     mutationFn: async (value: NotificationForm) =>
       fetchJson<NotificationResponse>('/api/notification/default', {
+        body: JSON.stringify(value),
+        method: 'POST',
+      }),
+  });
+
+  const sendTableNotificationMutation = useMutation({
+    mutationFn: async (value: TableNotificationRequest) =>
+      fetchJson<NotificationResponse>('/api/notification/table', {
         body: JSON.stringify(value),
         method: 'POST',
       }),
@@ -62,6 +82,22 @@ function NotificationRoute() {
   });
 
   const errorMessage = getErrorMessage(sendNotificationMutation.error);
+  const tableErrorMessage = getErrorMessage(
+    sendTableNotificationMutation.error
+  );
+
+  const handleSendTableExample = async () => {
+    sendNotificationMutation.reset();
+    sendTableNotificationMutation.reset();
+
+    try {
+      await sendTableNotificationMutation.mutateAsync(
+        buildTableExampleRequest()
+      );
+    } catch {
+      // The mutation state already captures and renders API failures for the page.
+    }
+  };
 
   return (
     <div className="min-h-screen bg-base-100">
@@ -81,8 +117,8 @@ function NotificationRoute() {
           </h1>
           <p className="mx-auto max-w-3xl text-xl text-base-content/70">
             This page exercises the reusable email notification system that
-            lives in <code>server.core</code>. The page keeps the request
-            path easy to trace while showing where to add real templates and
+            lives in <code>server.core</code>. The page keeps the request path
+            easy to trace while showing where to add real templates and
             service-level notification logic in a new app.
           </p>
         </header>
@@ -142,12 +178,16 @@ function NotificationRoute() {
 
               <div className="card bg-base-200 shadow-sm">
                 <div className="card-body">
-                  <h3 className="card-title text-lg">Starter files to inspect</h3>
+                  <h3 className="card-title text-lg">
+                    Starter files to inspect
+                  </h3>
                   <div className="space-y-3 text-sm text-base-content/70">
                     <p>
                       Shared layout:
                       <br />
-                      <code>server.core/Views/Shared/_NotificationLayout_mjml.cshtml</code>
+                      <code>
+                        server.core/Views/Shared/_NotificationLayout_mjml.cshtml
+                      </code>
                     </p>
                     <p>
                       Default template:
@@ -274,12 +314,93 @@ function NotificationRoute() {
                   <span>{errorMessage}</span>
                 </div>
               ) : null}
+
+              <div className="divider my-8">Table template example</div>
+
+              <div className="card bg-base-200 shadow-sm">
+                <div className="card-body gap-4">
+                  <h3 className="card-title text-lg">
+                    Send the 5-row table email
+                  </h3>
+                  <p className="text-sm text-base-content/70">
+                    This posts five dummy rows to the dedicated table template
+                    endpoint and renders the total in the last row of the email.
+                  </p>
+                  <button
+                    className="btn btn-outline btn-primary self-start"
+                    disabled={sendTableNotificationMutation.isPending}
+                    onClick={() => {
+                      void handleSendTableExample();
+                    }}
+                    type="button"
+                  >
+                    {sendTableNotificationMutation.isPending
+                      ? 'Sending Table Example...'
+                      : 'Send Table Example Email'}
+                  </button>
+                </div>
+              </div>
+
+              {sendTableNotificationMutation.isSuccess ? (
+                <div className="alert alert-success mt-6">
+                  <span>
+                    Table example email sent to{' '}
+                    <strong>{sendTableNotificationMutation.data.to}</strong>.
+                  </span>
+                </div>
+              ) : null}
+
+              {tableErrorMessage ? (
+                <div className="alert alert-error mt-6">
+                  <span>{tableErrorMessage}</span>
+                </div>
+              ) : null}
             </div>
           </article>
         </section>
       </div>
     </div>
   );
+}
+
+function buildTableExampleRequest(): TableNotificationRequest {
+  const rows: TableNotificationRow[] = [
+    {
+      title: 'Discovery workshop',
+      details: 'Stakeholder interviews and scope alignment',
+      amount: 125,
+    },
+    {
+      title: 'UI design',
+      details: 'Wireframes, review, and component specs',
+      amount: 240,
+    },
+    {
+      title: 'Frontend build',
+      details: 'Route wiring and shared component integration',
+      amount: 180,
+    },
+    {
+      title: 'Backend API',
+      details: 'Notification endpoint and MJML template data',
+      amount: 95,
+    },
+    {
+      title: 'QA pass',
+      details: 'Template verification and regression checks',
+      amount: 310,
+    },
+  ];
+
+  return {
+    header: 'Five-row statement example',
+    message:
+      'This example shows how a dedicated MJML template can render dynamic rows and a separately supplied total.',
+    rows,
+    subject: 'Table notification example',
+    to: '',
+    totalAmount: rows.reduce((sum, row) => sum + row.amount, 0),
+  };
 }
 
 function getErrorMessage(error: unknown) {

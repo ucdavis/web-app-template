@@ -83,6 +83,63 @@ public class NotificationServiceTests
         model.ButtonUrl.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task SendTableAsync_renders_the_table_template_and_sends_the_email()
+    {
+        var emailService = new CaptureEmailService();
+        var notificationRenderer = new CaptureNotificationRenderer();
+        var service = new NotificationService(
+            emailService,
+            notificationRenderer,
+            Options.Create(new NotificationOptions
+            {
+                DefaultAppName = "Notification Center",
+            }),
+            Options.Create(new SmtpOptions
+            {
+                FromName = "Template App",
+            }));
+
+        await service.SendTableAsync(new EmailRecipients
+        {
+            To = ["person@example.com"],
+        },
+        "Statement subject",
+        "Weekly project summary",
+        "Five sample rows are rendered into the MJML table.",
+        [
+            new NotificationTableRow
+            {
+                Title = "Kickoff",
+                Details = "Planning and alignment",
+                Amount = 125.50m,
+            },
+            new NotificationTableRow
+            {
+                Title = "Build",
+                Details = "Implementation sprint",
+                Amount = 340m,
+            },
+        ],
+        465.50m);
+
+        notificationRenderer.TemplatePath.Should().Be("/Views/Emails/TableNotification_mjml.cshtml");
+        notificationRenderer.Model.Should().BeOfType<TableNotificationTemplateModel>();
+
+        var model = (TableNotificationTemplateModel)notificationRenderer.Model!;
+        model.AppName.Should().Be("Notification Center");
+        model.Header.Should().Be("Weekly project summary");
+        model.Message.Should().Be("Five sample rows are rendered into the MJML table.");
+        model.Rows.Should().HaveCount(2);
+        model.TotalAmount.Should().Be(465.50m);
+
+        emailService.Message.Should().NotBeNull();
+        emailService.Message!.Subject.Should().Be("Statement subject");
+        emailService.Message.TextBody.Should().Contain("Kickoff");
+        emailService.Message.TextBody.Should().Contain("Total: $465.50");
+        emailService.Message.HtmlBody.Should().Be(CaptureNotificationRenderer.RenderedHtml);
+    }
+
     private sealed class CaptureEmailService : IEmailService
     {
         public EmailMessage? Message { get; private set; }
