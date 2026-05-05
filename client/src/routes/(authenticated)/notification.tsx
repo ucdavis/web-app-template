@@ -87,7 +87,6 @@ function NotificationRoute() {
   );
 
   const handleSendTableExample = async () => {
-    sendNotificationMutation.reset();
     sendTableNotificationMutation.reset();
 
     try {
@@ -327,16 +326,21 @@ function NotificationRoute() {
                     endpoint and renders the total in the last row of the email.
                   </p>
                   <button
-                    className="btn btn-outline btn-primary self-start"
+                    className="btn btn-primary self-start"
                     disabled={sendTableNotificationMutation.isPending}
                     onClick={() => {
                       void handleSendTableExample();
                     }}
                     type="button"
                   >
-                    {sendTableNotificationMutation.isPending
-                      ? 'Sending Table Example...'
-                      : 'Send Table Example Email'}
+                    {sendTableNotificationMutation.isPending ? (
+                      <>
+                        <span className="loading loading-spinner loading-xs mr-2"></span>
+                        Sending Table Example...
+                      </>
+                    ) : (
+                      'Send Table Example Email'
+                    )}
                   </button>
                 </div>
               </div>

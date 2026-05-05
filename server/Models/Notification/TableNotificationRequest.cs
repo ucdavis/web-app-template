@@ -21,6 +21,7 @@ public sealed class TableNotificationRequest
 
     public string Message { get; init; } = string.Empty;
 
+    [Required]
     [MinLength(1)]
     public IReadOnlyList<TableNotificationRowRequest> Rows { get; init; } = [];
 

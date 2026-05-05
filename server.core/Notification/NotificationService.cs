@@ -125,7 +125,7 @@ public sealed class NotificationService : INotificationService
             throw new ValidationException("At least one table row is required.");
         }
 
-        if (rows.Any(row => string.IsNullOrWhiteSpace(row.Title) || string.IsNullOrWhiteSpace(row.Details)))
+        if (rows.Any(row => row is null || string.IsNullOrWhiteSpace(row.Title) || string.IsNullOrWhiteSpace(row.Details)))
         {
             throw new ValidationException("Each table row requires a title and details.");
         }

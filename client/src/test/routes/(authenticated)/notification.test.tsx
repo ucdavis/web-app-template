@@ -204,7 +204,33 @@ describe('notification route', () => {
         to: '',
         totalAmount: 950,
       });
-      expect(postedBody?.rows).toHaveLength(5);
+      expect(postedBody?.rows).toEqual([
+        {
+          title: 'Discovery workshop',
+          details: 'Stakeholder interviews and scope alignment',
+          amount: 125,
+        },
+        {
+          title: 'UI design',
+          details: 'Wireframes, review, and component specs',
+          amount: 240,
+        },
+        {
+          title: 'Frontend build',
+          details: 'Route wiring and shared component integration',
+          amount: 180,
+        },
+        {
+          title: 'Backend API',
+          details: 'Notification endpoint and MJML template data',
+          amount: 95,
+        },
+        {
+          title: 'QA pass',
+          details: 'Template verification and regression checks',
+          amount: 310,
+        },
+      ]);
     } finally {
       cleanup();
     }

@@ -209,7 +209,13 @@ public class NotificationControllerTests
         notificationService.TableInvocations[0].Subject.Should().Be("Subject");
         notificationService.TableInvocations[0].Header.Should().Be("Header");
         notificationService.TableInvocations[0].Message.Should().Be("Summary message");
-        notificationService.TableInvocations[0].Rows.Should().ContainSingle(row => row.Title == "Design" && row.Details == "Initial exploration" && row.Amount == 75m);
+        notificationService.TableInvocations[0].Rows.Should().HaveCount(2);
+        notificationService.TableInvocations[0].Rows[0].Title.Should().Be("Design");
+        notificationService.TableInvocations[0].Rows[0].Details.Should().Be("Initial exploration");
+        notificationService.TableInvocations[0].Rows[0].Amount.Should().Be(75m);
+        notificationService.TableInvocations[0].Rows[1].Title.Should().Be("Build");
+        notificationService.TableInvocations[0].Rows[1].Details.Should().Be("Implementation");
+        notificationService.TableInvocations[0].Rows[1].Amount.Should().Be(125m);
         notificationService.TableInvocations[0].TotalAmount.Should().Be(200m);
     }
 
