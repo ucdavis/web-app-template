@@ -69,6 +69,59 @@ public sealed class NotificationController : ApiControllerBase
         });
     }
 
+    [HttpPost("table")]
+    [ProducesResponseType(typeof(SendSampleNotificationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SendTableSample(
+        [FromBody] TableNotificationRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!_environment.IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        var resolvedRecipient = ResolveRecipient(request.To);
+        if (string.IsNullOrWhiteSpace(resolvedRecipient))
+        {
+            return BadRequest("No email recipient was provided and the current user does not have an email claim.");
+        }
+
+        try
+        {
+            await _notificationService.SendTableAsync(new EmailRecipients
+            {
+                To = [resolvedRecipient],
+            }, request.Subject, request.Header, request.Message,
+            request.Rows.Select(row => new NotificationTableRow
+            {
+                Title = row.Title,
+                Details = row.Details,
+                Amount = row.Amount,
+            }).ToArray(), request.TotalAmount, cancellationToken);
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to deliver table notification email to {Recipient}.", resolvedRecipient);
+            return StatusCode(StatusCodes.Status502BadGateway,
+                "The notification email could not be sent due to a delivery error.");
+        }
+
+        return Ok(new SendSampleNotificationResponse
+        {
+            To = resolvedRecipient,
+        });
+    }
+
     private string? ResolveRecipient(string? requestedRecipient)
     {
         if (!string.IsNullOrWhiteSpace(requestedRecipient))

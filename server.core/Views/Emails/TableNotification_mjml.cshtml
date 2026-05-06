@@ -1,0 +1,67 @@
+@using System.Globalization
+@model Server.Core.Notification.TableNotificationTemplateModel
+
+@{
+    Layout = "/Views/Shared/_NotificationLayout_mjml.cshtml";
+    var currencyCulture = CultureInfo.GetCultureInfo("en-US");
+}
+
+<mj-section padding="36px 36px 12px 36px">
+    <mj-column>
+        <mj-text font-size="26px" font-weight="700" line-height="1.3" padding-bottom="12px">
+            @Model.Header
+        </mj-text>
+        @if (!string.IsNullOrWhiteSpace(Model.Message))
+        {
+            <mj-text padding="0px 0px 20px 0px">
+                @Model.Message
+            </mj-text>
+        }
+        <mj-table cellpadding="0" cellspacing="0" font-size="14px" line-height="1.5" role="presentation"
+                  table-layout="fixed" padding="0px">
+            <tr style="border-bottom:1px solid #d8e1ec;">
+                <th align="left" width="30%"
+                    style="padding:0 12px 12px 0;color:#5d6b82;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">
+                    @Model.FirstColumnHeader
+                </th>
+                <th align="left" width="50%"
+                    style="padding:0 16px 12px 12px;color:#5d6b82;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;">
+                    @Model.SecondColumnHeader
+                </th>
+                <th align="right" width="20%"
+                    style="padding:0 0 12px 12px;color:#5d6b82;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">
+                    @Model.AmountColumnHeader
+                </th>
+            </tr>
+            @foreach (var row in Model.Rows)
+            {
+                <tr style="border-bottom:1px solid #eef3f8;vertical-align:top;">
+                    <td style="padding:14px 12px 14px 0;color:#172033;font-weight:600;">
+                        @row.Title
+                    </td>
+                    <td style="padding:14px 16px 14px 12px;color:#5d6b82;">
+                        @row.Details
+                    </td>
+                    <td align="right" style="padding:14px 0 14px 12px;color:#172033;font-weight:600;white-space:nowrap;">
+                        @row.Amount.ToString("C2", currencyCulture)
+                    </td>
+                </tr>
+            }
+            <tr>
+                <td colspan="2"
+                    style="padding:18px 16px 0 0;color:#172033;font-size:16px;font-weight:700;text-align:right;">
+                    @Model.TotalLabel
+                </td>
+                <td align="right"
+                    style="padding:18px 0 0 12px;color:#0b5fff;font-size:16px;font-weight:700;white-space:nowrap;">
+                    @Model.TotalAmount.ToString("C2", currencyCulture)
+                </td>
+            </tr>
+        </mj-table>
+    </mj-column>
+</mj-section>
+
+@if (!string.IsNullOrWhiteSpace(Model.ButtonText) && !string.IsNullOrWhiteSpace(Model.ButtonUrl))
+{
+    @await Html.PartialAsync("/Views/Shared/_NotificationButton_mjml.cshtml", new Server.Core.Notification.NotificationButtonModel(Model.ButtonText, Model.ButtonUrl))
+}

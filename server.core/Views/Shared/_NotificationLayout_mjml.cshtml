@@ -1,4 +1,4 @@
-@model Server.Core.Notification.DefaultNotificationTemplateModel
+@model Server.Core.Notification.NotificationTemplateModelBase
 <!doctype html>
 <mjml>
   <mj-head>
@@ -6,15 +6,16 @@
     <mj-attributes>
       <mj-all font-family="Helvetica, Arial, sans-serif" />
       <mj-text color="#172033" font-size="16px" line-height="1.65" />
-      <mj-button background-color="#0b5fff"
+      <mj-button background-color="#0047ba"
                  color="#ffffff"
-                 border-radius="999px"
+             border-radius="8px"
                  font-size="16px"
                  font-weight="600"
                  inner-padding="14px 30px" />
     </mj-attributes>
   </mj-head>
-  <mj-body background-color="#eef3f8">
+  <mj-body background-color="#eef3f8"
+           width="@(string.IsNullOrWhiteSpace(Model.LayoutWidth) ? "600px" : Model.LayoutWidth)">
     <mj-section padding-top="40px" padding-bottom="16px">
       <mj-column>
         <mj-text align="center"

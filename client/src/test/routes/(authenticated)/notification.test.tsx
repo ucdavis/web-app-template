@@ -54,7 +54,9 @@ describe('notification route', () => {
         screen.getByRole('button', { name: 'Send Notification Email' })
       );
 
-      expect(await screen.findByText('preview@example.com')).toBeInTheDocument();
+      expect(
+        await screen.findByText('preview@example.com')
+      ).toBeInTheDocument();
       expect(postedBody).toMatchObject({
         header: 'Client test header',
         message: 'Client test message',
@@ -87,7 +89,9 @@ describe('notification route', () => {
     const { cleanup } = renderRoute({ initialPath: '/notification' });
 
     try {
-      await screen.findByText('Razor templates, MJML, and SMTP in one shared flow');
+      await screen.findByText(
+        'Razor templates, MJML, and SMTP in one shared flow'
+      );
 
       fireEvent.input(
         screen.getByPlaceholderText('Leave blank to use the current user'),
@@ -108,7 +112,9 @@ describe('notification route', () => {
         screen.getByRole('button', { name: 'Send Notification Email' })
       );
 
-      expect(await screen.findByText('explicit@example.com')).toBeInTheDocument();
+      expect(
+        await screen.findByText('explicit@example.com')
+      ).toBeInTheDocument();
       expect(postedBody).toMatchObject({
         to: 'explicit@example.com',
       });
@@ -142,7 +148,9 @@ describe('notification route', () => {
     const { cleanup } = renderRoute({ initialPath: '/notification' });
 
     try {
-      await screen.findByText('Razor templates, MJML, and SMTP in one shared flow');
+      await screen.findByText(
+        'Razor templates, MJML, and SMTP in one shared flow'
+      );
 
       fireEvent.click(
         screen.getByRole('button', { name: 'Send Notification Email' })
@@ -153,6 +161,76 @@ describe('notification route', () => {
           'The notification endpoint is only available in development.'
         )
       ).toBeInTheDocument();
+    } finally {
+      cleanup();
+    }
+  });
+
+  it('posts five dummy rows to the table notification endpoint', async () => {
+    let postedBody: Record<string, unknown> | undefined;
+
+    server.use(
+      http.get('/api/user/me', () =>
+        HttpResponse.json({
+          email: 'signed-in@example.com',
+          id: 'user-1',
+          name: 'Taylor',
+          roles: [],
+        })
+      ),
+      http.post('/api/notification/table', async ({ request }) => {
+        postedBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ to: 'signed-in@example.com' });
+      })
+    );
+
+    const { cleanup } = renderRoute({ initialPath: '/notification' });
+
+    try {
+      await screen.findByText(
+        'Razor templates, MJML, and SMTP in one shared flow'
+      );
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Send Table Example Email' })
+      );
+
+      expect(
+        await screen.findByText(/Table example email sent to/i)
+      ).toBeInTheDocument();
+      expect(postedBody).toMatchObject({
+        header: 'Five-row statement example',
+        subject: 'Table notification example',
+        to: '',
+        totalAmount: 950,
+      });
+      expect(postedBody?.rows).toEqual([
+        {
+          title: 'Discovery workshop',
+          details: 'Stakeholder interviews and scope alignment',
+          amount: 125,
+        },
+        {
+          title: 'UI design',
+          details: 'Wireframes, review, and component specs',
+          amount: 240,
+        },
+        {
+          title: 'Frontend build',
+          details: 'Route wiring and shared component integration',
+          amount: 180,
+        },
+        {
+          title: 'Backend API',
+          details: 'Notification endpoint and MJML template data',
+          amount: 95,
+        },
+        {
+          title: 'QA pass',
+          details: 'Template verification and regression checks',
+          amount: 310,
+        },
+      ]);
     } finally {
       cleanup();
     }
