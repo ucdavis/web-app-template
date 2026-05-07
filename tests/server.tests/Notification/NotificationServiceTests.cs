@@ -121,7 +121,24 @@ public class NotificationServiceTests
                 Amount = 340m,
             },
         ],
-        465.50m);
+        465.50m,
+        new NotificationInfoCardModel
+        {
+            BackgroundColor = NotificationInfoCardModel.LightGrayBackgroundColor,
+            Items =
+            [
+                new NotificationInfoCardItem
+                {
+                    Label = "Online Order Number",
+                    Value = "8047",
+                },
+                new NotificationInfoCardItem
+                {
+                    Label = "Project Title/Location",
+                    Value = "Feed Samples",
+                },
+            ],
+        });
 
         notificationRenderer.TemplatePath.Should().Be("/Views/Emails/TableNotification_mjml.cshtml");
         notificationRenderer.Model.Should().BeOfType<TableNotificationTemplateModel>();
@@ -133,11 +150,17 @@ public class NotificationServiceTests
         model.Message.Should().Be("Five sample rows are rendered into the MJML table.");
         model.Rows.Should().HaveCount(2);
         model.TotalAmount.Should().Be(465.50m);
+        model.InfoCard.Should().NotBeNull();
+        model.InfoCard!.BackgroundColor.Should().Be(NotificationInfoCardModel.LightGrayBackgroundColor);
+        model.InfoCard.Items.Should().HaveCount(2);
+        model.InfoCard.Items[0].Label.Should().Be("Online Order Number");
+        model.InfoCard.Items[0].Value.Should().Be("8047");
 
         emailService.Message.Should().NotBeNull();
         emailService.Message!.Subject.Should().Be("Statement subject");
         emailService.Message.TextBody.Should().Contain("Kickoff");
         emailService.Message.TextBody.Should().Contain("Total: $465.50");
+        emailService.Message.TextBody.Should().Contain("Online Order Number: 8047");
         emailService.Message.HtmlBody.Should().Be(CaptureNotificationRenderer.RenderedHtml);
     }
 

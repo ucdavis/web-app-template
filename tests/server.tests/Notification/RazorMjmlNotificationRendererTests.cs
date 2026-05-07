@@ -93,6 +93,23 @@ public class RazorMjmlNotificationRendererTests
                 },
             ],
             TotalAmount = 330m,
+            InfoCard = new NotificationInfoCardModel
+            {
+                BackgroundColor = NotificationInfoCardModel.LightBlueBackgroundColor,
+                Items =
+                [
+                    new NotificationInfoCardItem
+                    {
+                        Label = "Online Order Number",
+                        Value = "8047",
+                    },
+                    new NotificationInfoCardItem
+                    {
+                        Label = "Project Title/Location",
+                        Value = "Feed Samples",
+                    },
+                ],
+            },
         });
 
         html.Should().Contain("Statement");
@@ -100,6 +117,11 @@ public class RazorMjmlNotificationRendererTests
         html.Should().Contain("Design");
         html.Should().Contain("Wireframes and feedback");
         html.Should().Contain("$330.00");
+        html.Should().Contain("Online Order Number");
+        html.Should().Contain("8047");
+        html.Should().Contain("Project Title/Location");
+        html.Should().Contain("Feed Samples");
+        html.Should().Contain("#eef6ff");
         html.Should().Contain("width:640px");
         html.Should().NotContain("border-collapse:collapse;width:100%;");
         html.Should().NotContain("<mjml");

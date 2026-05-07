@@ -4,6 +4,7 @@
 @{
     Layout = "/Views/Shared/_NotificationLayout_mjml.cshtml";
     var currencyCulture = CultureInfo.GetCultureInfo("en-US");
+    var infoCard = Model.InfoCard;
 }
 
 <mj-section padding="36px 36px 12px 36px">
@@ -58,6 +59,58 @@
                 </td>
             </tr>
         </mj-table>
+
+        @if (infoCard != null && infoCard.Items.Count > 0)
+        {
+            <mj-spacer height="28px" padding="0px" />
+            <mj-table cellpadding="0" cellspacing="0" font-size="14px" line-height="1.5" role="presentation"
+                      table-layout="fixed" padding="0px">
+                <tr>
+                    <td style="padding:0;">
+                        <table cellpadding="0" cellspacing="0" role="presentation" width="100%"
+                               style="background-color:@infoCard.NormalizedBackgroundColor;border-collapse:separate;border-radius:14px;">
+                            <tr>
+                                <td style="padding:22px 24px 4px 24px;">
+                                    <table cellpadding="0" cellspacing="0" role="presentation" width="100%"
+                                           style="border-collapse:separate;">
+                                        @for (var index = 0; index < infoCard.Items.Count; index += 2)
+                                        {
+                                            var firstItem = infoCard.Items[index];
+                                            var secondItem = index + 1 < infoCard.Items.Count ? infoCard.Items[index + 1] : null;
+                                            var bottomPadding = index + 2 >= infoCard.Items.Count ? "18px" : "22px";
+
+                                            <tr>
+                                                <td valign="top" width="50%"
+                                                    style="padding:0 14px @bottomPadding 0;">
+                                                    <div style="color:#172033;font-size:12px;font-weight:700;line-height:1.4;">
+                                                        @firstItem.Label
+                                                    </div>
+                                                    <div style="color:#5d6b82;font-size:15px;line-height:1.5;padding-top:4px;">
+                                                        @firstItem.Value
+                                                    </div>
+                                                </td>
+                                                <td valign="top" width="50%"
+                                                    style="padding:0 0 @bottomPadding 14px;">
+                                                    @if (secondItem is not null)
+                                                    {
+                                                        <div style="color:#172033;font-size:12px;font-weight:700;line-height:1.4;">
+                                                            @secondItem.Label
+                                                        </div>
+                                                        <div style="color:#5d6b82;font-size:15px;line-height:1.5;padding-top:4px;">
+                                                            @secondItem.Value
+                                                        </div>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </mj-table>
+        }
     </mj-column>
 </mj-section>
 

@@ -197,6 +197,23 @@ public class NotificationControllerTests
                     Amount = 125m,
                 },
             ],
+            InfoCard = new TableNotificationInfoCardRequest
+            {
+                BackgroundColor = NotificationInfoCardModel.LightBlueBackgroundColor,
+                Items =
+                [
+                    new TableNotificationInfoCardItemRequest
+                    {
+                        Label = "Online Order Number",
+                        Value = "8047",
+                    },
+                    new TableNotificationInfoCardItemRequest
+                    {
+                        Label = "Project Title/Location",
+                        Value = "Feed Samples",
+                    },
+                ],
+            },
             TotalAmount = 200m,
         }, CancellationToken.None);
 
@@ -217,6 +234,11 @@ public class NotificationControllerTests
         notificationService.TableInvocations[0].Rows[1].Details.Should().Be("Implementation");
         notificationService.TableInvocations[0].Rows[1].Amount.Should().Be(125m);
         notificationService.TableInvocations[0].TotalAmount.Should().Be(200m);
+        var infoCard = notificationService.TableInvocations[0].InfoCard;
+        infoCard.Should().NotBeNull();
+        infoCard!.BackgroundColor.Should().Be(NotificationInfoCardModel.LightBlueBackgroundColor);
+        infoCard.Items[0].Label.Should().Be("Online Order Number");
+        infoCard.Items[0].Value.Should().Be("8047");
     }
 
     private static NotificationController CreateController(
@@ -263,9 +285,10 @@ public class NotificationControllerTests
             string message,
             IReadOnlyList<NotificationTableRow> rows,
             decimal totalAmount,
+            NotificationInfoCardModel? infoCard = null,
             CancellationToken cancellationToken = default)
         {
-            TableInvocations.Add(new TableInvocation(recipients, subject, header, message, rows, totalAmount));
+            TableInvocations.Add(new TableInvocation(recipients, subject, header, message, rows, totalAmount, infoCard));
             return Task.CompletedTask;
         }
     }
@@ -296,6 +319,7 @@ public class NotificationControllerTests
             string message,
             IReadOnlyList<NotificationTableRow> rows,
             decimal totalAmount,
+            NotificationInfoCardModel? infoCard = null,
             CancellationToken cancellationToken = default)
         {
             throw _exception;
@@ -327,5 +351,6 @@ public class NotificationControllerTests
         string Header,
         string Message,
         IReadOnlyList<NotificationTableRow> Rows,
-        decimal TotalAmount);
+        decimal TotalAmount,
+        NotificationInfoCardModel? InfoCard);
 }

@@ -21,18 +21,29 @@ type NotificationResponse = {
 };
 
 type TableNotificationRow = {
-  title: string;
-  details: string;
   amount: number;
+  details: string;
+  title: string;
 };
 
 type TableNotificationRequest = {
   header: string;
+  infoCard: TableNotificationInfoCard;
   message: string;
   rows: TableNotificationRow[];
   subject: string;
   to: string;
   totalAmount: number;
+};
+
+type TableNotificationInfoCard = {
+  backgroundColor: string;
+  items: TableNotificationInfoCardItem[];
+};
+
+type TableNotificationInfoCardItem = {
+  label: string;
+  value: string;
 };
 
 const notificationSchema = z.object({
@@ -370,34 +381,79 @@ function NotificationRoute() {
 function buildTableExampleRequest(): TableNotificationRequest {
   const rows: TableNotificationRow[] = [
     {
-      title: 'Discovery workshop',
-      details: 'Stakeholder interviews and scope alignment',
       amount: 125,
+      details: 'Stakeholder interviews and scope alignment',
+      title: 'Discovery workshop',
     },
     {
-      title: 'UI design',
-      details: 'Wireframes, review, and component specs',
       amount: 240,
+      details: 'Wireframes, review, and component specs',
+      title: 'UI design',
     },
     {
-      title: 'Frontend build',
-      details: 'Route wiring and shared component integration',
       amount: 180,
+      details: 'Route wiring and shared component integration',
+      title: 'Frontend build',
     },
     {
-      title: 'Backend API',
-      details: 'Notification endpoint and MJML template data',
       amount: 95,
+      details: 'Notification endpoint and MJML template data',
+      title: 'Backend API',
     },
     {
-      title: 'QA pass',
-      details: 'Template verification and regression checks',
       amount: 310,
+      details: 'Template verification and regression checks',
+      title: 'QA pass',
     },
   ];
 
   return {
     header: 'Five-row statement example',
+    infoCard: {
+      backgroundColor: '#eef6ff',
+      items: [
+        {
+          label: 'Online Order Number',
+          value: '8047',
+        },
+        {
+          label: 'Project Title/Location',
+          value: 'Feed Samples',
+        },
+        {
+          label: 'Payment Method',
+          value: 'Other (PO)',
+        },
+        {
+          label: 'Client Id',
+          value: 'XXDFA-FEED',
+        },
+        {
+          label: 'Client Name',
+          value: 'LEAL, Fakename',
+        },
+        {
+          label: 'Created By',
+          value: 'Commercial Fake Stuff',
+        },
+        {
+          label: 'Sample Type',
+          value: 'Plant',
+        },
+        {
+          label: 'Commodity',
+          value: 'Animal Feed',
+        },
+        {
+          label: '# of Samples',
+          value: '1',
+        },
+        {
+          label: 'Date Sampled',
+          value: '5/6/2026',
+        },
+      ],
+    },
     message:
       'This example shows how a dedicated MJML template can render dynamic rows and a separately supplied total.',
     rows,

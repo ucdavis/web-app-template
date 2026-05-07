@@ -99,7 +99,7 @@ public sealed class NotificationController : ApiControllerBase
                 Title = row.Title,
                 Details = row.Details,
                 Amount = row.Amount,
-            }).ToArray(), request.TotalAmount, cancellationToken);
+            }).ToArray(), request.TotalAmount, MapInfoCard(request.InfoCard), cancellationToken);
         }
         catch (ValidationException ex)
         {
@@ -131,5 +131,23 @@ public sealed class NotificationController : ApiControllerBase
 
         return User.FindFirst("preferred_username")?.Value
                ?? User.FindFirst(ClaimTypes.Email)?.Value;
+    }
+
+    private static NotificationInfoCardModel? MapInfoCard(TableNotificationInfoCardRequest? infoCard)
+    {
+        if (infoCard is null)
+        {
+            return null;
+        }
+
+        return new NotificationInfoCardModel
+        {
+            BackgroundColor = infoCard.BackgroundColor,
+            Items = infoCard.Items.Select(item => new NotificationInfoCardItem
+            {
+                Label = item.Label,
+                Value = item.Value,
+            }).ToArray(),
+        };
     }
 }

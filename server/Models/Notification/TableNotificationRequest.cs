@@ -26,6 +26,8 @@ public sealed class TableNotificationRequest
     public IReadOnlyList<TableNotificationRowRequest> Rows { get; init; } = [];
 
     public decimal TotalAmount { get; init; }
+
+    public TableNotificationInfoCardRequest? InfoCard { get; init; }
 }
 
 public sealed class TableNotificationRowRequest
@@ -37,4 +39,23 @@ public sealed class TableNotificationRowRequest
     public string Details { get; init; } = string.Empty;
 
     public decimal Amount { get; init; }
+}
+
+public sealed class TableNotificationInfoCardRequest
+{
+    [Required]
+    public string BackgroundColor { get; init; } = string.Empty;
+
+    [Required]
+    [MinLength(1)]
+    public IReadOnlyList<TableNotificationInfoCardItemRequest> Items { get; init; } = [];
+}
+
+public sealed class TableNotificationInfoCardItemRequest
+{
+    [Required]
+    public string Label { get; init; } = string.Empty;
+
+    [Required]
+    public string Value { get; init; } = string.Empty;
 }

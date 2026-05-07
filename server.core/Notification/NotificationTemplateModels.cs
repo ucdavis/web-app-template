@@ -25,6 +25,7 @@ public sealed class TableNotificationTemplateModel : NotificationTemplateModelBa
     public IReadOnlyList<NotificationTableRow> Rows { get; init; } = [];
     public string TotalLabel { get; init; } = "Total";
     public decimal TotalAmount { get; init; }
+    public NotificationInfoCardModel? InfoCard { get; init; }
 }
 
 public sealed class NotificationTableRow
@@ -32,6 +33,38 @@ public sealed class NotificationTableRow
     public string Title { get; init; } = string.Empty;
     public string Details { get; init; } = string.Empty;
     public decimal Amount { get; init; }
+}
+
+public sealed class NotificationInfoCardModel
+{
+    public const string LightBlueBackgroundColor = "#eef6ff";
+    public const string LightGrayBackgroundColor = "#f6f8fb";
+
+    private static readonly string[] SupportedBackgroundColors =
+    [
+        LightGrayBackgroundColor,
+        LightBlueBackgroundColor,
+    ];
+
+    public string BackgroundColor { get; init; } = LightGrayBackgroundColor;
+    public IReadOnlyList<NotificationInfoCardItem> Items { get; init; } = [];
+
+    public string NormalizedBackgroundColor =>
+        SupportedBackgroundColors.FirstOrDefault(color =>
+            string.Equals(color, BackgroundColor, StringComparison.OrdinalIgnoreCase))
+        ?? LightGrayBackgroundColor;
+
+    public static bool IsSupportedBackgroundColor(string? backgroundColor)
+    {
+        return SupportedBackgroundColors.Any(color =>
+            string.Equals(color, backgroundColor, StringComparison.OrdinalIgnoreCase));
+    }
+}
+
+public sealed class NotificationInfoCardItem
+{
+    public string Label { get; init; } = string.Empty;
+    public string Value { get; init; } = string.Empty;
 }
 
 public sealed class NotificationButtonModel

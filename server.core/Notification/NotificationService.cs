@@ -20,6 +20,7 @@ public interface INotificationService
         string message,
         IReadOnlyList<NotificationTableRow> rows,
         decimal totalAmount,
+        NotificationInfoCardModel? infoCard = null,
         CancellationToken cancellationToken = default);
 }
 
@@ -108,6 +109,7 @@ public sealed class NotificationService : INotificationService
         string message,
         IReadOnlyList<NotificationTableRow> rows,
         decimal totalAmount,
+        NotificationInfoCardModel? infoCard = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(subject))
@@ -130,6 +132,21 @@ public sealed class NotificationService : INotificationService
             throw new ValidationException("Each table row requires a title and details.");
         }
 
+        if (infoCard is { Items.Count: 0 })
+        {
+            throw new ValidationException("At least one info card item is required when an info card is provided.");
+        }
+
+        if (infoCard?.Items.Any(item => item is null || string.IsNullOrWhiteSpace(item.Label) || string.IsNullOrWhiteSpace(item.Value)) == true)
+        {
+            throw new ValidationException("Each info card item requires a label and value.");
+        }
+
+        if (infoCard is not null && !NotificationInfoCardModel.IsSupportedBackgroundColor(infoCard.BackgroundColor))
+        {
+            throw new ValidationException("Info card background color must be a supported light shade.");
+        }
+
         EmailValidation.ValidateRecipients(recipients);
 
         var appName = string.IsNullOrWhiteSpace(_notificationOptions.DefaultAppName)
@@ -144,6 +161,7 @@ public sealed class NotificationService : INotificationService
             Message = message,
             Rows = rows,
             TotalAmount = totalAmount,
+            InfoCard = infoCard,
             ButtonText = string.IsNullOrWhiteSpace(_notificationOptions.BaseUrl) ? string.Empty : _notificationOptions.DefaultButtonText,
             ButtonUrl = _notificationOptions.BaseUrl,
         };
@@ -165,6 +183,12 @@ public sealed class NotificationService : INotificationService
             $"- {row.Title}: {row.Details} ({row.Amount.ToString("C2", CurrencyCulture)})"));
         textLines.Add(string.Empty);
         textLines.Add($"Total: {totalAmount.ToString("C2", CurrencyCulture)}");
+
+        if (infoCard is not null)
+        {
+            textLines.Add(string.Empty);
+            textLines.AddRange(infoCard.Items.Select(item => $"{item.Label}: {item.Value}"));
+        }
 
         var textBody = string.Join(Environment.NewLine, textLines);
         var htmlBody = await _notificationRenderer.RenderAsync(
