@@ -227,6 +227,20 @@ Controllers    Static Files + SPA fallback (wwwroot)
 9. **Environment-aware code** - Keep development and production behavior aligned through relative URLs and existing proxy/static-file patterns
 10. **Responsive design** - Use Tailwind responsive utilities
 
+### C# Readability Preferences
+
+Prefer simple, explicit C# conditionals that balance compactness with readability. Use familiar null-conditional operators, direct boolean checks, and short local variables when they make intent easier to scan.
+
+Avoid advanced pattern-matching forms for routine null checks, collection checks, property extraction, or aliasing. Use pattern matching only when it clearly models the domain logic better than ordinary conditionals.
+
+### Async Timing and Synchronization
+
+Do not use arbitrary delays, sleeps, timers, or timeout-based retries to hide race conditions or make async code appear to work. Avoid patterns like `setTimeout`, `Task.Delay`, polling loops, or fixed wait times unless the delay itself is a real product requirement.
+
+When coordinating async work, prefer explicit completion signals and proper async primitives: `Promise` chains, `async`/`await`, awaited task results, cancellation tokens, event callbacks, query/mutation lifecycle hooks, router loaders, or framework-provided readiness states.
+
+If timing code seems necessary, first identify the real dependency being waited on and model that dependency directly. Use timeouts only for bounded failure handling, cancellation, user feedback, or external-system resilience, not as a substitute for correct async flow.
+
 ## Common Patterns
 
 ### Route Component Example
