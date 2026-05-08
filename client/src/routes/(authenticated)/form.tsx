@@ -33,7 +33,10 @@ const contactProfileSchema = z.object({
     .string()
     .trim()
     .min(2, 'First name must be at least 2 characters')
-    .max(50, 'First name must be 50 characters or fewer'),
+    .max(50, 'First name must be 50 characters or fewer')
+    .refine((value) => value.toLowerCase() !== 'error', {
+      message: 'First name cannot be "error"',
+    }),
   lastName: z
     .string()
     .trim()
@@ -267,6 +270,58 @@ function FormRoute() {
                 emptyText="No project request submitted yet."
                 title="Latest Project Payload"
               />
+            </div>
+          </article>
+        </section>
+
+        <section className="mt-12 grid gap-8 lg:grid-cols-2">
+          <article className="card bg-base-100 shadow-md">
+            <div className="card-body">
+              <h2 className="card-title text-xl">Validation Examples</h2>
+              <p className="text-base-content/70">
+                These examples are intentionally small so the validation logic
+                stays easy to trace back to the Zod schemas at the top of the
+                route file.
+              </p>
+              <ul className="mt-2 space-y-2 text-sm text-base-content/70">
+                <li>Leave required fields blank to see schema errors.</li>
+                <li>Enter an invalid email address to test email validation.</li>
+                <li>
+                  Enter <code>error</code> as the first name to test a custom
+                  Zod <code>refine</code> rule.
+                </li>
+                <li>
+                  Submit the project request without the checkbox to see a
+                  boolean refinement.
+                </li>
+              </ul>
+            </div>
+          </article>
+
+          <article className="card bg-base-100 shadow-md">
+            <div className="card-body">
+              <h2 className="card-title text-xl">Implementation Notes</h2>
+              <p className="text-base-content/70">
+                The forms use TanStack Form for field state and submit handling,
+                while Zod owns the request shape and validation messages.
+              </p>
+              <ul className="mt-2 space-y-2 text-sm text-base-content/70">
+                <li>
+                  Form-level validators run on change and again on submit.
+                </li>
+                <li>
+                  Default values are typed as the full form model so enum fields
+                  do not narrow to a single literal.
+                </li>
+                <li>
+                  The shared field wrapper dedupes repeated validation messages
+                  before rendering them.
+                </li>
+                <li>
+                  Keep matching server-side validation on API endpoints for any
+                  real request.
+                </li>
+              </ul>
             </div>
           </article>
         </section>

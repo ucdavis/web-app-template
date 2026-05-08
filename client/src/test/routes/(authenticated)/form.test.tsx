@@ -37,6 +37,37 @@ describe('form route', () => {
     }
   });
 
+  it('shows the custom first-name refine message', async () => {
+    mockCurrentUser();
+
+    const { cleanup } = renderRoute({ initialPath: '/form' });
+
+    try {
+      await screen.findByText('Contact Profile');
+
+      fireEvent.input(screen.getByPlaceholderText('Enter first name'), {
+        target: { value: 'error' },
+      });
+      fireEvent.input(screen.getByPlaceholderText('Enter last name'), {
+        target: { value: 'Example' },
+      });
+      fireEvent.input(screen.getByPlaceholderText('person@example.edu'), {
+        target: { value: 'person@example.edu' },
+      });
+
+      fireEvent.click(
+        screen.getByRole('button', { name: 'Save Contact Profile' })
+      );
+
+      expect(
+        await screen.findByText('First name cannot be "error"')
+      ).toBeInTheDocument();
+      expect(screen.getByText(/custom Zod/)).toBeInTheDocument();
+    } finally {
+      cleanup();
+    }
+  });
+
   it('renders Zod errors and submits the project request example', async () => {
     mockCurrentUser();
 
