@@ -274,56 +274,142 @@ function FormRoute() {
           </article>
         </section>
 
-        <section className="mt-12 grid gap-8 lg:grid-cols-2">
-          <article className="card bg-base-100 shadow-md">
-            <div className="card-body">
-              <h2 className="card-title text-xl">Validation Examples</h2>
-              <p className="text-base-content/70">
-                These examples are intentionally small so the validation logic
-                stays easy to trace back to the Zod schemas at the top of the
-                route file.
-              </p>
-              <ul className="mt-2 space-y-2 text-sm text-base-content/70">
-                <li>Leave required fields blank to see schema errors.</li>
-                <li>Enter an invalid email address to test email validation.</li>
-                <li>
-                  Enter <code>error</code> as the first name to test a custom
-                  Zod <code>refine</code> rule.
-                </li>
-                <li>
-                  Submit the project request without the checkbox to see a
-                  boolean refinement.
-                </li>
-              </ul>
-            </div>
-          </article>
+        <section className="mt-16">
+          <h2 className="mb-12 text-center text-3xl font-bold">
+            Form Features
+          </h2>
+          <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
+            <article className="card bg-base-100 text-center shadow-md">
+              <div className="card-body">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/20">
+                  <svg
+                    className="h-6 w-6 text-primary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                    />
+                  </svg>
+                </div>
+                <h3 className="card-title justify-center">
+                  Zod Validation
+                </h3>
+                <p className="text-base-content/70">
+                  Schema-based validation keeps required fields, email checks,
+                  enum values, and custom refine rules in one readable place.
+                </p>
+              </div>
+            </article>
 
-          <article className="card bg-base-100 shadow-md">
-            <div className="card-body">
-              <h2 className="card-title text-xl">Implementation Notes</h2>
-              <p className="text-base-content/70">
-                The forms use TanStack Form for field state and submit handling,
-                while Zod owns the request shape and validation messages.
-              </p>
-              <ul className="mt-2 space-y-2 text-sm text-base-content/70">
-                <li>
-                  Form-level validators run on change and again on submit.
-                </li>
-                <li>
-                  Default values are typed as the full form model so enum fields
-                  do not narrow to a single literal.
-                </li>
-                <li>
-                  The shared field wrapper dedupes repeated validation messages
-                  before rendering them.
-                </li>
-                <li>
-                  Keep matching server-side validation on API endpoints for any
-                  real request.
-                </li>
-              </ul>
-            </div>
-          </article>
+            <article className="card bg-base-100 text-center shadow-md">
+              <div className="card-body">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-success/20">
+                  <svg
+                    className="h-6 w-6 text-success"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M4 6h16M4 12h16M4 18h7"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                    />
+                  </svg>
+                </div>
+                <h3 className="card-title justify-center">
+                  Reusable Fields
+                </h3>
+                <p className="text-base-content/70">
+                  Shared text, select, textarea, checkbox, and submit controls
+                  keep form markup compact while preserving DaisyUI styling.
+                </p>
+              </div>
+            </article>
+
+            <article className="card bg-base-100 text-center shadow-md">
+              <div className="card-body">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/20">
+                  <svg
+                    className="h-6 w-6 text-secondary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="M12 6v12m6-6H6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                    />
+                  </svg>
+                </div>
+                <h3 className="card-title justify-center">Type Safe</h3>
+                <p className="text-base-content/70">
+                  Default values, route code, and submit payloads use the same
+                  TypeScript models that the Zod schemas validate.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section className="mt-16 mb-16">
+          <h2 className="mb-12 text-center text-3xl font-bold">
+            Try These Examples
+          </h2>
+          <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
+            <article className="card bg-base-100 shadow-md">
+              <div className="card-body">
+                <h3 className="card-title mb-4">Zod Validation Testing</h3>
+                <ul className="list-disc space-y-2 pl-5 text-sm text-base-content/70">
+                  <li>Leave fields empty to see required validation.</li>
+                  <li>
+                    Enter <code>error</code> in first name to test the custom
+                    Zod <code>refine</code> rule.
+                  </li>
+                  <li>Enter an invalid email format in either form.</li>
+                  <li>Try single-character names to see min-length validation.</li>
+                  <li>
+                    Submit the project request without checking the confirmation
+                    box to test a boolean refinement.
+                  </li>
+                </ul>
+              </div>
+            </article>
+
+            <article className="card bg-base-100 shadow-md">
+              <div className="card-body">
+                <h3 className="card-title mb-4">Form Behavior</h3>
+                <ul className="list-disc space-y-2 pl-5 text-sm text-base-content/70">
+                  <li>
+                    Both forms validate as you edit and again when you submit.
+                  </li>
+                  <li>
+                    Valid submissions render the latest typed payload below the
+                    form.
+                  </li>
+                  <li>
+                    Repeated schema messages are deduped before they are shown.
+                  </li>
+                  <li>
+                    The project request shows how textarea and checkbox fields
+                    fit the same shared form pattern.
+                  </li>
+                  <li>
+                    Any real API endpoint should still validate the same rules
+                    on the ASP.NET Core side.
+                  </li>
+                </ul>
+              </div>
+            </article>
+          </div>
         </section>
       </main>
     </div>
