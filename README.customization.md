@@ -51,7 +51,101 @@ If you change `CallbackPath`, remember to mirror it in the Entra redirect URIs.
   - `OTEL_SERVICE_NAME`
 - Commit only the `.env.example` scaffolding—never real credentials—and document which secrets are required for each environment.
 
-## 5. Telemetry & Logging Adjustments
+## 5. Azure Deployment Setup
+
+Replace all placeholder deployment names before the first cloud deployment. The defaults are intentionally generic:
+
+- `APP_NAME=webapp`
+- `RESOURCE_GROUP=rg-webapp-test` for `test`
+- `RESOURCE_GROUP=rg-webapp-prod` for `prod`
+
+The Azure deployment templates only allow `test` and `prod`. Resource groups must end with the matching environment suffix, and deployments must pass the expected subscription ID guard before resources are created.
+
+### GitHub Environments
+
+Create GitHub Environments named `test` and `prod`. Configure production reviewers or approval gates as appropriate for your project.
+
+Each environment needs these variables from the OIDC bootstrap output or your Azure subscription:
+
+- `AZURE_CLIENT_ID`: bootstrap `clientId` output
+- `AZURE_TENANT_ID`: bootstrap `tenantId` output
+- `AZURE_SUBSCRIPTION_ID`: bootstrap `subscriptionId` output
+- `RESOURCE_GROUP`: bootstrap `resourceGroupName` output
+
+When the workflow should create or update Azure SQL and App Service resources, add this secret:
+
+- `SQL_ADMIN_PASSWORD`
+
+Optional GitHub Environment variables/secrets used by the reusable deployment workflow include:
+
+- App identity and location: `APP_NAME`, `AZURE_LOCATION`
+- Existing infrastructure deploys: `WEB_APP_NAME`, `DB_CONNECTION` secret
+- Auth: `AUTH_CLIENT_ID`, `AUTH_TENANT_ID`, `AUTH_DOMAIN`, `AUTH_INSTANCE`, `AUTH_CALLBACK_PATH`
+- Notifications and SMTP: `NOTIFICATION_BASE_URL`, `NOTIFICATION_DEFAULT_APP_NAME`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USE_SSL`, `SMTP_USERNAME`, `SMTP_PASSWORD` secret, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`, `SMTP_REPLY_TO_EMAIL`, `SMTP_BCC_EMAIL`
+- Observability: `OTLP_EXPORTER_ENDPOINT`, `OTLP_EXPORTER_PROTOCOL`
+- SKUs and database names: `WEB_SKU_NAME`, `WEB_SKU_TIER`, `SQL_DATABASE_NAME`, `SQL_SKU_NAME`, `SQL_SKU_TIER`, `SQL_ADMIN_LOGIN`
+
+### One-time OIDC bootstrap
+
+Run `infrastructure/azure/github-oidc.bicep` once per environment before the first GitHub deployment. Run it again after repository, organization, GitHub Environment, resource group, subscription, or identity changes, or if the generated Entra app/service principal is deleted.
+
+Why OIDC is used: GitHub Actions receives short-lived Azure tokens scoped to this repository and GitHub Environment. That removes the need to store long-lived Azure client secrets in GitHub.
+
+Example for `test`:
+
+```bash
+az login
+az account set --subscription "<subscription-id>"
+az deployment sub create \
+  --location westus2 \
+  --template-file infrastructure/azure/github-oidc.bicep \
+  --parameters \
+    appName="<app-name>" \
+    repository="<owner>/<repo>" \
+    env="test" \
+    expectedSubscriptionId="<subscription-id>" \
+    resourceGroupName="rg-<app-name>-test"
+```
+
+Repeat with `env="prod"` and a `-prod` resource group for production. The bootstrap output should include `deploymentGuardPassed=true`, `clientId`, `tenantId`, `subscriptionId`, `principalId`, `resourceGroupName`, and `federatedCredentialSubject`.
+
+The operator needs permission to create Entra applications/service principals. With the default `assignRbac=true`, the operator also needs Owner or User Access Administrator at the target resource group scope. If they do not have that permission, run with `assignRbac=false`, then have an Azure owner assign Contributor to the emitted `principalId` on the target resource group.
+
+The first Bicep build or deployment may restore the Microsoft Graph extension configured in `infrastructure/azure/bicepconfig.json`.
+
+### First deployment
+
+The `CI/CD` workflow:
+
+- Validates pull requests.
+- Deploys pushes to `main` to the `test` environment.
+- Supports manual deployments to `test` or `prod`, including a `deploy_infra` toggle.
+
+For local deployment:
+
+```bash
+export APP_NAME="<app-name>"
+export AZURE_SUBSCRIPTION_ID="<subscription-id>"
+export SQL_ADMIN_PASSWORD="<strong-password>"
+infrastructure/azure/deploy_test.sh
+```
+
+Use `infrastructure/azure/deploy_prod.sh` for production. For existing Azure infrastructure, run:
+
+```bash
+DEPLOY_INFRA=false WEB_APP_NAME="<app-service-name>" infrastructure/azure/deploy.sh test
+```
+
+After App Service has a stable hostname or custom domain, add these redirect URIs to your app registration:
+
+- `https://<app-service-hostname>/signin-oidc`
+- `https://<custom-domain>/signin-oidc`, if you use a custom domain
+
+The app currently applies existing EF Core migrations at startup. The deployment scaffold must not create or edit migrations, but first cloud deployment will apply whatever migrations already exist unless you change startup behavior.
+
+The app currently stores ASP.NET Core data-protection keys on the local filesystem. This is fine for typical single-instance App Service deployments. Configure shared key storage before scaling out to multiple instances or using slots that must share auth cookies.
+
+## 6. Telemetry & Logging Adjustments
 
 `server/Helpers/TelemetryHelper.cs` wires OpenTelemetry for logs, traces, and metrics. Tweak as needed:
 
@@ -60,7 +154,7 @@ If you change `CallbackPath`, remember to mirror it in the Entra redirect URIs.
 
 Confirm your observability backend (Grafana, New Relic, Azure Monitor) receives traffic by temporarily setting `OTEL_LOG_LEVEL=debug` and checking the startup output.
 
-## 6. Email Notification
+## 7. Email Notification
 
 The template includes a reusable email notification stack in `server.core`:
 
@@ -90,7 +184,7 @@ Optional SMTP and notification settings you may also want to customize:
 
 When you start replacing the default notification flow with real notification use cases, keep app-specific composition in your own core services. Follow `NotificationService` as the pattern for rendering templates with `INotificationRenderer`, then hand the final text/html message to `IEmailService` for delivery.
 
-## 7. Clean Up Sample Code
+## 8. Clean Up Sample Code
 
 Remove or rewrite sample artifacts so they do not ship:
 
@@ -105,17 +199,20 @@ Remove or rewrite sample artifacts so they do not ship:
 
 Discard unused assets, tests, and mock data that referenced the template demos.
 
-## 8. Polish the UX & Tooling
+## 9. Polish the UX & Tooling
 
 - Turn off dev-only tooling—`ReactQueryDevtools` and `TanStackRouterDevtools` in `client/src/routes/__root.tsx`—for production builds or gate them behind `import.meta.env.DEV`.
 - Update Swagger metadata (title, description, contact) inside `Program.cs` when calling `builder.Services.AddSwaggerGen(...)` or remove entirely.
-- Review `.devcontainer/devcontainer.json`, CI workflows, and deployment manifests (if you add them) to ensure they use your new names, ports, and environment variables.
+- Review `.devcontainer/devcontainer.json`, `.github/workflows/`, and `infrastructure/azure/` to ensure they use your new names, ports, environments, and variables.
 - Re-run `npm install`, `cd client && npm install`, and `dotnet restore` after updating Node/.NET versions (`global.json`) so everyone builds with the intended SDKs.
 
-## 9. Final Verification Checklist
+## 10. Final Verification Checklist
 
 - [ ] `npm start` launches both servers on the expected ports.
 - [ ] `dotnet test` and `cd client && npm test` succeed.
+- [ ] `az bicep build --file infrastructure/azure/main.bicep` succeeds.
+- [ ] `az bicep build --file infrastructure/azure/github-oidc.bicep` succeeds.
+- [ ] GitHub Environment variables/secrets are configured from the OIDC bootstrap outputs.
 - [ ] Logging and OTLP exports reach your observability backend.
 - [ ] Signing in via Microsoft Entra succeeds locally (and in cloud environments, once deployed).
 - [ ] README and onboarding docs describe your product, not the template.

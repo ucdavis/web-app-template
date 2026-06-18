@@ -114,17 +114,9 @@ Useful companion commands:
 
 ### Auth Configuration
 
-We use OIDC with Microsoft Entra ID (Azure AD) for authentication. The auth flow doesn't use any secrets and the settings in `appsettings.*.json` are sufficient for local development.
+The app uses OIDC with Microsoft Entra ID (Azure AD). The default settings in `appsettings.*.json` are enough for local template development.
 
-When you are ready to get your own, go to [Microsoft Entra ID](https://entra.microsoft.com/) and create a new application registration. For local development, set the redirect URL to the origin you actually launch from:
-
-- `http://localhost:5173/signin-oidc` for the default Vite dev flow
-- `http://localhost:5165/signin-oidc` if you are testing directly against the backend origin
-- `https://localhost:44322/signin-oidc` if you use the default IIS Express profile
-
-Check the box for "ID tokens".
-
-You might also want to set the publisher domain to ucdavis.edu and fill in the other general branding info.
+For a new application registration, redirect URIs, and app-specific auth settings, follow [the customization guide](README.customization.md#3-microsoft-entra-id-azure-ad-setup).
 
 ### Google Analytics (GA4)
 
@@ -146,18 +138,21 @@ Before using this template in a real app, replace `G-XXXXXXXXXX` in `client/inde
 
 The health check endpoint (`/health`) is configured to return the status of the application and its dependencies. It includes a database health check to ensure the SQL Server connection is healthy. See [Health Checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks?view=aspnetcore-10.0#entity-framework-core-dbcontext-probe).
 
+## Azure Deployment
+
+The template includes generic Azure App Service deployment scaffolding in `infrastructure/azure/` and GitHub Actions workflows in `.github/workflows/`.
+
+Cloud deployments are intentionally limited to `test` and `prod`. Before the first cloud deployment, replace placeholder names such as `webapp`, `rg-webapp-test`, and `rg-webapp-prod` with names for your application.
+
+For GitHub Environments, the one-time OIDC bootstrap, required variables/secrets, local deploy scripts, and first-deploy caveats, see [Azure Deployment Setup](README.customization.md#5-azure-deployment-setup). For the hosting flow and key deployment files, see [Development Architecture](docs/ARCHITECTURE.md#azure-hosting-flow).
+
 ## Development
 
 ### Development Architecture
 
-In development mode:
+In development, ASP.NET Core runs on port `5165`, Vite serves the frontend on port `5173`, and Vite proxies backend routes to ASP.NET Core. Visual Studio uses `SpaProxy` to start Vite and redirect the browser to it.
 
-- ASP.NET Core runs on port `5165`
-- Vite serves the frontend on port `5173`
-- Visual Studio uses `SpaProxy` to start Vite and redirect the browser to it
-- Vite proxies `/api`, `/login`, `/signin-oidc`, and `/health` back to ASP.NET Core
-
-This keeps frontend HMR fast while preserving the backend's auth and API pipeline. In production, the backend serves pre-built static files from `wwwroot/`.
+For request-flow diagrams, production behavior, and key file responsibilities, see [Development Architecture](docs/ARCHITECTURE.md).
 
 ### Backend Development
 
@@ -245,6 +240,8 @@ And as always, after updating dependencies, make sure to run `dotnet build` and 
 │   ├── Properties/          # Launch settings
 │   ├── Program.cs           # Application entry point
 │   └── server.csproj        # SpaProxy + publish integration
+├── infrastructure/azure/    # Azure Bicep templates and local deployment scripts
+├── .github/workflows/       # CI/CD and reusable Azure App Service deployment workflow
 ├── package.json             # Root dev orchestration scripts
 └── app.sln                  # Visual Studio solution file
 ```
