@@ -71,7 +71,10 @@ try
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
-    // configure data protection (generated keys for auth and such)
+    // Configure data protection for auth cookies and related framework secrets.
+    // This local key ring assumes one effective app instance. Before scaling out
+    // or sharing cookies across deployment slots, move keys to shared storage such
+    // as Azure Blob Storage or another ASP.NET Core Data Protection provider.
     var keysPath = Path.Combine(builder.Environment.ContentRootPath, "..", ".aspnet", "DataProtection-Keys");
     Directory.CreateDirectory(keysPath);
 
