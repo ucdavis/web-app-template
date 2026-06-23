@@ -24,7 +24,14 @@ param skuName string
 param skuTier string
 
 @description('Whether to allow Azure services and resources to access this SQL server.')
-param allowAzureServices bool = true
+param allowAzureServices bool = false
+
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+@description('Public network access for this SQL server.')
+param publicNetworkAccess string = 'Enabled'
 
 resource sqlServer 'Microsoft.Sql/servers@2023-08-01' = {
   name: name
@@ -34,7 +41,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01' = {
     administratorLogin: adminLogin
     administratorLoginPassword: adminPassword
     minimalTlsVersion: '1.2'
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: publicNetworkAccess
   }
 }
 

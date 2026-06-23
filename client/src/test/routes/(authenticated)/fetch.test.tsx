@@ -22,9 +22,10 @@ describe('fetch route', () => {
       })
     );
 
-    const { cleanup } = renderRoute({ initialPath: '/fetch' });
+    let cleanup = () => undefined;
 
     try {
+      ({ cleanup } = renderRoute({ initialPath: '/fetch' }));
       expect(
         await screen.findByRole('heading', { name: 'Access unavailable' })
       ).toBeInTheDocument();

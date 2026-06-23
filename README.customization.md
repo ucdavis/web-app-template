@@ -196,7 +196,7 @@ Portal flow:
 1. Go to https://entra.microsoft.com → **Applications** → **App registrations**.
 2. Open the application used for user sign-in, matching `AUTH_CLIENT_ID` / `Auth:ClientId`.
 3. Open **Authentication**.
-4. Under **Web** → **Redirect URIs**, add the App Service callback URI, for example `https://web-webapp-test-thbqez.azurewebsites.net/signin-oidc`.
+4. Under **Web** → **Redirect URIs**, add the App Service callback URI, for example `https://<app-service-hostname>/signin-oidc`.
 5. Save the app registration, then retry sign-in.
 
 Azure CLI flow:
@@ -222,8 +222,8 @@ az ad app update \
 For this template deployment, the command is:
 
 ```bash
-auth_client_id="78531534-e937-4532-b687-0bf183d777c6"
-redirect_uri="https://web-webapp-test-thbqez.azurewebsites.net/signin-oidc"
+auth_client_id="<auth-client-id>"
+redirect_uri="https://<app-service-hostname>/signin-oidc"
 
 redirect_uris=()
 while IFS= read -r existing_uri; do

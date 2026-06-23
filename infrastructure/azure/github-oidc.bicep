@@ -37,7 +37,8 @@ var normalizedExpectedSubscriptionId = toLower(expectedSubscriptionId)
 var normalizedCurrentSubscriptionId = toLower(subscription().subscriptionId)
 var expectedResourceGroupSuffix = '-${env}'
 var normalizedResourceGroupName = toLower(resourceGroupName)
-var repositoryIsConfigured = contains(repository, '/') && repository != 'owner/repository'
+var repositoryParts = split(repository, '/')
+var repositoryIsConfigured = length(repositoryParts) == 2 && !empty(repositoryParts[0]) && !empty(repositoryParts[1]) && repository != 'owner/repository'
 var deploymentGuardPassed = !empty(expectedSubscriptionId) && repositoryIsConfigured && normalizedCurrentSubscriptionId == normalizedExpectedSubscriptionId && endsWith(normalizedResourceGroupName, expectedResourceGroupSuffix)
 var federatedCredentialName = 'github-environment-${env}'
 var federatedCredentialSubject = 'repo:${repository}:environment:${env}'

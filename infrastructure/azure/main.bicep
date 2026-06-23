@@ -49,6 +49,16 @@ param sqlSkuName string = env == 'prod' ? 'S0' : 'Basic'
 @description('SQL database SKU tier.')
 param sqlSkuTier string = env == 'prod' ? 'Standard' : 'Basic'
 
+@description('Whether to allow Azure services and resources to access SQL server.')
+param sqlAllowAzureServices bool = env == 'test'
+
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+@description('Public network access for SQL server.')
+param sqlPublicNetworkAccess string = 'Enabled'
+
 @description('Base URL used in generated notification emails. Defaults to the App Service hostname.')
 param notificationBaseUrl string = ''
 
@@ -176,6 +186,8 @@ module sql 'modules/sql.bicep' = if (deploymentGuardPassed) {
     databaseName: sqlDatabaseName
     skuName: sqlSkuName
     skuTier: sqlSkuTier
+    allowAzureServices: sqlAllowAzureServices
+    publicNetworkAccess: sqlPublicNetworkAccess
   }
 }
 
