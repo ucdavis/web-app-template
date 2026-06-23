@@ -22,7 +22,7 @@ describe('fetch route', () => {
       })
     );
 
-    let cleanup = () => undefined;
+    let cleanup: () => void = () => undefined;
 
     try {
       ({ cleanup } = renderRoute({ initialPath: '/fetch' }));
