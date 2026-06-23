@@ -196,7 +196,7 @@ describe('notification route', () => {
       );
 
       expect(
-        await screen.findByText(/Table example email sent to/i)
+        await screen.findByText(/table example email sent to/i)
       ).toBeInTheDocument();
       expect(postedBody).toMatchObject({
         header: 'Five-row statement example',
@@ -206,29 +206,29 @@ describe('notification route', () => {
       });
       expect(postedBody?.rows).toEqual([
         {
-          title: 'Discovery workshop',
-          details: 'Stakeholder interviews and scope alignment',
           amount: 125,
+          details: 'Stakeholder interviews and scope alignment',
+          title: 'Discovery workshop',
         },
         {
-          title: 'UI design',
-          details: 'Wireframes, review, and component specs',
           amount: 240,
+          details: 'Wireframes, review, and component specs',
+          title: 'UI design',
         },
         {
-          title: 'Frontend build',
-          details: 'Route wiring and shared component integration',
           amount: 180,
+          details: 'Route wiring and shared component integration',
+          title: 'Frontend build',
         },
         {
-          title: 'Backend API',
-          details: 'Notification endpoint and MJML template data',
           amount: 95,
+          details: 'Notification endpoint and MJML template data',
+          title: 'Backend API',
         },
         {
-          title: 'QA pass',
-          details: 'Template verification and regression checks',
           amount: 310,
+          details: 'Template verification and regression checks',
+          title: 'QA pass',
         },
       ]);
     } finally {

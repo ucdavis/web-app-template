@@ -1,0 +1,93 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub Environment to deploy.
+        required: true
+        type: choice
+        default: test
+        options:
+          - test
+          - prod
+      deploy_infra:
+        description: Deploy Azure infrastructure before deploying the app package.
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Restore frontend dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: client
+        run: npm run build
+
+      - name: Test frontend
+        working-directory: client
+        run: npm test -- --run
+
+      - name: Restore .NET projects
+        run: dotnet restore app.sln
+
+      - name: Build .NET projects
+        run: dotnet build app.sln --configuration Release --no-restore
+
+      - name: Test .NET projects
+        run: dotnet test app.sln --configuration Release --no-build
+
+  deploy_test:
+    name: Deploy test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    uses: ./.github/workflows/deploy-azure-appservice.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      environment: test
+      deploy_infra: true
+    secrets: inherit
+
+  deploy_manual:
+    name: Deploy ${{ inputs.environment }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/deploy-azure-appservice.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      environment: ${{ inputs.environment }}
+      deploy_infra: ${{ inputs.deploy_infra }}
+    secrets: inherit
