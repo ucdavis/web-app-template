@@ -17,7 +17,9 @@ If you need the app to run on ports other than the default `5165` (API) and `517
 3. `client/vite.config.ts` → change `server.port` and update every proxy target pointing at `http://localhost:5165`.
 4. `.devcontainer/devcontainer.json` → update `containerEnv.ASPNETCORE_URLS`, `forwardPorts`, and `portsAttributes` so port auto-forwarding stays in sync.
 
-## 3. Microsoft Entra ID (Azure AD) Setup
+## 3. Microsoft Entra ID (Azure AD) App Sign-In Setup
+
+This section configures the Entra app registration that users sign in to through Microsoft Identity Web. It is separate from the GitHub deployment identity created later by `infrastructure/azure/github-oidc.bicep`.
 
 1. Visit https://entra.microsoft.com → **App registrations** → **New registration**.
 2. Give the app a friendly name, pick the correct supported account types, and add the following redirect URIs. Use HTTPS in production and match whatever port you configured above:
@@ -42,6 +44,8 @@ Then update `server/appsettings.json`:
 
 If you change `CallbackPath`, remember to mirror it in the Entra redirect URIs.
 
+The Azure deployment bootstrap in section 5 automates a different Entra application/service principal for GitHub Actions OIDC. Do not use that bootstrap `clientId` as `Auth:ClientId` unless you intentionally combined the deployment identity and the user sign-in app registration, which is not the default setup.
+
 ## 4. Secrets, Connection Strings, & Environment Files
 
 - Connection strings: overwrite `ConnectionStrings:DefaultConnection` in `server/appsettings.Development.json` or, preferably, set `DB_CONNECTION` in `server/.env` / `server/.env.Development`. `Program.cs` reads `DB_CONNECTION` first, then falls back to the JSON file.
@@ -64,6 +68,15 @@ The Azure deployment templates only allow `test` and `prod`. Resource groups mus
 ### GitHub Environments
 
 Create GitHub Environments named `test` and `prod`. Configure production reviewers or approval gates as appropriate for your project.
+
+Using GitHub CLI:
+
+```bash
+gh api --method PUT repos/<owner>/<repo>/environments/test
+gh api --method PUT repos/<owner>/<repo>/environments/prod
+```
+
+You need repository admin permission, and your `gh` token must be able to manage repository environments, variables, and secrets. If `gh variable set --env test ...` returns `HTTP 404: Not Found`, confirm the environment exists and that `gh repo view` points at the expected repository.
 
 Each environment needs these variables from the OIDC bootstrap output or your Azure subscription:
 
@@ -91,12 +104,16 @@ Run `infrastructure/azure/github-oidc.bicep` once per environment before the fir
 
 Why OIDC is used: GitHub Actions receives short-lived Azure tokens scoped to this repository and GitHub Environment. That removes the need to store long-lived Azure client secrets in GitHub.
 
+This bootstrap is only for deployment authentication from GitHub Actions to Azure. It does not create or configure the Microsoft Identity Web app registration used for end-user sign-in in section 3.
+
 Example for `test`:
 
 ```bash
 az login
 az account set --subscription "<subscription-id>"
+deployment_name="github-oidc-<app-name>"
 az deployment sub create \
+  --name "$deployment_name" \
   --location westus2 \
   --template-file infrastructure/azure/github-oidc.bicep \
   --parameters \
@@ -107,7 +124,39 @@ az deployment sub create \
     resourceGroupName="rg-<app-name>-test"
 ```
 
-Repeat with `env="prod"` and a `-prod` resource group for production. The bootstrap output should include `deploymentGuardPassed=true`, `clientId`, `tenantId`, `subscriptionId`, `principalId`, `resourceGroupName`, and `federatedCredentialSubject`.
+For example, with the default `APP_NAME=webapp`, use `deployment_name="github-oidc-webapp"`. Repeat with `env="prod"`, a production deployment name such as `deployment_name="github-oidc-<app-name>-prod"`, and a `-prod` resource group for production. The bootstrap output should include `deploymentGuardPassed=true`, `clientId`, `tenantId`, `subscriptionId`, `principalId`, `resourceGroupName`, and `federatedCredentialSubject`.
+
+If you did not set `--name`, Azure CLI usually names the deployment after the template file, for example `github-oidc`. Find recent subscription deployments with:
+
+```bash
+az deployment sub list \
+  --query "sort_by([].{name:name,timestamp:properties.timestamp,provisioningState:properties.provisioningState}, &timestamp)[-5:]" \
+  --output table
+```
+
+Get the GitHub Environment variable values from the deployment outputs:
+
+```bash
+az deployment sub show \
+  --name "$deployment_name" \
+  --query "properties.outputs.{AZURE_CLIENT_ID:clientId.value,AZURE_TENANT_ID:tenantId.value,AZURE_SUBSCRIPTION_ID:subscriptionId.value,RESOURCE_GROUP:resourceGroupName.value,federatedCredentialSubject:federatedCredentialSubject.value}" \
+  --output table
+```
+
+Configure the GitHub Environment with those values:
+
+```bash
+gh variable set AZURE_CLIENT_ID --env test --body "$(az deployment sub show --name "$deployment_name" --query properties.outputs.clientId.value --output tsv)"
+gh variable set AZURE_TENANT_ID --env test --body "$(az deployment sub show --name "$deployment_name" --query properties.outputs.tenantId.value --output tsv)"
+gh variable set AZURE_SUBSCRIPTION_ID --env test --body "$(az deployment sub show --name "$deployment_name" --query properties.outputs.subscriptionId.value --output tsv)"
+gh variable set RESOURCE_GROUP --env test --body "$(az deployment sub show --name "$deployment_name" --query properties.outputs.resourceGroupName.value --output tsv)"
+```
+
+Then add the SQL admin password as a GitHub Environment secret:
+
+```bash
+gh secret set SQL_ADMIN_PASSWORD --env test
+```
 
 The operator needs permission to create Entra applications/service principals. With the default `assignRbac=true`, the operator also needs Owner or User Access Administrator at the target resource group scope. If they do not have that permission, run with `assignRbac=false`, then have an Azure owner assign Contributor to the emitted `principalId` on the target resource group.
 
@@ -140,6 +189,54 @@ After App Service has a stable hostname or custom domain, add these redirect URI
 
 - `https://<app-service-hostname>/signin-oidc`
 - `https://<custom-domain>/signin-oidc`, if you use a custom domain
+
+Portal flow:
+
+1. Go to https://entra.microsoft.com → **Applications** → **App registrations**.
+2. Open the application used for user sign-in, matching `AUTH_CLIENT_ID` / `Auth:ClientId`.
+3. Open **Authentication**.
+4. Under **Web** → **Redirect URIs**, add the App Service callback URI, for example `https://web-webapp-test-thbqez.azurewebsites.net/signin-oidc`.
+5. Save the app registration, then retry sign-in.
+
+Azure CLI flow:
+
+```bash
+auth_client_id="<auth-client-id>"
+redirect_uri="https://<app-service-hostname>/signin-oidc"
+
+redirect_uris=()
+while IFS= read -r existing_uri; do
+  redirect_uris+=("$existing_uri")
+done < <(az ad app show --id "$auth_client_id" --query "web.redirectUris[]" --output tsv)
+
+if [[ ! " ${redirect_uris[*]} " =~ " ${redirect_uri} " ]]; then
+  redirect_uris+=("$redirect_uri")
+fi
+
+az ad app update \
+  --id "$auth_client_id" \
+  --web-redirect-uris "${redirect_uris[@]}"
+```
+
+For this template deployment, the command is:
+
+```bash
+auth_client_id="78531534-e937-4532-b687-0bf183d777c6"
+redirect_uri="https://web-webapp-test-thbqez.azurewebsites.net/signin-oidc"
+
+redirect_uris=()
+while IFS= read -r existing_uri; do
+  redirect_uris+=("$existing_uri")
+done < <(az ad app show --id "$auth_client_id" --query "web.redirectUris[]" --output tsv)
+
+if [[ ! " ${redirect_uris[*]} " =~ " ${redirect_uri} " ]]; then
+  redirect_uris+=("$redirect_uri")
+fi
+
+az ad app update \
+  --id "$auth_client_id" \
+  --web-redirect-uris "${redirect_uris[@]}"
+```
 
 The app currently applies existing EF Core migrations at startup. The deployment scaffold must not create or edit migrations, but first cloud deployment will apply whatever migrations already exist unless you change startup behavior.
 

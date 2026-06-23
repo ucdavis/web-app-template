@@ -45,3 +45,6 @@ msbuild.wrn
 
 # Jetbrains
 .idea/
+
+# publish artifacts
+publish/
