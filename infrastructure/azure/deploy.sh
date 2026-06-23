@@ -27,10 +27,11 @@ Existing infrastructure deployments:
 
 Optional app settings use the same names as the GitHub Environment variables:
   AUTH_CLIENT_ID, AUTH_TENANT_ID, AUTH_DOMAIN, AUTH_INSTANCE, AUTH_CALLBACK_PATH,
-  NOTIFICATION_BASE_URL, NOTIFICATION_DEFAULT_APP_NAME,
-  SMTP_HOST, SMTP_PORT, SMTP_USE_SSL, SMTP_USERNAME, SMTP_PASSWORD,
+  NOTIFICATION_BASE_URL, NOTIFICATION_DEFAULT_APP_NAME, NOTIFICATION_DEFAULT_BUTTON_TEXT,
+  SMTP_HOST, SMTP_PORT, SMTP_TIMEOUT, SMTP_USE_SSL, SMTP_USERNAME, SMTP_PASSWORD,
   SMTP_FROM_EMAIL, SMTP_FROM_NAME, SMTP_REPLY_TO_EMAIL, SMTP_BCC_EMAIL,
-  OTLP_EXPORTER_ENDPOINT, OTLP_EXPORTER_PROTOCOL, DB_CONNECTION
+  OTLP_EXPORTER_ENDPOINT, OTLP_EXPORTER_PROTOCOL, OTEL_EXPORTER_OTLP_HEADERS,
+  OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES, DB_CONNECTION
 USAGE
 }
 
@@ -194,6 +195,7 @@ if is_true "$DEPLOY_INFRA"; then
   add_param "sqlSkuTier" "${SQL_SKU_TIER:-}"
   add_param "notificationBaseUrl" "${NOTIFICATION_BASE_URL:-}"
   add_param "notificationDefaultAppName" "${NOTIFICATION_DEFAULT_APP_NAME:-}"
+  add_param "notificationDefaultButtonText" "${NOTIFICATION_DEFAULT_BUTTON_TEXT:-}"
   add_param "authClientId" "${AUTH_CLIENT_ID:-}"
   add_param "authTenantId" "${AUTH_TENANT_ID:-}"
   add_param "authDomain" "${AUTH_DOMAIN:-}"
@@ -201,6 +203,7 @@ if is_true "$DEPLOY_INFRA"; then
   add_param "authCallbackPath" "${AUTH_CALLBACK_PATH:-}"
   add_param "smtpHost" "${SMTP_HOST:-}"
   add_param "smtpPort" "${SMTP_PORT:-}"
+  add_param "smtpTimeout" "${SMTP_TIMEOUT:-}"
   add_param "smtpUseSsl" "${SMTP_USE_SSL:-}"
   add_param "smtpUsername" "${SMTP_USERNAME:-}"
   add_param "smtpPassword" "${SMTP_PASSWORD:-}"
@@ -210,6 +213,9 @@ if is_true "$DEPLOY_INFRA"; then
   add_param "smtpBccEmail" "${SMTP_BCC_EMAIL:-}"
   add_param "otlpExporterEndpoint" "${OTLP_EXPORTER_ENDPOINT:-}"
   add_param "otlpExporterProtocol" "${OTLP_EXPORTER_PROTOCOL:-}"
+  add_param "otelExporterOtlpHeaders" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
+  add_param "otelServiceName" "${OTEL_SERVICE_NAME:-}"
+  add_param "otelResourceAttributes" "${OTEL_RESOURCE_ATTRIBUTES:-}"
 
   printf 'Deploying infrastructure to %s...\n' "$RESOURCE_GROUP"
   az deployment group create \
@@ -250,6 +256,7 @@ app_settings=(
 add_setting "DB_CONNECTION" "${DB_CONNECTION:-}"
 add_setting "Notification__BaseUrl" "${NOTIFICATION_BASE_URL:-}"
 add_setting "Notification__DefaultAppName" "${NOTIFICATION_DEFAULT_APP_NAME:-}"
+add_setting "Notification__DefaultButtonText" "${NOTIFICATION_DEFAULT_BUTTON_TEXT:-}"
 add_setting "Auth__ClientId" "${AUTH_CLIENT_ID:-}"
 add_setting "Auth__TenantId" "${AUTH_TENANT_ID:-}"
 add_setting "Auth__Domain" "${AUTH_DOMAIN:-}"
@@ -257,6 +264,7 @@ add_setting "Auth__Instance" "${AUTH_INSTANCE:-}"
 add_setting "Auth__CallbackPath" "${AUTH_CALLBACK_PATH:-}"
 add_setting "Smtp__Host" "${SMTP_HOST:-}"
 add_setting "Smtp__Port" "${SMTP_PORT:-}"
+add_setting "Smtp__Timeout" "${SMTP_TIMEOUT:-}"
 add_setting "Smtp__UseSsl" "${SMTP_USE_SSL:-}"
 add_setting "Smtp__Username" "${SMTP_USERNAME:-}"
 add_setting "Smtp__Password" "${SMTP_PASSWORD:-}"
@@ -266,6 +274,9 @@ add_setting "Smtp__ReplyToEmail" "${SMTP_REPLY_TO_EMAIL:-}"
 add_setting "Smtp__BccEmail" "${SMTP_BCC_EMAIL:-}"
 add_setting "OTEL_EXPORTER_OTLP_ENDPOINT" "${OTLP_EXPORTER_ENDPOINT:-}"
 add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "${OTLP_EXPORTER_PROTOCOL:-}"
+add_setting "OTEL_EXPORTER_OTLP_HEADERS" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
+add_setting "OTEL_SERVICE_NAME" "${OTEL_SERVICE_NAME:-}"
+add_setting "OTEL_RESOURCE_ATTRIBUTES" "${OTEL_RESOURCE_ATTRIBUTES:-}"
 
 printf 'Applying runtime settings to %s...\n' "$WEB_APP_NAME"
 az webapp config appsettings set \

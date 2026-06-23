@@ -38,6 +38,9 @@ param notificationBaseUrl string
 @description('Default application name used in generated notifications.')
 param notificationDefaultAppName string
 
+@description('Default button text used in generated notifications.')
+param notificationDefaultButtonText string
+
 @description('Entra ID application client ID used by Microsoft Identity Web.')
 param authClientId string
 
@@ -58,6 +61,9 @@ param smtpHost string
 
 @description('SMTP port for outbound email.')
 param smtpPort int
+
+@description('SMTP timeout in milliseconds.')
+param smtpTimeout int
 
 @description('Whether SMTP should use SSL.')
 param smtpUseSsl bool
@@ -86,6 +92,16 @@ param otlpExporterEndpoint string
 
 @description('OTLP exporter protocol.')
 param otlpExporterProtocol string
+
+@secure()
+@description('Optional OTLP exporter headers.')
+param otelExporterOtlpHeaders string
+
+@description('Optional OpenTelemetry service name.')
+param otelServiceName string
+
+@description('Optional OpenTelemetry resource attributes.')
+param otelResourceAttributes string
 
 var baseAppSettings = [
   {
@@ -121,6 +137,10 @@ var baseAppSettings = [
     value: notificationDefaultAppName
   }
   {
+    name: 'Notification__DefaultButtonText'
+    value: notificationDefaultButtonText
+  }
+  {
     name: 'Auth__ClientId'
     value: authClientId
   }
@@ -147,6 +167,10 @@ var baseAppSettings = [
   {
     name: 'Smtp__Port'
     value: string(smtpPort)
+  }
+  {
+    name: 'Smtp__Timeout'
+    value: string(smtpTimeout)
   }
   {
     name: 'Smtp__UseSsl'
@@ -178,7 +202,7 @@ var baseAppSettings = [
   }
 ]
 
-var otlpAppSettings = empty(otlpExporterEndpoint) ? [] : [
+var otlpEndpointAppSettings = empty(otlpExporterEndpoint) ? [] : [
   {
     name: 'OTEL_EXPORTER_OTLP_ENDPOINT'
     value: otlpExporterEndpoint
@@ -186,6 +210,27 @@ var otlpAppSettings = empty(otlpExporterEndpoint) ? [] : [
   {
     name: 'OTEL_EXPORTER_OTLP_PROTOCOL'
     value: otlpExporterProtocol
+  }
+]
+
+var otlpHeadersAppSettings = empty(otelExporterOtlpHeaders) ? [] : [
+  {
+    name: 'OTEL_EXPORTER_OTLP_HEADERS'
+    value: otelExporterOtlpHeaders
+  }
+]
+
+var otelServiceNameAppSettings = empty(otelServiceName) ? [] : [
+  {
+    name: 'OTEL_SERVICE_NAME'
+    value: otelServiceName
+  }
+]
+
+var otelResourceAttributesAppSettings = empty(otelResourceAttributes) ? [] : [
+  {
+    name: 'OTEL_RESOURCE_ATTRIBUTES'
+    value: otelResourceAttributes
   }
 ]
 
@@ -218,7 +263,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
     httpsOnly: true
     siteConfig: {
       alwaysOn: true
-      appSettings: concat(baseAppSettings, otlpAppSettings)
+      appSettings: concat(baseAppSettings, otlpEndpointAppSettings, otlpHeadersAppSettings, otelServiceNameAppSettings, otelResourceAttributesAppSettings)
       ftpsState: 'FtpsOnly'
       healthCheckPath: '/health'
       http20Enabled: true

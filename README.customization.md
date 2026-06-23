@@ -53,6 +53,7 @@ The Azure deployment bootstrap in section 5 automates a different Entra applicat
   - `OTEL_EXPORTER_OTLP_ENDPOINT`
   - `OTEL_EXPORTER_OTLP_HEADERS` (e.g., `Authorization=Bearer <token>`)
   - `OTEL_SERVICE_NAME`
+  - `OTEL_RESOURCE_ATTRIBUTES` (e.g., `deployment.environment=Development,service.namespace=<app-name>`)
 - Commit only the `.env.example` scaffolding—never real credentials—and document which secrets are required for each environment.
 
 ## 5. Azure Deployment Setup
@@ -94,8 +95,8 @@ Optional GitHub Environment variables/secrets used by the reusable deployment wo
 - App identity and location: `APP_NAME`, `AZURE_LOCATION`
 - Existing infrastructure deploys: `WEB_APP_NAME`, `DB_CONNECTION` secret
 - Auth: `AUTH_CLIENT_ID`, `AUTH_TENANT_ID`, `AUTH_DOMAIN`, `AUTH_INSTANCE`, `AUTH_CALLBACK_PATH`
-- Notifications and SMTP: `NOTIFICATION_BASE_URL`, `NOTIFICATION_DEFAULT_APP_NAME`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USE_SSL`, `SMTP_USERNAME`, `SMTP_PASSWORD` secret, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`, `SMTP_REPLY_TO_EMAIL`, `SMTP_BCC_EMAIL`
-- Observability: `OTLP_EXPORTER_ENDPOINT`, `OTLP_EXPORTER_PROTOCOL`
+- Notifications and SMTP: `NOTIFICATION_BASE_URL`, `NOTIFICATION_DEFAULT_APP_NAME`, `NOTIFICATION_DEFAULT_BUTTON_TEXT`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_TIMEOUT`, `SMTP_USE_SSL`, `SMTP_USERNAME`, `SMTP_PASSWORD` secret, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`, `SMTP_REPLY_TO_EMAIL`, `SMTP_BCC_EMAIL`
+- Observability: `OTLP_EXPORTER_ENDPOINT`, `OTLP_EXPORTER_PROTOCOL`, `OTEL_EXPORTER_OTLP_HEADERS` secret, `OTEL_SERVICE_NAME`, `OTEL_RESOURCE_ATTRIBUTES`
 - SKUs and database names: `WEB_SKU_NAME`, `WEB_SKU_TIER`, `SQL_DATABASE_NAME`, `SQL_SKU_NAME`, `SQL_SKU_TIER`, `SQL_ADMIN_LOGIN`
 
 ### One-time OIDC bootstrap

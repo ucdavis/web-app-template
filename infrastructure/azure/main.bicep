@@ -55,6 +55,9 @@ param notificationBaseUrl string = ''
 @description('Default application name used in generated notifications.')
 param notificationDefaultAppName string = appName
 
+@description('Default button text used in generated notifications.')
+param notificationDefaultButtonText string = 'Open the application'
+
 @description('Entra ID application client ID used by Microsoft Identity Web.')
 param authClientId string = ''
 
@@ -75,6 +78,9 @@ param smtpHost string = ''
 
 @description('SMTP port for outbound email.')
 param smtpPort int = 587
+
+@description('SMTP timeout in milliseconds.')
+param smtpTimeout int = 100000
 
 @description('Whether SMTP should use SSL.')
 param smtpUseSsl bool = true
@@ -107,6 +113,16 @@ param otlpExporterEndpoint string = ''
 ])
 @description('OTLP exporter protocol used when an OTLP endpoint is configured.')
 param otlpExporterProtocol string = 'http/protobuf'
+
+@secure()
+@description('Optional OTLP exporter headers. Use for collector authorization headers when required.')
+param otelExporterOtlpHeaders string = ''
+
+@description('Optional OpenTelemetry service name.')
+param otelServiceName string = ''
+
+@description('Optional OpenTelemetry resource attributes.')
+param otelResourceAttributes string = ''
 
 var appNameSafe = toLower(replace(replace(appName, ' ', ''), '_', ''))
 var nameToken = substring(uniqueString(resourceGroup().id, appName, env), 0, 6)
@@ -187,6 +203,7 @@ module compute 'modules/compute.bicep' = if (deploymentGuardPassed) {
     appInsightsInstrumentationKey: appInsights!.properties.InstrumentationKey
     notificationBaseUrl: resolvedNotificationBaseUrl
     notificationDefaultAppName: notificationDefaultAppName
+    notificationDefaultButtonText: notificationDefaultButtonText
     authClientId: authClientId
     authTenantId: authTenantId
     authDomain: authDomain
@@ -194,6 +211,7 @@ module compute 'modules/compute.bicep' = if (deploymentGuardPassed) {
     authCallbackPath: authCallbackPath
     smtpHost: smtpHost
     smtpPort: smtpPort
+    smtpTimeout: smtpTimeout
     smtpUseSsl: smtpUseSsl
     smtpUsername: smtpUsername
     smtpPassword: smtpPassword
@@ -203,6 +221,9 @@ module compute 'modules/compute.bicep' = if (deploymentGuardPassed) {
     smtpBccEmail: smtpBccEmail
     otlpExporterEndpoint: otlpExporterEndpoint
     otlpExporterProtocol: otlpExporterProtocol
+    otelExporterOtlpHeaders: otelExporterOtlpHeaders
+    otelServiceName: otelServiceName
+    otelResourceAttributes: otelResourceAttributes
   }
 }
 

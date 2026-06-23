@@ -49,6 +49,9 @@ on:
       SMTP_PASSWORD:
         description: Optional SMTP password runtime setting.
         required: false
+      OTEL_EXPORTER_OTLP_HEADERS:
+        description: Optional OTLP exporter headers, such as collector authorization.
+        required: false
       DB_CONNECTION:
         description: Optional DB_CONNECTION override for existing infrastructure deployments.
         required: false
@@ -80,6 +83,10 @@ jobs:
       DEPLOY_ENV: ${{ inputs.environment }}
       NOTIFICATION_BASE_URL: ${{ vars.NOTIFICATION_BASE_URL }}
       NOTIFICATION_DEFAULT_APP_NAME: ${{ vars.NOTIFICATION_DEFAULT_APP_NAME }}
+      NOTIFICATION_DEFAULT_BUTTON_TEXT: ${{ vars.NOTIFICATION_DEFAULT_BUTTON_TEXT }}
+      OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      OTEL_RESOURCE_ATTRIBUTES: ${{ vars.OTEL_RESOURCE_ATTRIBUTES }}
+      OTEL_SERVICE_NAME: ${{ vars.OTEL_SERVICE_NAME }}
       OTLP_EXPORTER_ENDPOINT: ${{ vars.OTLP_EXPORTER_ENDPOINT }}
       OTLP_EXPORTER_PROTOCOL: ${{ vars.OTLP_EXPORTER_PROTOCOL }}
       RESOURCE_GROUP: ${{ inputs.resource_group || vars.RESOURCE_GROUP }}
@@ -90,6 +97,7 @@ jobs:
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       SMTP_PORT: ${{ vars.SMTP_PORT }}
       SMTP_REPLY_TO_EMAIL: ${{ vars.SMTP_REPLY_TO_EMAIL }}
+      SMTP_TIMEOUT: ${{ vars.SMTP_TIMEOUT }}
       SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
       SMTP_USE_SSL: ${{ vars.SMTP_USE_SSL }}
       SQL_ADMIN_LOGIN: ${{ vars.SQL_ADMIN_LOGIN || 'sqladmin' }}
@@ -221,6 +229,7 @@ jobs:
           add_param "sqlSkuTier" "$SQL_SKU_TIER"
           add_param "notificationBaseUrl" "$NOTIFICATION_BASE_URL"
           add_param "notificationDefaultAppName" "$NOTIFICATION_DEFAULT_APP_NAME"
+          add_param "notificationDefaultButtonText" "$NOTIFICATION_DEFAULT_BUTTON_TEXT"
           add_param "authClientId" "$AUTH_CLIENT_ID"
           add_param "authTenantId" "$AUTH_TENANT_ID"
           add_param "authDomain" "$AUTH_DOMAIN"
@@ -228,6 +237,7 @@ jobs:
           add_param "authCallbackPath" "$AUTH_CALLBACK_PATH"
           add_param "smtpHost" "$SMTP_HOST"
           add_param "smtpPort" "$SMTP_PORT"
+          add_param "smtpTimeout" "$SMTP_TIMEOUT"
           add_param "smtpUseSsl" "$SMTP_USE_SSL"
           add_param "smtpUsername" "$SMTP_USERNAME"
           add_param "smtpPassword" "$SMTP_PASSWORD"
@@ -237,6 +247,9 @@ jobs:
           add_param "smtpBccEmail" "$SMTP_BCC_EMAIL"
           add_param "otlpExporterEndpoint" "$OTLP_EXPORTER_ENDPOINT"
           add_param "otlpExporterProtocol" "$OTLP_EXPORTER_PROTOCOL"
+          add_param "otelExporterOtlpHeaders" "$OTEL_EXPORTER_OTLP_HEADERS"
+          add_param "otelServiceName" "$OTEL_SERVICE_NAME"
+          add_param "otelResourceAttributes" "$OTEL_RESOURCE_ATTRIBUTES"
 
           az deployment group create \
             --name "$deployment_name" \
@@ -290,6 +303,7 @@ jobs:
           add_setting "DB_CONNECTION" "$DB_CONNECTION"
           add_setting "Notification__BaseUrl" "$NOTIFICATION_BASE_URL"
           add_setting "Notification__DefaultAppName" "$NOTIFICATION_DEFAULT_APP_NAME"
+          add_setting "Notification__DefaultButtonText" "$NOTIFICATION_DEFAULT_BUTTON_TEXT"
           add_setting "Auth__ClientId" "$AUTH_CLIENT_ID"
           add_setting "Auth__TenantId" "$AUTH_TENANT_ID"
           add_setting "Auth__Domain" "$AUTH_DOMAIN"
@@ -297,6 +311,7 @@ jobs:
           add_setting "Auth__CallbackPath" "$AUTH_CALLBACK_PATH"
           add_setting "Smtp__Host" "$SMTP_HOST"
           add_setting "Smtp__Port" "$SMTP_PORT"
+          add_setting "Smtp__Timeout" "$SMTP_TIMEOUT"
           add_setting "Smtp__UseSsl" "$SMTP_USE_SSL"
           add_setting "Smtp__Username" "$SMTP_USERNAME"
           add_setting "Smtp__Password" "$SMTP_PASSWORD"
@@ -306,6 +321,9 @@ jobs:
           add_setting "Smtp__BccEmail" "$SMTP_BCC_EMAIL"
           add_setting "OTEL_EXPORTER_OTLP_ENDPOINT" "$OTLP_EXPORTER_ENDPOINT"
           add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "$OTLP_EXPORTER_PROTOCOL"
+          add_setting "OTEL_EXPORTER_OTLP_HEADERS" "$OTEL_EXPORTER_OTLP_HEADERS"
+          add_setting "OTEL_SERVICE_NAME" "$OTEL_SERVICE_NAME"
+          add_setting "OTEL_RESOURCE_ATTRIBUTES" "$OTEL_RESOURCE_ATTRIBUTES"
 
           az webapp config appsettings set \
             --resource-group "$RESOURCE_GROUP" \
