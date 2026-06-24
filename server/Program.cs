@@ -95,7 +95,41 @@ try
 
     app.UseForwardedHeaders();
 
-    app.UseStaticFiles();
+    app.Use(async (context, next) =>
+    {
+        context.Response.OnStarting(() =>
+        {
+            if (context.Response.StatusCode == StatusCodes.Status404NotFound &&
+                IsAssetRequest(context.Request.Path))
+            {
+                ApplyNoStoreHeaders(context);
+            }
+
+            return Task.CompletedTask;
+        });
+
+        await next();
+    });
+
+    var staticFileOptions = new StaticFileOptions
+    {
+        OnPrepareResponse = context =>
+        {
+            if (string.Equals(context.File.Name, "index.html", StringComparison.OrdinalIgnoreCase))
+            {
+                ApplyNoStoreHeaders(context.Context);
+                return;
+            }
+
+            if (IsAssetRequest(context.Context.Request.Path))
+            {
+                context.Context.Response.Headers.CacheControl = "public,max-age=31536000,immutable";
+            }
+        }
+    };
+
+    app.UseDefaultFiles();
+    app.UseStaticFiles(staticFileOptions);
 
     app.UseResponseCaching();
 
@@ -108,8 +142,6 @@ try
     }
     else
     {
-        app.UseDefaultFiles();
-
         // only use HTTPS redirection in non-development environments
         app.UseHttpsRedirection();
     }
@@ -135,12 +167,7 @@ try
         NoStore = false,
     });
 
-
-    if (!app.Environment.IsDevelopment())
-    {
-        // In production, fallback to index.html for SPA routing
-        app.MapFallbackToFile("/index.html");
-    }
+    app.MapFallbackToFile("/index.html", staticFileOptions);
 
     app.Logger.LogInformation("Startup complete. Listening on {Urls}", string.Join(", ", app.Urls));
     app.Run();
@@ -150,4 +177,19 @@ catch (Exception ex)
 {
     StartupLoggingHelper.LogStartupFailure(app, ex);
     throw;
+}
+
+static bool IsAssetRequest(PathString path)
+{
+    var value = path.Value;
+    return value is not null &&
+           (string.Equals(value, "/assets", StringComparison.OrdinalIgnoreCase) ||
+            value.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase));
+}
+
+static void ApplyNoStoreHeaders(HttpContext context)
+{
+    context.Response.Headers.CacheControl = "no-store,max-age=0";
+    context.Response.Headers.Pragma = "no-cache";
+    context.Response.Headers.Expires = "0";
 }
