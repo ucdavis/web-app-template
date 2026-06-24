@@ -1,0 +1,103 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: GitHub Environment to deploy.
+        required: true
+        type: choice
+        default: test
+        options:
+          - test
+          - prod
+      deploy_infra:
+        description: Deploy Azure infrastructure before deploying the app package.
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Restore frontend dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: client
+        run: npm run build
+
+      - name: Test frontend
+        working-directory: client
+        run: npm test -- --run
+
+      - name: Restore .NET projects
+        run: dotnet restore app.sln
+
+      - name: Build .NET projects
+        run: dotnet build app.sln --configuration Release --no-restore
+
+      - name: Test .NET projects
+        run: dotnet test app.sln --configuration Release --no-build
+
+  deploy_test:
+    name: Deploy test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    uses: ./.github/workflows/deploy-azure-appservice.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      environment: test
+      deploy_infra: true
+    secrets:
+      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+
+  deploy_manual:
+    name: Deploy ${{ inputs.environment }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    uses: ./.github/workflows/deploy-azure-appservice.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      environment: ${{ inputs.environment }}
+      deploy_infra: ${{ inputs.deploy_infra }}
+    secrets:
+      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      DB_CONNECTION: ${{ secrets.DB_CONNECTION }}

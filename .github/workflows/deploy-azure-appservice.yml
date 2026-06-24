@@ -1,0 +1,340 @@
+name: Deploy Azure App Service
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub Environment and Azure deployment environment.
+        required: true
+        type: string
+      deploy_infra:
+        description: Deploy Azure infrastructure before deploying the app package.
+        required: false
+        type: boolean
+        default: true
+      app_name:
+        description: Base application name used by the Azure Bicep template.
+        required: false
+        type: string
+        default: webapp
+      web_app_name:
+        description: Existing App Service name to deploy when deploy_infra is false.
+        required: false
+        type: string
+        default: ""
+      resource_group:
+        description: Azure resource group. Defaults to the RESOURCE_GROUP environment variable.
+        required: false
+        type: string
+        default: ""
+      azure_location:
+        description: Azure region override for infrastructure deployment.
+        required: false
+        type: string
+        default: ""
+      dotnet_version:
+        description: .NET SDK version to install.
+        required: false
+        type: string
+        default: 10.0.x
+      node_version:
+        description: Node.js version to install.
+        required: false
+        type: string
+        default: 22.x
+    secrets:
+      SQL_ADMIN_PASSWORD:
+        description: SQL admin password used when deploy_infra is true.
+        required: false
+      SMTP_PASSWORD:
+        description: Optional SMTP password runtime setting.
+        required: false
+      OTEL_EXPORTER_OTLP_HEADERS:
+        description: Optional OTLP exporter headers, such as collector authorization.
+        required: false
+      DB_CONNECTION:
+        description: Optional DB_CONNECTION override for existing infrastructure deployments.
+        required: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    concurrency:
+      group: azure-${{ inputs.environment }}
+      cancel-in-progress: false
+    env:
+      APP_NAME: ${{ vars.APP_NAME || inputs.app_name }}
+      AUTH_CALLBACK_PATH: ${{ vars.AUTH_CALLBACK_PATH }}
+      AUTH_CLIENT_ID: ${{ vars.AUTH_CLIENT_ID }}
+      AUTH_DOMAIN: ${{ vars.AUTH_DOMAIN }}
+      AUTH_INSTANCE: ${{ vars.AUTH_INSTANCE }}
+      AUTH_TENANT_ID: ${{ vars.AUTH_TENANT_ID }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_LOCATION: ${{ inputs.azure_location || vars.AZURE_LOCATION }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+      DEPLOY_ENV: ${{ inputs.environment }}
+      NOTIFICATION_BASE_URL: ${{ vars.NOTIFICATION_BASE_URL }}
+      NOTIFICATION_DEFAULT_APP_NAME: ${{ vars.NOTIFICATION_DEFAULT_APP_NAME }}
+      NOTIFICATION_DEFAULT_BUTTON_TEXT: ${{ vars.NOTIFICATION_DEFAULT_BUTTON_TEXT }}
+      OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${{ vars.OTEL_EXPORTER_OTLP_ENDPOINT }}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${{ vars.OTEL_EXPORTER_OTLP_PROTOCOL }}
+      OTEL_RESOURCE_ATTRIBUTES: ${{ vars.OTEL_RESOURCE_ATTRIBUTES }}
+      OTEL_SERVICE_NAME: ${{ vars.OTEL_SERVICE_NAME }}
+      RESOURCE_GROUP: ${{ inputs.resource_group || vars.RESOURCE_GROUP }}
+      SMTP_BCC_EMAIL: ${{ vars.SMTP_BCC_EMAIL }}
+      SMTP_FROM_EMAIL: ${{ vars.SMTP_FROM_EMAIL }}
+      SMTP_FROM_NAME: ${{ vars.SMTP_FROM_NAME }}
+      SMTP_HOST: ${{ vars.SMTP_HOST }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SMTP_PORT: ${{ vars.SMTP_PORT }}
+      SMTP_REPLY_TO_EMAIL: ${{ vars.SMTP_REPLY_TO_EMAIL }}
+      SMTP_TIMEOUT: ${{ vars.SMTP_TIMEOUT }}
+      SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
+      SMTP_USE_SSL: ${{ vars.SMTP_USE_SSL }}
+      SQL_ADMIN_LOGIN: ${{ vars.SQL_ADMIN_LOGIN || 'sqladmin' }}
+      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      SQL_DATABASE_NAME: ${{ vars.SQL_DATABASE_NAME }}
+      SQL_SKU_NAME: ${{ vars.SQL_SKU_NAME }}
+      SQL_SKU_TIER: ${{ vars.SQL_SKU_TIER }}
+      WEB_APP_NAME_INPUT: ${{ inputs.web_app_name || vars.WEB_APP_NAME }}
+      WEB_SKU_NAME: ${{ vars.WEB_SKU_NAME }}
+      WEB_SKU_TIER: ${{ vars.WEB_SKU_TIER }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+
+      - name: Validate deployment configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "$DEPLOY_ENV" != "test" && "$DEPLOY_ENV" != "prod" ]]; then
+            echo "environment must be either test or prod."
+            exit 1
+          fi
+
+          missing=()
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID RESOURCE_GROUP; do
+            if [[ -z "${!name}" ]]; then
+              missing+=("$name")
+            fi
+          done
+
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required GitHub Environment variable(s): %s\n' "${missing[*]}"
+            exit 1
+          fi
+
+          if [[ "${{ inputs.deploy_infra }}" == "true" && -z "$SQL_ADMIN_PASSWORD" ]]; then
+            echo "SQL_ADMIN_PASSWORD must be configured as a GitHub Environment secret when deploy_infra is true."
+            exit 1
+          fi
+
+          if [[ "${{ inputs.deploy_infra }}" != "true" && -z "$WEB_APP_NAME_INPUT" ]]; then
+            echo "WEB_APP_NAME or the web_app_name input must be configured when deploy_infra is false."
+            exit 1
+          fi
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: ${{ inputs.dotnet_version }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ inputs.node_version }}
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Restore frontend dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: client
+        run: npm run build
+
+      - name: Test frontend
+        working-directory: client
+        run: npm test -- --run
+
+      - name: Restore .NET projects
+        run: dotnet restore app.sln
+
+      - name: Build .NET projects
+        run: dotnet build app.sln --configuration Release --no-restore
+
+      - name: Test .NET projects
+        run: dotnet test app.sln --configuration Release --no-build
+
+      - name: Publish app
+        run: dotnet publish server/server.csproj --configuration Release --output "$PWD/publish/web"
+
+      - name: Package app
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p publish
+          cd publish/web
+          zip -qr ../webapp.zip .
+
+      - name: Azure login
+        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy infrastructure
+        id: deploy_infra
+        if: ${{ inputs.deploy_infra }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deployment_name="${APP_NAME}-${DEPLOY_ENV}-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
+          params=(
+            "appName=$APP_NAME"
+            "env=$DEPLOY_ENV"
+            "expectedSubscriptionId=$AZURE_SUBSCRIPTION_ID"
+            "sqlAdminLogin=$SQL_ADMIN_LOGIN"
+            "sqlAdminPassword=$SQL_ADMIN_PASSWORD"
+          )
+
+          add_param() {
+            local name="$1"
+            local value="$2"
+
+            if [[ -n "$value" ]]; then
+              params+=("$name=$value")
+            fi
+          }
+
+          add_param "location" "$AZURE_LOCATION"
+          add_param "sqlDatabaseName" "$SQL_DATABASE_NAME"
+          add_param "webSkuName" "$WEB_SKU_NAME"
+          add_param "webSkuTier" "$WEB_SKU_TIER"
+          add_param "sqlSkuName" "$SQL_SKU_NAME"
+          add_param "sqlSkuTier" "$SQL_SKU_TIER"
+          add_param "notificationBaseUrl" "$NOTIFICATION_BASE_URL"
+          add_param "notificationDefaultAppName" "$NOTIFICATION_DEFAULT_APP_NAME"
+          add_param "notificationDefaultButtonText" "$NOTIFICATION_DEFAULT_BUTTON_TEXT"
+          add_param "authClientId" "$AUTH_CLIENT_ID"
+          add_param "authTenantId" "$AUTH_TENANT_ID"
+          add_param "authDomain" "$AUTH_DOMAIN"
+          add_param "authInstance" "$AUTH_INSTANCE"
+          add_param "authCallbackPath" "$AUTH_CALLBACK_PATH"
+          add_param "smtpHost" "$SMTP_HOST"
+          add_param "smtpPort" "$SMTP_PORT"
+          add_param "smtpTimeout" "$SMTP_TIMEOUT"
+          add_param "smtpUseSsl" "$SMTP_USE_SSL"
+          add_param "smtpUsername" "$SMTP_USERNAME"
+          add_param "smtpPassword" "$SMTP_PASSWORD"
+          add_param "smtpFromEmail" "$SMTP_FROM_EMAIL"
+          add_param "smtpFromName" "$SMTP_FROM_NAME"
+          add_param "smtpReplyToEmail" "$SMTP_REPLY_TO_EMAIL"
+          add_param "smtpBccEmail" "$SMTP_BCC_EMAIL"
+          add_param "otelExporterOtlpEndpoint" "$OTEL_EXPORTER_OTLP_ENDPOINT"
+          add_param "otelExporterOtlpProtocol" "$OTEL_EXPORTER_OTLP_PROTOCOL"
+          add_param "otelExporterOtlpHeaders" "$OTEL_EXPORTER_OTLP_HEADERS"
+          add_param "otelServiceName" "$OTEL_SERVICE_NAME"
+          add_param "otelResourceAttributes" "$OTEL_RESOURCE_ATTRIBUTES"
+
+          az deployment group create \
+            --name "$deployment_name" \
+            --resource-group "$RESOURCE_GROUP" \
+            --template-file infrastructure/azure/main.bicep \
+            --parameters "${params[@]}" \
+            --query properties.outputs \
+            --output json | tee publish/deployment-outputs.json
+
+          deployment_guard_passed="$(jq -r '.deploymentGuardPassed.value // false' publish/deployment-outputs.json)"
+          if [[ "$deployment_guard_passed" != "true" ]]; then
+            echo "Azure deployment guard did not pass. Check subscription ID, resource group suffix, and environment values."
+            exit 1
+          fi
+
+          web_app_name="$(jq -r '.webAppName.value // empty' publish/deployment-outputs.json)"
+          if [[ -z "$web_app_name" ]]; then
+            echo "The infrastructure deployment did not return a webAppName output."
+            exit 1
+          fi
+
+          echo "web_app_name=$web_app_name" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve existing App Service
+        id: resolve_existing
+        if: ${{ ! inputs.deploy_infra }}
+        shell: bash
+        run: echo "web_app_name=$WEB_APP_NAME_INPUT" >> "$GITHUB_OUTPUT"
+
+      - name: Apply runtime app settings
+        shell: bash
+        env:
+          WEB_APP_NAME: ${{ steps.deploy_infra.outputs.web_app_name || steps.resolve_existing.outputs.web_app_name }}
+        run: |
+          set -euo pipefail
+
+          settings=(
+            "ASPNETCORE_ENVIRONMENT=$DEPLOY_ENV"
+            "WEBSITE_RUN_FROM_PACKAGE=1"
+          )
+
+          add_setting() {
+            local name="$1"
+            local value="$2"
+
+            if [[ -n "$value" ]]; then
+              settings+=("$name=$value")
+            fi
+          }
+
+          add_setting "DB_CONNECTION" "$DB_CONNECTION"
+          add_setting "Notification__BaseUrl" "$NOTIFICATION_BASE_URL"
+          add_setting "Notification__DefaultAppName" "$NOTIFICATION_DEFAULT_APP_NAME"
+          add_setting "Notification__DefaultButtonText" "$NOTIFICATION_DEFAULT_BUTTON_TEXT"
+          add_setting "Auth__ClientId" "$AUTH_CLIENT_ID"
+          add_setting "Auth__TenantId" "$AUTH_TENANT_ID"
+          add_setting "Auth__Domain" "$AUTH_DOMAIN"
+          add_setting "Auth__Instance" "$AUTH_INSTANCE"
+          add_setting "Auth__CallbackPath" "$AUTH_CALLBACK_PATH"
+          add_setting "Smtp__Host" "$SMTP_HOST"
+          add_setting "Smtp__Port" "$SMTP_PORT"
+          add_setting "Smtp__Timeout" "$SMTP_TIMEOUT"
+          add_setting "Smtp__UseSsl" "$SMTP_USE_SSL"
+          add_setting "Smtp__Username" "$SMTP_USERNAME"
+          add_setting "Smtp__Password" "$SMTP_PASSWORD"
+          add_setting "Smtp__FromEmail" "$SMTP_FROM_EMAIL"
+          add_setting "Smtp__FromName" "$SMTP_FROM_NAME"
+          add_setting "Smtp__ReplyToEmail" "$SMTP_REPLY_TO_EMAIL"
+          add_setting "Smtp__BccEmail" "$SMTP_BCC_EMAIL"
+          add_setting "OTEL_EXPORTER_OTLP_ENDPOINT" "$OTEL_EXPORTER_OTLP_ENDPOINT"
+          add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "$OTEL_EXPORTER_OTLP_PROTOCOL"
+          add_setting "OTEL_EXPORTER_OTLP_HEADERS" "$OTEL_EXPORTER_OTLP_HEADERS"
+          add_setting "OTEL_SERVICE_NAME" "$OTEL_SERVICE_NAME"
+          add_setting "OTEL_RESOURCE_ATTRIBUTES" "$OTEL_RESOURCE_ATTRIBUTES"
+
+          az webapp config appsettings set \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$WEB_APP_NAME" \
+            --settings "${settings[@]}" \
+            --output none
+
+      - name: Deploy app package
+        uses: azure/webapps-deploy@02a81bead70021f5284939794bcec79c271ab383 # v3
+        with:
+          app-name: ${{ steps.deploy_infra.outputs.web_app_name || steps.resolve_existing.outputs.web_app_name }}
+          package: publish/webapp.zip

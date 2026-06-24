@@ -21,9 +21,9 @@ type NotificationResponse = {
 };
 
 type TableNotificationRow = {
-  title: string;
-  details: string;
   amount: number;
+  details: string;
+  title: string;
 };
 
 type TableNotificationRequest = {
@@ -370,29 +370,29 @@ function NotificationRoute() {
 function buildTableExampleRequest(): TableNotificationRequest {
   const rows: TableNotificationRow[] = [
     {
-      title: 'Discovery workshop',
-      details: 'Stakeholder interviews and scope alignment',
       amount: 125,
+      details: 'Stakeholder interviews and scope alignment',
+      title: 'Discovery workshop',
     },
     {
-      title: 'UI design',
-      details: 'Wireframes, review, and component specs',
       amount: 240,
+      details: 'Wireframes, review, and component specs',
+      title: 'UI design',
     },
     {
-      title: 'Frontend build',
-      details: 'Route wiring and shared component integration',
       amount: 180,
+      details: 'Route wiring and shared component integration',
+      title: 'Frontend build',
     },
     {
-      title: 'Backend API',
-      details: 'Notification endpoint and MJML template data',
       amount: 95,
+      details: 'Notification endpoint and MJML template data',
+      title: 'Backend API',
     },
     {
-      title: 'QA pass',
-      details: 'Template verification and regression checks',
       amount: 310,
+      details: 'Template verification and regression checks',
+      title: 'QA pass',
     },
   ];
 

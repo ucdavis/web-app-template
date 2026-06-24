@@ -1,10 +1,50 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/test/mswUtils.ts';
 import { renderRoute } from '@/test/routerUtils.tsx';
 
 describe('fetch route', () => {
+  it('renders the not-authorized state when the signed-in user is forbidden', async () => {
+    const consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const consoleWarn = vi
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
+    let weatherRequestCount = 0;
+
+    server.use(
+      http.get('/api/user/me', () => new HttpResponse(null, { status: 403 })),
+      http.get('/api/weatherforecast', () => {
+        weatherRequestCount += 1;
+        return HttpResponse.json([]);
+      })
+    );
+
+    let cleanup: () => void = () => undefined;
+
+    try {
+      ({ cleanup } = renderRoute({ initialPath: '/fetch' }));
+      expect(
+        await screen.findByRole('heading', { name: 'Access unavailable' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'You are signed in, but your account is not authorized to use this application.'
+        )
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('heading', { name: 'Weather forecast' })
+      ).not.toBeInTheDocument();
+      expect(weatherRequestCount).toBe(0);
+    } finally {
+      consoleError.mockRestore();
+      consoleWarn.mockRestore();
+      cleanup();
+    }
+  });
+
   it('renders weather data returned by the API', async () => {
     // arrange
     const forecasts = [

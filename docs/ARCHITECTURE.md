@@ -11,6 +11,8 @@ This template uses:
 
 In production, ASP.NET Core serves the built frontend from `server/wwwroot`.
 
+Cloud deployments use Azure App Service, Azure SQL, workspace-based Application Insights, and Log Analytics. The deployment scaffold supports only `test` and `prod` environments.
+
 ## Development Request Flow
 
 ### Visual Studio startup flow
@@ -52,6 +54,24 @@ Browser → :5165 (ASP.NET Core)
     ↓                ↓
  Controllers      wwwroot/index.html + assets
 ```
+
+## Azure Hosting Flow
+
+```text
+GitHub Actions or local deploy script
+    ↓
+Build React frontend + publish ASP.NET Core app
+    ↓
+Zip deploy to Azure App Service
+    ↓
+App Service serves /api, auth, health, static assets, and SPA fallback
+    ↓
+Azure SQL, Application Insights, and Log Analytics
+```
+
+Each deployment validates the expected subscription ID and requires the target resource group to end with the matching environment suffix before resources are created.
+
+GitHub deployments authenticate to Azure with OIDC through a per-environment Entra app registration. The one-time bootstrap template creates the app registration, service principal, GitHub Environment federated credential, and optional Contributor assignment on the environment resource group.
 
 ## Key Files
 
@@ -95,6 +115,39 @@ Responsibilities:
 - Serves static files in all environments
 - Reserves SPA fallback behavior for production, where the built frontend lives in `wwwroot`
 
+### `infrastructure/azure/main.bicep`
+
+Responsibilities:
+
+- Creates Azure SQL, Linux App Service, Log Analytics, and workspace-based Application Insights
+- Applies generic runtime settings for auth, notifications, SMTP, database connectivity, and optional OTLP export
+- Emits deployment outputs consumed by scripts and GitHub Actions
+
+### `infrastructure/azure/github-oidc.bicep`
+
+Responsibilities:
+
+- Creates the per-environment GitHub OIDC deployment identity
+- Adds the federated credential for `repo:<owner>/<repo>:environment:<env>`
+- Optionally assigns Contributor on the target resource group
+
+### `.github/workflows/ci-cd.yml`
+
+Responsibilities:
+
+- Validates pull requests
+- Deploys pushes to `main` to the `test` GitHub Environment
+- Supports manual deployments to `test` or `prod`
+
+### `.github/workflows/deploy-azure-appservice.yml`
+
+Responsibilities:
+
+- Provides the reusable App Service deployment job
+- Builds, tests, publishes, and packages the app
+- Logs in to Azure with GitHub OIDC
+- Optionally deploys infrastructure and then zip deploys the app package
+
 ## Development Workflows
 
 ### Visual Studio on Windows
@@ -125,6 +178,10 @@ Run only the frontend:
 cd client
 npm run dev
 ```
+
+### Local Azure deploy
+
+For local deploy commands and required settings, see [Azure Deployment Setup](../README.customization.md#5-azure-deployment-setup).
 
 ## Why This Replaced `.esproj`
 
@@ -167,6 +224,12 @@ Common local fix:
 ```bash
 npm run db:up
 ```
+
+For cloud first-start migration behavior, see [First deployment](../README.customization.md#first-deployment).
+
+### Auth cookies fail after scaling out
+
+For the data-protection scale-out caveat, see [First deployment](../README.customization.md#first-deployment).
 
 ### Changing ports
 
