@@ -83,6 +83,8 @@ try
 
     app = builder.Build();
 
+    app.Logger.LogInformation("Starting up {AppName} in {Environment} environment", app.Environment.ApplicationName, app.Environment.EnvironmentName);
+
     // do db migrations at startup
     using (var scope = app.Services.CreateScope())
     {
@@ -140,7 +142,9 @@ try
         app.MapFallbackToFile("/index.html");
     }
 
+    app.Logger.LogInformation("Startup complete. Listening on {Urls}", string.Join(", ", app.Urls));
     app.Run();
+    app.Logger.LogInformation("Shutting down {AppName} in {Environment} environment", app.Environment.ApplicationName, app.Environment.EnvironmentName);
 }
 catch (Exception ex)
 {

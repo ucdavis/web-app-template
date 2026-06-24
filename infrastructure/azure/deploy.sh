@@ -30,7 +30,7 @@ Optional app settings use the same names as the GitHub Environment variables:
   NOTIFICATION_BASE_URL, NOTIFICATION_DEFAULT_APP_NAME, NOTIFICATION_DEFAULT_BUTTON_TEXT,
   SMTP_HOST, SMTP_PORT, SMTP_TIMEOUT, SMTP_USE_SSL, SMTP_USERNAME, SMTP_PASSWORD,
   SMTP_FROM_EMAIL, SMTP_FROM_NAME, SMTP_REPLY_TO_EMAIL, SMTP_BCC_EMAIL,
-  OTLP_EXPORTER_ENDPOINT, OTLP_EXPORTER_PROTOCOL, OTEL_EXPORTER_OTLP_HEADERS,
+  OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_PROTOCOL, OTEL_EXPORTER_OTLP_HEADERS,
   OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES, DB_CONNECTION
 USAGE
 }
@@ -211,8 +211,8 @@ if is_true "$DEPLOY_INFRA"; then
   add_param "smtpFromName" "${SMTP_FROM_NAME:-}"
   add_param "smtpReplyToEmail" "${SMTP_REPLY_TO_EMAIL:-}"
   add_param "smtpBccEmail" "${SMTP_BCC_EMAIL:-}"
-  add_param "otlpExporterEndpoint" "${OTLP_EXPORTER_ENDPOINT:-}"
-  add_param "otlpExporterProtocol" "${OTLP_EXPORTER_PROTOCOL:-}"
+  add_param "otelExporterOtlpEndpoint" "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+  add_param "otelExporterOtlpProtocol" "${OTEL_EXPORTER_OTLP_PROTOCOL:-}"
   add_param "otelExporterOtlpHeaders" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
   add_param "otelServiceName" "${OTEL_SERVICE_NAME:-}"
   add_param "otelResourceAttributes" "${OTEL_RESOURCE_ATTRIBUTES:-}"
@@ -272,8 +272,8 @@ add_setting "Smtp__FromEmail" "${SMTP_FROM_EMAIL:-}"
 add_setting "Smtp__FromName" "${SMTP_FROM_NAME:-}"
 add_setting "Smtp__ReplyToEmail" "${SMTP_REPLY_TO_EMAIL:-}"
 add_setting "Smtp__BccEmail" "${SMTP_BCC_EMAIL:-}"
-add_setting "OTEL_EXPORTER_OTLP_ENDPOINT" "${OTLP_EXPORTER_ENDPOINT:-}"
-add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "${OTLP_EXPORTER_PROTOCOL:-}"
+add_setting "OTEL_EXPORTER_OTLP_ENDPOINT" "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "${OTEL_EXPORTER_OTLP_PROTOCOL:-}"
 add_setting "OTEL_EXPORTER_OTLP_HEADERS" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
 add_setting "OTEL_SERVICE_NAME" "${OTEL_SERVICE_NAME:-}"
 add_setting "OTEL_RESOURCE_ATTRIBUTES" "${OTEL_RESOURCE_ATTRIBUTES:-}"

@@ -88,10 +88,10 @@ param smtpReplyToEmail string
 param smtpBccEmail string
 
 @description('Optional OTLP exporter endpoint.')
-param otlpExporterEndpoint string
+param otelExporterOtlpEndpoint string
 
 @description('OTLP exporter protocol.')
-param otlpExporterProtocol string
+param otelExporterOtlpProtocol string
 
 @secure()
 @description('Optional OTLP exporter headers.')
@@ -202,14 +202,14 @@ var baseAppSettings = [
   }
 ]
 
-var otlpEndpointAppSettings = empty(otlpExporterEndpoint) ? [] : [
+var otlpEndpointAppSettings = empty(otelExporterOtlpEndpoint) ? [] : [
   {
     name: 'OTEL_EXPORTER_OTLP_ENDPOINT'
-    value: otlpExporterEndpoint
+    value: otelExporterOtlpEndpoint
   }
   {
     name: 'OTEL_EXPORTER_OTLP_PROTOCOL'
-    value: otlpExporterProtocol
+    value: otelExporterOtlpProtocol
   }
 ]
 

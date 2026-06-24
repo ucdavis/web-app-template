@@ -115,14 +115,14 @@ param smtpReplyToEmail string = ''
 param smtpBccEmail string = ''
 
 @description('Optional OTLP exporter endpoint. Leave empty when no external OTLP collector is configured.')
-param otlpExporterEndpoint string = ''
+param otelExporterOtlpEndpoint string = ''
 
 @allowed([
   'grpc'
   'http/protobuf'
 ])
 @description('OTLP exporter protocol used when an OTLP endpoint is configured.')
-param otlpExporterProtocol string = 'http/protobuf'
+param otelExporterOtlpProtocol string = 'http/protobuf'
 
 @secure()
 @description('Optional OTLP exporter headers. Use for collector authorization headers when required.')
@@ -231,8 +231,8 @@ module compute 'modules/compute.bicep' = if (deploymentGuardPassed) {
     smtpFromName: smtpFromName
     smtpReplyToEmail: smtpReplyToEmail
     smtpBccEmail: smtpBccEmail
-    otlpExporterEndpoint: otlpExporterEndpoint
-    otlpExporterProtocol: otlpExporterProtocol
+    otelExporterOtlpEndpoint: otelExporterOtlpEndpoint
+    otelExporterOtlpProtocol: otelExporterOtlpProtocol
     otelExporterOtlpHeaders: otelExporterOtlpHeaders
     otelServiceName: otelServiceName
     otelResourceAttributes: otelResourceAttributes
