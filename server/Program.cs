@@ -6,6 +6,7 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Server.Core.Data;
 using Server.Core.Notification;
 using Server.Helpers;
+using Server.Models.PeopleLookup;
 using Server.Services;
 
 WebApplication? app = null;
@@ -32,40 +33,50 @@ try
         o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     });
 
-    // Add auth config (entra)
-    builder.Services.AddAuthenticationServices(builder.Configuration);
-
     builder.Services.AddControllers();
     builder.Services.AddNotificationServices(builder.Configuration);
-
-    // Add response caching for pages that opt-in
-    // https://learn.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-9.0
+    builder.Services.AddAuthenticationServices(builder.Configuration);
+    builder.Services.AddAuthorization();
     builder.Services.AddResponseCaching();
+    builder.Services.Configure<PeopleLookupOptions>(builder.Configuration.GetSection(PeopleLookupOptions.SectionName));
+    builder.Services.AddHttpClient("identity", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        })
+        .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
+            MaxConnectionsPerServer = 10
+        });
 
     // add scoped services here
-    builder.Services.AddScoped<IDbInitializer, DbInitializer>();
     builder.Services.AddScoped<IUserService, UserService>();
+    builder.Services.AddScoped<IIdentityLookupService, IdentityLookupService>();
+    builder.Services.AddScoped<IPeopleLookupPermissionService, PeopleLookupPermissionService>();
     // add auth policies here
 
-    // add db context (check secrets first, then config, then default)
-    var conn = builder.Configuration["DB_CONNECTION"]
-                ?? builder.Configuration.GetConnectionString("DefaultConnection");
+    var healthChecks = builder.Services.AddHealthChecks();
+    var databaseEnabled = builder.Configuration.GetValue("Database:Enabled", false);
 
-    if (string.IsNullOrWhiteSpace(conn))
+    if (databaseEnabled)
     {
-        const string message = "No database connection string configured. Set the DB_CONNECTION environment variable or " +
-                               "configure ConnectionStrings:DefaultConnection. For host-based local development use " +
-                               "Server=localhost,14333;Database=AppDb;User ID=sa;Password=LocalDev123!;Encrypt=False;TrustServerCertificate=True;. " +
-                               "Inside the DevContainer use Server=sql,1433;Database=AppDb;User ID=sa;Password=LocalDev123!;Encrypt=False;TrustServerCertificate=True;.";
+        // add db context (check secrets first, then config, then default)
+        var conn = builder.Configuration["DB_CONNECTION"]
+                   ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
-        throw new InvalidOperationException(message);
+        if (string.IsNullOrWhiteSpace(conn))
+        {
+            const string message = "Database is enabled, but no connection string is configured. Set the DB_CONNECTION environment variable or " +
+                                   "configure ConnectionStrings:DefaultConnection.";
+
+            throw new InvalidOperationException(message);
+        }
+
+        builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+        builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
+        healthChecks.AddDbContextCheck<AppDbContext>();
     }
-
-    builder.Services.AddDbContextPool<AppDbContext>(o => o.UseSqlServer(conn, opt => opt.MigrationsAssembly("server.core")));
-
-    builder.Services
-        .AddHealthChecks()
-        .AddDbContextCheck<AppDbContext>();
 
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services.AddEndpointsApiExplorer();
@@ -83,9 +94,10 @@ try
 
     app = builder.Build();
 
-    // do db migrations at startup
-    using (var scope = app.Services.CreateScope())
+    if (databaseEnabled)
     {
+        // do db migrations at startup only when DB-backed features are explicitly enabled
+        using var scope = app.Services.CreateScope();
         var init = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
         var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
         await init.InitializeAsync(env.IsDevelopment());
@@ -112,7 +124,6 @@ try
         app.UseHttpsRedirection();
     }
 
-
     app.UseAuthentication();
     app.UseAuthorization();
 
@@ -132,7 +143,6 @@ try
         Location = ResponseCacheLocation.Any,
         NoStore = false,
     });
-
 
     if (!app.Environment.IsDevelopment())
     {

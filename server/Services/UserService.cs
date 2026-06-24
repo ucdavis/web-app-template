@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Server.Core.Data;
 
 namespace Server.Services;
 
@@ -13,17 +12,15 @@ public interface IUserService
 public class UserService : IUserService
 {
     private readonly ILogger<UserService> _logger;
-    private readonly AppDbContext _dbContext;
 
-    public UserService(ILogger<UserService> logger, AppDbContext dbContext)
+    public UserService(ILogger<UserService> logger)
     {
         _logger = logger;
-        _dbContext = dbContext;
     }
 
     public async Task<List<string>> GetRolesForUser(string userId)
     {
-        // fake role strings but use _dbContext to get real roles later
+        // fake role strings; replace this with a persistent role source when the app needs one
         var roles = new List<string> { "User", "SampleRole" };
 
         return await Task.FromResult(roles);

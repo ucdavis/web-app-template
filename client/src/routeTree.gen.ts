@@ -14,10 +14,12 @@ import { Route as authenticatedRouteRouteImport } from './routes/(authenticated)
 import { Route as authenticatedIndexRouteImport } from './routes/(authenticated)/index'
 import { Route as authenticatedTableExportRouteImport } from './routes/(authenticated)/table-export'
 import { Route as authenticatedStylesRouteImport } from './routes/(authenticated)/styles'
+import { Route as authenticatedPeopleLookupRouteImport } from './routes/(authenticated)/people-lookup'
 import { Route as authenticatedNotificationRouteImport } from './routes/(authenticated)/notification'
 import { Route as authenticatedMeRouteImport } from './routes/(authenticated)/me'
 import { Route as authenticatedFormRouteImport } from './routes/(authenticated)/form'
 import { Route as authenticatedFetchRouteImport } from './routes/(authenticated)/fetch'
+import { Route as authenticatedPeopleLookupIdRouteImport } from './routes/(authenticated)/people-lookup_.$id'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -44,6 +46,12 @@ const authenticatedStylesRoute = authenticatedStylesRouteImport.update({
   path: '/styles',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
+const authenticatedPeopleLookupRoute =
+  authenticatedPeopleLookupRouteImport.update({
+    id: '/people-lookup',
+    path: '/people-lookup',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 const authenticatedNotificationRoute =
   authenticatedNotificationRouteImport.update({
     id: '/notification',
@@ -65,6 +73,12 @@ const authenticatedFetchRoute = authenticatedFetchRouteImport.update({
   path: '/fetch',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
+const authenticatedPeopleLookupIdRoute =
+  authenticatedPeopleLookupIdRouteImport.update({
+    id: '/people-lookup_/$id',
+    path: '/people-lookup/$id',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
@@ -72,9 +86,11 @@ export interface FileRoutesByFullPath {
   '/form': typeof authenticatedFormRoute
   '/me': typeof authenticatedMeRoute
   '/notification': typeof authenticatedNotificationRoute
+  '/people-lookup': typeof authenticatedPeopleLookupRoute
   '/styles': typeof authenticatedStylesRoute
   '/table-export': typeof authenticatedTableExportRoute
   '/': typeof authenticatedIndexRoute
+  '/people-lookup/$id': typeof authenticatedPeopleLookupIdRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
@@ -82,9 +98,11 @@ export interface FileRoutesByTo {
   '/form': typeof authenticatedFormRoute
   '/me': typeof authenticatedMeRoute
   '/notification': typeof authenticatedNotificationRoute
+  '/people-lookup': typeof authenticatedPeopleLookupRoute
   '/styles': typeof authenticatedStylesRoute
   '/table-export': typeof authenticatedTableExportRoute
   '/': typeof authenticatedIndexRoute
+  '/people-lookup/$id': typeof authenticatedPeopleLookupIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -94,9 +112,11 @@ export interface FileRoutesById {
   '/(authenticated)/form': typeof authenticatedFormRoute
   '/(authenticated)/me': typeof authenticatedMeRoute
   '/(authenticated)/notification': typeof authenticatedNotificationRoute
+  '/(authenticated)/people-lookup': typeof authenticatedPeopleLookupRoute
   '/(authenticated)/styles': typeof authenticatedStylesRoute
   '/(authenticated)/table-export': typeof authenticatedTableExportRoute
   '/(authenticated)/': typeof authenticatedIndexRoute
+  '/(authenticated)/people-lookup_/$id': typeof authenticatedPeopleLookupIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -106,9 +126,11 @@ export interface FileRouteTypes {
     | '/form'
     | '/me'
     | '/notification'
+    | '/people-lookup'
     | '/styles'
     | '/table-export'
     | '/'
+    | '/people-lookup/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/about'
@@ -116,9 +138,11 @@ export interface FileRouteTypes {
     | '/form'
     | '/me'
     | '/notification'
+    | '/people-lookup'
     | '/styles'
     | '/table-export'
     | '/'
+    | '/people-lookup/$id'
   id:
     | '__root__'
     | '/(authenticated)'
@@ -127,9 +151,11 @@ export interface FileRouteTypes {
     | '/(authenticated)/form'
     | '/(authenticated)/me'
     | '/(authenticated)/notification'
+    | '/(authenticated)/people-lookup'
     | '/(authenticated)/styles'
     | '/(authenticated)/table-export'
     | '/(authenticated)/'
+    | '/(authenticated)/people-lookup_/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -174,6 +200,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedStylesRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/people-lookup': {
+      id: '/(authenticated)/people-lookup'
+      path: '/people-lookup'
+      fullPath: '/people-lookup'
+      preLoaderRoute: typeof authenticatedPeopleLookupRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
     '/(authenticated)/notification': {
       id: '/(authenticated)/notification'
       path: '/notification'
@@ -202,6 +235,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedFetchRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/people-lookup_/$id': {
+      id: '/(authenticated)/people-lookup_/$id'
+      path: '/people-lookup/$id'
+      fullPath: '/people-lookup/$id'
+      preLoaderRoute: typeof authenticatedPeopleLookupIdRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
   }
 }
 
@@ -210,9 +250,11 @@ interface authenticatedRouteRouteChildren {
   authenticatedFormRoute: typeof authenticatedFormRoute
   authenticatedMeRoute: typeof authenticatedMeRoute
   authenticatedNotificationRoute: typeof authenticatedNotificationRoute
+  authenticatedPeopleLookupRoute: typeof authenticatedPeopleLookupRoute
   authenticatedStylesRoute: typeof authenticatedStylesRoute
   authenticatedTableExportRoute: typeof authenticatedTableExportRoute
   authenticatedIndexRoute: typeof authenticatedIndexRoute
+  authenticatedPeopleLookupIdRoute: typeof authenticatedPeopleLookupIdRoute
 }
 
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
@@ -220,9 +262,11 @@ const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedFormRoute: authenticatedFormRoute,
   authenticatedMeRoute: authenticatedMeRoute,
   authenticatedNotificationRoute: authenticatedNotificationRoute,
+  authenticatedPeopleLookupRoute: authenticatedPeopleLookupRoute,
   authenticatedStylesRoute: authenticatedStylesRoute,
   authenticatedTableExportRoute: authenticatedTableExportRoute,
   authenticatedIndexRoute: authenticatedIndexRoute,
+  authenticatedPeopleLookupIdRoute: authenticatedPeopleLookupIdRoute,
 }
 
 const authenticatedRouteRouteWithChildren =
