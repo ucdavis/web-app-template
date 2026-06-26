@@ -114,7 +114,7 @@ Useful companion commands:
 
 ### Auth Configuration
 
-The app uses OIDC with Microsoft Entra ID (Azure AD). The default settings in `appsettings.*.json` are enough for local template development.
+The app uses OIDC with Microsoft Entra ID (Azure AD). The template intentionally ships with a placeholder `Auth:ClientId`; replace it with your app registration's client ID before testing sign-in so copied projects cannot accidentally authenticate as the template app.
 
 For a new application registration, redirect URIs, and app-specific auth settings, follow [the customization guide](README.customization.md#3-microsoft-entra-id-azure-ad-setup).
 

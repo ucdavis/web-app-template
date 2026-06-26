@@ -22,6 +22,8 @@ try
         .AddEnvFile($".env.{builder.Environment.EnvironmentName}", optional: true) // env-specific secrets
         .AddEnvironmentVariables(); // OS env vars override everything
 
+    ValidateAuthConfiguration(builder.Configuration);
+
     // setup logging and telemetry
     TelemetryHelper.ConfigureLogging(builder.Logging);
     TelemetryHelper.ConfigureOpenTelemetry(builder.Services);
@@ -192,4 +194,16 @@ static void ApplyNoStoreHeaders(HttpContext context)
     context.Response.Headers.CacheControl = "no-store,max-age=0";
     context.Response.Headers.Pragma = "no-cache";
     context.Response.Headers.Expires = "0";
+}
+
+static void ValidateAuthConfiguration(IConfiguration configuration)
+{
+    var clientId = configuration["Auth:ClientId"]?.Trim();
+
+    if (string.IsNullOrWhiteSpace(clientId) ||
+        string.Equals(clientId, "<client-guid>", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException(
+            "Auth:ClientId is not configured. Replace the placeholder in server/appsettings.json or set the Auth__ClientId environment variable.");
+    }
 }
