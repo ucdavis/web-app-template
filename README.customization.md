@@ -42,6 +42,8 @@ Then update `server/appsettings.json`:
 }
 ```
 
+The template default for `Auth:ClientId` is a placeholder on purpose. Replace it with the **Application (client) ID** from the user sign-in app registration, or override it locally with `Auth__ClientId` in `server/.env`.
+
 If you change `CallbackPath`, remember to mirror it in the Entra redirect URIs.
 
 The Azure deployment bootstrap in section 5 automates a different Entra application/service principal for GitHub Actions OIDC. Do not use that bootstrap `clientId` as `Auth:ClientId` unless you intentionally combined the deployment identity and the user sign-in app registration, which is not the default setup.
