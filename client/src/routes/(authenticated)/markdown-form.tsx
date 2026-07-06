@@ -276,37 +276,90 @@ function formatSelection(action: FormattingAction, selectedText: string) {
   const text = selectedText || fallbackText(action);
 
   if (action === 'bold') {
-    return `**${text}**`;
+    return toggleWrapper(text, '**');
   }
 
   if (action === 'italic') {
-    return `*${text}*`;
+    return toggleWrapper(text, '*');
   }
 
   if (action === 'link') {
-    return `[${text}](https://example.com)`;
+    const link = /^\[([^\]]+)]\(([^)]+)\)$/.exec(text);
+    return link ? link[1] : `[${text}](https://example.com)`;
   }
 
   if (action === 'heading') {
-    return prefixLines(text, '## ');
+    return toggleLinePrefix(text, '## ');
   }
 
   if (action === 'bullet') {
-    return prefixLines(text, '- ');
+    return toggleLinePrefix(text, '- ');
   }
 
   if (action === 'numbered') {
-    return text
-      .split('\n')
-      .map((line, index) => `${index + 1}. ${line || 'List item'}`)
-      .join('\n');
+    return hasLinePattern(text, /^\d+\.\s+/)
+      ? removeLinePattern(text, /^\d+\.\s+/)
+      : text
+          .split('\n')
+          .map((line, index) => `${index + 1}. ${line || 'List item'}`)
+          .join('\n');
   }
 
   if (action === 'quote') {
-    return prefixLines(text, '> ');
+    return toggleLinePrefix(text, '> ');
   }
 
-  return `\`\`\`\n${text}\n\`\`\``;
+  return text.startsWith('```\n') && text.endsWith('\n```')
+    ? text.slice(4, -4)
+    : `\`\`\`\n${text}\n\`\`\``;
+}
+
+function toggleWrapper(text: string, marker: string) {
+  if (hasWrapper(text, marker)) {
+    return text.slice(marker.length, -marker.length);
+  }
+
+  return `${marker}${text}${marker}`;
+}
+
+function hasWrapper(text: string, marker: string) {
+  if (!text.startsWith(marker) || !text.endsWith(marker)) {
+    return false;
+  }
+
+  return marker !== '*' || (!text.startsWith('**') && !text.endsWith('**'));
+}
+
+function toggleLinePrefix(text: string, prefix: string) {
+  return hasLinePrefix(text, prefix)
+    ? text
+        .split('\n')
+        .map((line) => (line ? line.slice(prefix.length) : line))
+        .join('\n')
+    : prefixLines(text, prefix);
+}
+
+function hasLinePrefix(text: string, prefix: string) {
+  const populatedLines = text.split('\n').filter((line) => line.length > 0);
+  return (
+    populatedLines.length > 0 &&
+    populatedLines.every((line) => line.startsWith(prefix))
+  );
+}
+
+function hasLinePattern(text: string, pattern: RegExp) {
+  const populatedLines = text.split('\n').filter((line) => line.length > 0);
+  return (
+    populatedLines.length > 0 &&
+    populatedLines.every((line) => pattern.test(line))
+  );
+}
+
+function removeLinePattern(text: string, pattern: RegExp) {
+  return text
+    .split('\n')
+    .map((line) => line.replace(pattern, ''))
+    .join('\n');
 }
 
 function fallbackText(action: FormattingAction) {
