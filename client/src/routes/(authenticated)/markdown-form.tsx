@@ -632,7 +632,8 @@ function renderTable(tableLines: string[], key: string) {
 }
 
 function renderInlineMarkdown(text: string, keyPrefix: string) {
-  const pattern = /(`[^`]+`|\*\*[^*]+\*\*|\*[^*]+\*|\[[^\]]+]\([^)]+\))/g;
+  const pattern =
+    /(`[^`]+`|\*{3}[^*]+\*{3}|\*{2}[^*]+\*{2}|\*[^*]+\*|\[[^\]]+]\([^)]+\))/g;
   const nodes: ReactNode[] = [];
   let lastIndex = 0;
 
@@ -658,6 +659,14 @@ function renderInlineToken(token: string, key: string) {
       <code className="rounded bg-base-300 px-1 py-0.5 text-sm" key={key}>
         {token.slice(1, -1)}
       </code>
+    );
+  }
+
+  if (token.startsWith('***')) {
+    return (
+      <strong key={key}>
+        <em>{token.slice(3, -3)}</em>
+      </strong>
     );
   }
 
