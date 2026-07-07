@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Server.Core.Markdown;
+using server.core.Services.Markdown;
 using Server.Models.Markdown;
 
 namespace Server.Controllers;

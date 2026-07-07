@@ -1,9 +1,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
-using server.core.Services.Notification;
-using server.core.Services.Notification.Email;
-using Server.Core.Markdown;
 using Server.Core.Notification;
+using Server.Core.Notification.Email;
+using server.core.Services.Markdown;
 
 namespace Server.Tests.Notification;
 

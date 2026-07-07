@@ -7,8 +7,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Server.Controllers;
 using Server.Models.Notification;
-using server.core.Services.Notification;
-using server.core.Services.Notification.Email;
+using Server.Core.Notification;
+using Server.Core.Notification.Email;
 
 namespace Server.Tests.Notification;
 

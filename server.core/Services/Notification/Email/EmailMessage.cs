@@ -1,4 +1,4 @@
-namespace server.core.Services.Notification.Email;
+namespace Server.Core.Notification.Email;
 
 public sealed class EmailMessage
 {

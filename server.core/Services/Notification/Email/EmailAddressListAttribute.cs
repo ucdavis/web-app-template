@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace server.core.Services.Notification.Email;
+namespace Server.Core.Notification.Email;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
 public sealed class EmailAddressListAttribute : ValidationAttribute

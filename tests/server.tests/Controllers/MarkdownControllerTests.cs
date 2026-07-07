@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Server.Controllers;
-using Server.Core.Markdown;
+using server.core.Services.Markdown;
 using Server.Models.Markdown;
 
 namespace Server.Tests.Controllers;

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using server.core.Services.Notification;
+using Server.Core.Notification;
 using Server.Core.Data;
 using Server.Helpers;
 using Server.Services;

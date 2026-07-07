@@ -3,10 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Razor.Templating.Core;
-using Server.Core.Markdown;
-using server.core.Services.Notification.Email;
+using Server.Core.Notification.Email;
+using server.core.Services.Markdown;
 
-namespace server.core.Services.Notification;
+namespace Server.Core.Notification;
 
 public static class NotificationServiceCollectionExtensions
 {

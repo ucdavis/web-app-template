@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using Microsoft.Extensions.Options;
-using server.core.Services.Notification.Email;
-using Server.Core.Markdown;
+using Server.Core.Notification.Email;
+using server.core.Services.Markdown;
 
-namespace server.core.Services.Notification;
+namespace Server.Core.Notification;
 
 public interface INotificationService
 {

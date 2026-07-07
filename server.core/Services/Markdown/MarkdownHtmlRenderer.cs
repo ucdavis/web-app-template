@@ -6,7 +6,7 @@ using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
-namespace Server.Core.Markdown;
+namespace server.core.Services.Markdown;
 
 public interface IMarkdownHtmlRenderer
 {
