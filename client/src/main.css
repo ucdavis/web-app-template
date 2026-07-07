@@ -1,3 +1,68 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @import '@ucdavis/gunrock-tailwind/imports.css';
 @plugin "daisyui";
+
+@layer components {
+  .markdown-preview h1 {
+    @apply mt-6 mb-3 text-4xl font-bold first:mt-0;
+  }
+
+  .markdown-preview h2 {
+    @apply mt-6 mb-3 text-3xl font-bold first:mt-0;
+  }
+
+  .markdown-preview h3 {
+    @apply mt-6 mb-3 text-2xl font-bold first:mt-0;
+  }
+
+  .markdown-preview h4,
+  .markdown-preview h5,
+  .markdown-preview h6 {
+    @apply mt-6 mb-3 text-xl font-bold first:mt-0;
+  }
+
+  .markdown-preview p {
+    @apply my-4 leading-7;
+  }
+
+  .markdown-preview a {
+    @apply text-primary underline underline-offset-2;
+  }
+
+  .markdown-preview ul {
+    @apply my-4 ml-6 list-disc space-y-1;
+  }
+
+  .markdown-preview ol {
+    @apply my-4 ml-6 list-decimal space-y-1;
+  }
+
+  .markdown-preview blockquote {
+    @apply my-4 border-l-4 border-primary pl-4 text-base-content/80;
+  }
+
+  .markdown-preview hr {
+    @apply my-6 border-base-300;
+  }
+
+  .markdown-preview pre {
+    @apply my-4 overflow-x-auto rounded-box bg-neutral p-4 text-sm text-neutral-content;
+  }
+
+  .markdown-preview :not(pre) > code {
+    @apply rounded bg-base-300 px-1 py-0.5 text-sm;
+  }
+
+  .markdown-preview table {
+    @apply my-4 w-full border-collapse text-sm;
+  }
+
+  .markdown-preview th,
+  .markdown-preview td {
+    @apply border border-base-300 px-3 py-2 text-left align-top;
+  }
+
+  .markdown-preview th {
+    @apply bg-base-200 font-semibold;
+  }
+}

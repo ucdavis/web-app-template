@@ -1,20 +1,19 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import {
   type ClipboardEvent,
   type FormEvent,
   type KeyboardEvent,
-  type ReactNode,
-  useMemo,
   useRef,
   useState,
 } from 'react';
 
 import {
   htmlToMarkdown,
-  isSafeMarkdownUrl,
   markdownExample,
   normalizeMarkdown,
 } from '@/lib/markdown.ts';
+import { fetchJson } from '@/lib/api.ts';
 
 export const Route = createFileRoute('/(authenticated)/markdown-form')({
   component: MarkdownFormComponent,
@@ -45,13 +44,28 @@ const toolbarActions: {
   { action: 'code', label: '</>', title: 'Code block' },
 ];
 
+type MarkdownPreviewResponse = {
+  html: string;
+};
+
 function MarkdownFormComponent() {
   const [markdown, setMarkdown] = useState(markdownExample);
   const [status, setStatus] = useState(
     'Paste rich text from Word, Google Docs, or a web page to convert it.'
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const preview = useMemo(() => renderMarkdown(markdown), [markdown]);
+  const previewQuery = useQuery({
+    queryFn: ({ signal }) =>
+      fetchJson<MarkdownPreviewResponse>(
+        '/api/markdown/preview',
+        {
+          body: JSON.stringify({ markdown }),
+          method: 'POST',
+        },
+        signal
+      ),
+    queryKey: ['markdown-preview', markdown],
+  });
 
   function updateMarkdown(value: string) {
     setMarkdown(value);
@@ -256,12 +270,15 @@ function MarkdownFormComponent() {
                 <div>
                   <h2 className="card-title text-2xl">Preview</h2>
                   <p className="mt-2 text-sm text-base-content/70">
-                    This preview renders a safe subset of Markdown without
-                    injecting pasted HTML.
+                    This preview is rendered by the server with Markdig.
                   </p>
                 </div>
                 <div className="min-h-[32rem] rounded-box border border-base-300 bg-base-200/40 p-6">
-                  {preview}
+                  <MarkdownPreview
+                    html={previewQuery.data?.html}
+                    isError={previewQuery.isError}
+                    isPending={previewQuery.isPending}
+                  />
                 </div>
               </div>
             </aside>
@@ -269,6 +286,41 @@ function MarkdownFormComponent() {
         </form>
       </main>
     </div>
+  );
+}
+
+function MarkdownPreview({
+  html,
+  isError,
+  isPending,
+}: {
+  html?: string;
+  isError: boolean;
+  isPending: boolean;
+}) {
+  if (isPending) {
+    return <p className="text-base-content/60">Rendering preview...</p>;
+  }
+
+  if (isError) {
+    return (
+      <p className="text-error">
+        The preview could not be rendered. Try again after checking the server.
+      </p>
+    );
+  }
+
+  if (!html) {
+    return (
+      <p className="text-base-content/60">The preview will appear here.</p>
+    );
+  }
+
+  return (
+    <div
+      className="markdown-preview max-w-none text-base-content"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
 }
 
@@ -315,11 +367,32 @@ function formatSelection(action: FormattingAction, selectedText: string) {
 }
 
 function toggleWrapper(text: string, marker: string) {
-  if (hasWrapper(text, marker)) {
-    return text.slice(marker.length, -marker.length);
+  const { content, leadingWhitespace, trailingWhitespace } =
+    splitBoundaryWhitespace(text);
+
+  if (!content) {
+    return text;
   }
 
-  return `${marker}${text}${marker}`;
+  if (hasWrapper(content, marker)) {
+    return `${leadingWhitespace}${content.slice(marker.length, -marker.length)}${trailingWhitespace}`;
+  }
+
+  return `${leadingWhitespace}${marker}${content}${marker}${trailingWhitespace}`;
+}
+
+function splitBoundaryWhitespace(text: string) {
+  const leadingWhitespace = /^\s*/.exec(text)?.[0] ?? '';
+  const trailingWhitespace = /\s*$/.exec(text)?.[0] ?? '';
+
+  return {
+    content: text.slice(
+      leadingWhitespace.length,
+      text.length - trailingWhitespace.length
+    ),
+    leadingWhitespace,
+    trailingWhitespace,
+  };
 }
 
 function hasWrapper(text: string, marker: string) {
@@ -391,312 +464,4 @@ function prefixLines(text: string, prefix: string) {
     .split('\n')
     .map((line) => `${prefix}${line || fallbackText('bullet')}`)
     .join('\n');
-}
-
-function renderMarkdown(markdown: string) {
-  const lines = markdown.replaceAll('\r\n', '\n').split('\n');
-  const nodes: ReactNode[] = [];
-  let index = 0;
-
-  while (index < lines.length) {
-    const line = lines[index] ?? '';
-
-    if (!line.trim()) {
-      index += 1;
-      continue;
-    }
-
-    if (line.startsWith('```')) {
-      const codeLines: string[] = [];
-      index += 1;
-
-      while (index < lines.length && !lines[index]?.startsWith('```')) {
-        codeLines.push(lines[index] ?? '');
-        index += 1;
-      }
-
-      nodes.push(
-        <pre
-          className="my-4 overflow-x-auto rounded-box bg-neutral p-4 text-sm text-neutral-content"
-          key={`code-${index}`}
-        >
-          <code>{codeLines.join('\n')}</code>
-        </pre>
-      );
-      index += 1;
-      continue;
-    }
-
-    const heading = /^(#{1,6})\s+(.+)$/.exec(line);
-
-    if (heading) {
-      nodes.push(
-        renderHeading(
-          heading[1].length,
-          renderInlineMarkdown(heading[2], `heading-${index}`),
-          `heading-${index}`
-        )
-      );
-      index += 1;
-      continue;
-    }
-
-    if (/^[*_-]{3,}$/.test(line.trim())) {
-      nodes.push(<hr className="my-6 border-base-300" key={`hr-${index}`} />);
-      index += 1;
-      continue;
-    }
-
-    if (isTableStart(lines, index)) {
-      const tableLines = [line];
-      index += 2;
-
-      while (index < lines.length && /^\|.+\|$/.test(lines[index] ?? '')) {
-        tableLines.push(lines[index] ?? '');
-        index += 1;
-      }
-
-      nodes.push(renderTable(tableLines, `table-${index}`));
-      continue;
-    }
-
-    if (/^\s*>\s?/.test(line)) {
-      const quoteLines: string[] = [];
-
-      while (index < lines.length && /^\s*>\s?/.test(lines[index] ?? '')) {
-        quoteLines.push((lines[index] ?? '').replace(/^\s*>\s?/, ''));
-        index += 1;
-      }
-
-      nodes.push(
-        <blockquote
-          className="my-4 border-l-4 border-primary pl-4 text-base-content/80"
-          key={`quote-${index}`}
-        >
-          {renderMarkdown(quoteLines.join('\n'))}
-        </blockquote>
-      );
-      continue;
-    }
-
-    if (/^\s*[*-]\s+/.test(line) || /^\s*\d+\.\s+/.test(line)) {
-      const ordered = /^\s*\d+\.\s+/.test(line);
-      const items: string[] = [];
-
-      while (
-        index < lines.length &&
-        (ordered
-          ? /^\s*\d+\.\s+/.test(lines[index] ?? '')
-          : /^\s*[*-]\s+/.test(lines[index] ?? ''))
-      ) {
-        items.push((lines[index] ?? '').replace(/^\s*(?:[*-]|\d+\.)\s+/, ''));
-        index += 1;
-      }
-
-      const ListTag = ordered ? 'ol' : 'ul';
-      nodes.push(
-        <ListTag
-          className={`my-4 ml-6 space-y-1 ${ordered ? 'list-decimal' : 'list-disc'}`}
-          key={`list-${index}`}
-        >
-          {items.map((item, itemIndex) => (
-            <li key={`${index}-${itemIndex}`}>
-              {renderInlineMarkdown(item, `item-${index}-${itemIndex}`)}
-            </li>
-          ))}
-        </ListTag>
-      );
-      continue;
-    }
-
-    const paragraphLines = [line];
-    index += 1;
-
-    while (
-      index < lines.length &&
-      lines[index]?.trim() &&
-      !isBlockStart(lines, index)
-    ) {
-      paragraphLines.push(lines[index] ?? '');
-      index += 1;
-    }
-
-    nodes.push(
-      <p className="my-4 leading-7" key={`paragraph-${index}`}>
-        {renderInlineMarkdown(paragraphLines.join(' '), `paragraph-${index}`)}
-      </p>
-    );
-  }
-
-  return nodes.length > 0 ? (
-    <div className="max-w-none text-base-content">{nodes}</div>
-  ) : (
-    <p className="text-base-content/60">The preview will appear here.</p>
-  );
-}
-
-function renderHeading(level: number, content: ReactNode[], key: string) {
-  const className = 'mt-6 mb-3 font-bold first:mt-0';
-
-  if (level === 1) {
-    return (
-      <h1 className={`${className} text-4xl`} key={key}>
-        {content}
-      </h1>
-    );
-  }
-
-  if (level === 2) {
-    return (
-      <h2 className={`${className} text-3xl`} key={key}>
-        {content}
-      </h2>
-    );
-  }
-
-  if (level === 3) {
-    return (
-      <h3 className={`${className} text-2xl`} key={key}>
-        {content}
-      </h3>
-    );
-  }
-
-  return (
-    <h4 className={`${className} text-xl`} key={key}>
-      {content}
-    </h4>
-  );
-}
-
-function isBlockStart(lines: string[], index: number) {
-  const line = lines[index] ?? '';
-  return (
-    line.startsWith('```') ||
-    /^(#{1,6})\s+/.test(line) ||
-    /^[*_-]{3,}$/.test(line.trim()) ||
-    /^\s*>\s?/.test(line) ||
-    /^\s*[*-]\s+/.test(line) ||
-    /^\s*\d+\.\s+/.test(line) ||
-    isTableStart(lines, index)
-  );
-}
-
-function isTableStart(lines: string[], index: number) {
-  const header = lines[index] ?? '';
-  const separator = lines[index + 1] ?? '';
-
-  return (
-    /^\|.+\|$/.test(header) && /^\|(?:\s*:?-{3,}:?\s*\|)+$/.test(separator)
-  );
-}
-
-function renderTable(tableLines: string[], key: string) {
-  const rows = tableLines.map((line) =>
-    line
-      .slice(1, -1)
-      .split('|')
-      .map((cell) => cell.trim())
-  );
-  const [header, ...bodyRows] = rows;
-
-  return (
-    <div className="my-4 overflow-x-auto" key={key}>
-      <table className="table table-sm">
-        <thead>
-          <tr>
-            {header?.map((cell, index) => (
-              <th key={`${key}-head-${index}`}>
-                {renderInlineMarkdown(cell, `${key}-head-${index}`)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {bodyRows.map((row, rowIndex) => (
-            <tr key={`${key}-row-${rowIndex}`}>
-              {row.map((cell, cellIndex) => (
-                <td key={`${key}-cell-${rowIndex}-${cellIndex}`}>
-                  {renderInlineMarkdown(
-                    cell,
-                    `${key}-cell-${rowIndex}-${cellIndex}`
-                  )}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function renderInlineMarkdown(text: string, keyPrefix: string) {
-  const pattern =
-    /(`[^`]+`|\*{3}[^*]+\*{3}|\*{2}[^*]+\*{2}|\*[^*]+\*|\[[^\]]+]\([^)]+\))/g;
-  const nodes: ReactNode[] = [];
-  let lastIndex = 0;
-
-  for (const match of text.matchAll(pattern)) {
-    if (match.index > lastIndex) {
-      nodes.push(text.slice(lastIndex, match.index));
-    }
-
-    nodes.push(renderInlineToken(match[0], `${keyPrefix}-${match.index}`));
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < text.length) {
-    nodes.push(text.slice(lastIndex));
-  }
-
-  return nodes;
-}
-
-function renderInlineToken(token: string, key: string) {
-  if (token.startsWith('`')) {
-    return (
-      <code className="rounded bg-base-300 px-1 py-0.5 text-sm" key={key}>
-        {token.slice(1, -1)}
-      </code>
-    );
-  }
-
-  if (token.startsWith('***')) {
-    return (
-      <strong key={key}>
-        <em>{token.slice(3, -3)}</em>
-      </strong>
-    );
-  }
-
-  if (token.startsWith('**')) {
-    return <strong key={key}>{token.slice(2, -2)}</strong>;
-  }
-
-  if (token.startsWith('*')) {
-    return <em key={key}>{token.slice(1, -1)}</em>;
-  }
-
-  const link = /^\[([^\]]+)]\(([^)]+)\)$/.exec(token);
-
-  if (link && isSafeMarkdownUrl(link[2])) {
-    return (
-      <a
-        className="link link-primary"
-        href={link[2]}
-        key={key}
-        rel="noopener noreferrer"
-        target={
-          link[2].startsWith('#') || link[2].startsWith('/')
-            ? undefined
-            : '_blank'
-        }
-      >
-        {link[1]}
-      </a>
-    );
-  }
-
-  return token;
 }
