@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 using Markdig;
 using Markdig.Renderers;
 using Markdig.Renderers.Html;
@@ -58,13 +59,109 @@ public sealed class MarkdigMarkdownHtmlRenderer : IMarkdownHtmlRenderer
     {
         var attributes = markdownObject.TryGetAttributes();
 
-        if (attributes?.Properties is null)
+        if (attributes is null)
+        {
+            return;
+        }
+
+        attributes.Id = markdownObject is HeadingBlock heading
+            ? GetSafeHeadingId(heading, attributes.Id)
+            : null;
+        attributes.Classes?.Clear();
+
+        if (attributes.Properties is null)
         {
             return;
         }
 
         attributes.Properties.RemoveAll(attribute =>
             !AllowedHtmlAttributeNames.Contains(attribute.Key));
+    }
+
+    private static string? GetSafeHeadingId(HeadingBlock heading, string? currentId)
+    {
+        var headingSlug = CreateHeadingSlug(heading);
+
+        if (string.IsNullOrEmpty(headingSlug))
+        {
+            return null;
+        }
+
+        return IsGeneratedHeadingId(currentId, headingSlug) ? currentId : headingSlug;
+    }
+
+    private static bool IsGeneratedHeadingId(string? id, string headingSlug)
+    {
+        if (string.IsNullOrEmpty(id))
+        {
+            return false;
+        }
+
+        if (id == headingSlug)
+        {
+            return true;
+        }
+
+        var duplicatePrefix = $"{headingSlug}-";
+        return id.StartsWith(duplicatePrefix, StringComparison.Ordinal) &&
+               id[duplicatePrefix.Length..].All(char.IsDigit);
+    }
+
+    private static string CreateHeadingSlug(HeadingBlock heading)
+    {
+        var headingText = new StringBuilder();
+
+        if (heading.Inline is not null)
+        {
+            AppendInlineText(heading.Inline, headingText);
+        }
+
+        var slug = new StringBuilder();
+        var previousWasDash = false;
+
+        foreach (var character in headingText.ToString().ToLowerInvariant())
+        {
+            if (char.IsLetterOrDigit(character))
+            {
+                slug.Append(character);
+                previousWasDash = false;
+                continue;
+            }
+
+            if ((char.IsWhiteSpace(character) || character == '-') &&
+                slug.Length > 0 &&
+                !previousWasDash)
+            {
+                slug.Append('-');
+                previousWasDash = true;
+            }
+        }
+
+        while (slug.Length > 0 && slug[^1] == '-')
+        {
+            slug.Length--;
+        }
+
+        return slug.ToString();
+    }
+
+    private static void AppendInlineText(ContainerInline container, StringBuilder builder)
+    {
+        for (var inline = container.FirstChild; inline is not null; inline = inline.NextSibling)
+        {
+            switch (inline)
+            {
+                case LiteralInline literal:
+                    builder.Append(literal.Content);
+                    break;
+                case CodeInline code:
+                    builder.Append(code.Content);
+                    break;
+                case ContainerInline childContainer:
+                    AppendInlineText(childContainer, builder);
+                    break;
+            }
+        }
     }
 
     private static bool IsSafeMarkdownUrl(string? url)

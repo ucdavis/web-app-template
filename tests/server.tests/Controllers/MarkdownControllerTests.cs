@@ -68,7 +68,7 @@ public class MarkdownControllerTests
 
         var result = controller.Preview(new MarkdownPreviewRequest
         {
-            Markdown = "## Heading {onclick=\"alert(1)\" style=\"background:url(javascript:alert(1))\"}\n\n[Link](https://example.com){onclick=\"alert(1)\"}\n\n![Logo](https://example.com/logo.png){onerror=\"alert(1)\"}",
+            Markdown = "## Heading {#custom-id .danger onclick=\"alert(1)\" style=\"background:url(javascript:alert(1))\"}\n\n[Link](https://example.com){#link-id .danger onclick=\"alert(1)\"}\n\n![Logo](https://example.com/logo.png){#image-id .danger onerror=\"alert(1)\"}",
         });
 
         var response = result.Result.Should().BeOfType<OkObjectResult>().Subject;
@@ -78,6 +78,10 @@ public class MarkdownControllerTests
         model.Html.Should().NotContain("onerror");
         model.Html.Should().NotContain("javascript:alert");
         model.Html.Should().NotContain("style=");
+        model.Html.Should().NotContain("custom-id");
+        model.Html.Should().NotContain("link-id");
+        model.Html.Should().NotContain("image-id");
+        model.Html.Should().NotContain("class=");
         model.Html.Should().Contain("<h2 id=\"heading\">Heading</h2>");
         model.Html.Should().Contain("<a href=\"https://example.com\">Link</a>");
         model.Html.Should().Contain("<img src=\"https://example.com/logo.png\" alt=\"Logo\"");
