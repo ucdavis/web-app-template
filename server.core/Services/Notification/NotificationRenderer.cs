@@ -2,7 +2,7 @@ using Mjml.Net;
 using Microsoft.Extensions.Logging;
 using Razor.Templating.Core;
 
-namespace Server.Core.Notification;
+namespace server.core.Services.Notification;
 
 public interface INotificationRenderer
 {

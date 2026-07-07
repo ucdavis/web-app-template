@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using FluentAssertions;
-using Server.Core.Notification;
+using server.core.Services.Notification.Email;
 
 namespace Server.Tests.Notification;
 

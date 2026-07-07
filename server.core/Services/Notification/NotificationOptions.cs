@@ -1,4 +1,4 @@
-namespace Server.Core.Notification;
+namespace server.core.Services.Notification;
 
 public sealed class NotificationOptions
 {

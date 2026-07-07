@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
-namespace Server.Core.Notification;
+namespace server.core.Services.Notification.Email;
 
 public interface IEmailService
 {

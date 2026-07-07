@@ -1,5 +1,6 @@
 using FluentAssertions;
 using MailKit.Security;
+using server.core.Services.Notification.Email;
 using Server.Core.Notification;
 
 namespace Server.Tests.Notification;

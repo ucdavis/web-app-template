@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Options;
 
-namespace Server.Core.Notification;
+namespace server.core.Services.Notification.Email;
 
 public sealed class SmtpOptions
 {

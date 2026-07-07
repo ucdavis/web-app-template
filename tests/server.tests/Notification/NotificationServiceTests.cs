@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
+using server.core.Services.Notification;
+using server.core.Services.Notification.Email;
 using Server.Core.Markdown;
 using Server.Core.Notification;
 

@@ -1,7 +1,8 @@
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Server.Core.Notification;
+using server.core.Services.Notification;
+using server.core.Services.Notification.Email;
 
 namespace Server.Tests.Notification;
 
