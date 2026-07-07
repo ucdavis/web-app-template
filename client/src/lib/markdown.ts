@@ -114,7 +114,16 @@ function nodeToMarkdown(node: Node): string {
   }
 
   if (tagName === 'CODE') {
-    return `\`${(element.textContent ?? '').replaceAll('`', '\\`')}\``;
+    const code = element.textContent ?? '';
+    const longestBacktickRun = [...code.matchAll(/`+/g)].reduce(
+      (longestRun, match) => Math.max(longestRun, match[0].length),
+      0
+    );
+    const fence = '`'.repeat(longestBacktickRun + 1);
+    const paddedCode =
+      code.startsWith('`') || code.endsWith('`') ? ` ${code} ` : code;
+
+    return `${fence}${paddedCode}${fence}`;
   }
 
   if (tagName === 'PRE') {

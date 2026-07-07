@@ -25,4 +25,36 @@ describe('markdown utilities', () => {
     expect(markdown).toBe('Unsafe link');
     expect(isSafeMarkdownUrl('javascript:alert(1)')).toBe(false);
   });
+
+  it('uses longer inline code fences when code contains backticks', () => {
+    const backtick = String.fromCharCode(96);
+    const doubleBacktick = backtick.repeat(2);
+
+    expect(
+      htmlToMarkdown(
+        '<p><code>npm ' + backtick + 'run' + backtick + ' build</code></p>'
+      )
+    ).toBe(
+      doubleBacktick +
+        'npm ' +
+        backtick +
+        'run' +
+        backtick +
+        ' build' +
+        doubleBacktick
+    );
+    expect(
+      htmlToMarkdown(
+        '<p><code>' + backtick + 'template' + backtick + '</code></p>'
+      )
+    ).toBe(
+      doubleBacktick +
+        ' ' +
+        backtick +
+        'template' +
+        backtick +
+        ' ' +
+        doubleBacktick
+    );
+  });
 });
