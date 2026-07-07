@@ -47,6 +47,48 @@ describe('markdown form route', () => {
     }
   });
 
+  it('debounces preview requests while keeping the previous preview visible', async () => {
+    let latestMarkdown = '';
+    let previewRequestCount = 0;
+
+    server.use(
+      http.get('/api/user/me', () => HttpResponse.json({ id: 'user-1' })),
+      http.post('/api/markdown/preview', async ({ request }) => {
+        const body = (await request.json()) as { markdown: string };
+        latestMarkdown = body.markdown;
+        previewRequestCount += 1;
+
+        return HttpResponse.json({
+          html:
+            body.markdown === 'One two three'
+              ? '<p>One two three</p>'
+              : '<p>Program description</p>',
+        });
+      })
+    );
+
+    const { cleanup } = renderRoute({ initialPath: '/markdown-form' });
+
+    try {
+      const textarea = await screen.findByLabelText(/markdown source/i);
+
+      await screen.findByText('Program description');
+      const settledRequestCount = previewRequestCount;
+
+      fireEvent.change(textarea, { target: { value: 'One' } });
+      fireEvent.change(textarea, { target: { value: 'One two' } });
+      fireEvent.change(textarea, { target: { value: 'One two three' } });
+
+      expect(previewRequestCount).toBe(settledRequestCount);
+      expect(screen.getByText('Program description')).toBeInTheDocument();
+
+      await waitFor(() => expect(latestMarkdown).toBe('One two three'));
+      expect(previewRequestCount).toBe(settledRequestCount + 1);
+    } finally {
+      cleanup();
+    }
+  });
+
   it('emails the current markdown', async () => {
     let emailedMarkdown = '';
 

@@ -1,9 +1,14 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query';
 import {
   type ClipboardEvent,
   type FormEvent,
   type KeyboardEvent,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -14,9 +19,11 @@ import {
   normalizeMarkdown,
 } from '@/lib/markdown.ts';
 import { fetchJson } from '@/lib/api.ts';
+import { meQueryOptions } from '@/queries/user.ts';
 
 export const Route = createFileRoute('/(authenticated)/markdown-form')({
   component: MarkdownFormComponent,
+  loader: ({ context }) => context.queryClient.ensureQueryData(meQueryOptions()),
 });
 
 type FormattingAction =
@@ -44,6 +51,8 @@ const toolbarActions: {
   { action: 'code', label: '</>', title: 'Code block' },
 ];
 
+const previewDebounceMs = 300;
+
 type MarkdownPreviewResponse = {
   html: string;
 };
@@ -58,17 +67,19 @@ function MarkdownFormComponent() {
     'Paste rich text from Word, Google Docs, or a web page to convert it.'
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const previewMarkdown = useDebouncedValue(markdown, previewDebounceMs);
   const previewQuery = useQuery({
     queryFn: ({ signal }) =>
       fetchJson<MarkdownPreviewResponse>(
         '/api/markdown/preview',
         {
-          body: JSON.stringify({ markdown }),
+          body: JSON.stringify({ markdown: previewMarkdown }),
           method: 'POST',
         },
         signal
       ),
-    queryKey: ['markdown-preview', markdown],
+    placeholderData: keepPreviousData,
+    queryKey: ['markdown-preview', previewMarkdown],
   });
   const emailMutation = useMutation({
     mutationFn: () =>
@@ -318,6 +329,20 @@ function MarkdownFormComponent() {
       </main>
     </div>
   );
+}
+
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [delay, value]);
+
+  return debouncedValue;
 }
 
 function MarkdownPreview({

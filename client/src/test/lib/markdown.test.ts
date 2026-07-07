@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { htmlToMarkdown, isSafeMarkdownUrl } from '@/lib/markdown.ts';
+import {
+  htmlToMarkdown,
+  isSafeMarkdownUrl,
+  normalizeMarkdown,
+} from '@/lib/markdown.ts';
 
 describe('markdown utilities', () => {
   it('converts common rich text html to markdown', () => {
@@ -24,6 +28,44 @@ describe('markdown utilities', () => {
 
     expect(markdown).toBe('Unsafe link');
     expect(isSafeMarkdownUrl('javascript:alert(1)')).toBe(false);
+  });
+
+  it('rejects protocol-relative urls while allowing relative paths', () => {
+    expect(isSafeMarkdownUrl('//evil.com')).toBe(false);
+    expect(isSafeMarkdownUrl('/programs')).toBe(true);
+    expect(isSafeMarkdownUrl('#details')).toBe(true);
+    expect(isSafeMarkdownUrl('./details')).toBe(true);
+    expect(isSafeMarkdownUrl('../details')).toBe(true);
+    expect(
+      htmlToMarkdown(
+        '<p><a href="//evil.com/path">Unsafe link</a></p><img alt="Logo" src="//evil.com/logo.png">'
+      )
+    ).toBe('Unsafe link\n\nLogo');
+  });
+
+  it('converts horizontal rules to markdown separators', () => {
+    expect(htmlToMarkdown('<p>Above</p><hr><p>Below</p>')).toBe(
+      'Above\n\n---\n\nBelow'
+    );
+  });
+
+  it('preserves hard breaks while trimming other line-end whitespace', () => {
+    expect(htmlToMarkdown('<p>Line one<br>Line two</p>')).toBe(
+      'Line one  \nLine two'
+    );
+    expect(normalizeMarkdown('Hard break  \nSpace \nTab\t\n\n\nNext')).toBe(
+      'Hard break  \nSpace\nTab\n\nNext'
+    );
+  });
+
+  it('escapes markdown syntax in pasted plain text', () => {
+    expect(
+      htmlToMarkdown(
+        '<p>*literal* _value_ `code` [label]</p><p><span>*nested*</span></p><p># Heading</p><p>- item</p><p>&gt; quote</p><p>1. item</p>'
+      )
+    ).toBe(
+      '\\*literal\\* \\_value\\_ \\`code\\` \\[label\\]\n\n\\*nested\\*\n\n\\# Heading\n\n\\- item\n\n\\> quote\n\n1\\. item'
+    );
   });
 
   it('uses longer inline code fences when code contains backticks', () => {

@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using Markdig;
 using Markdig.Renderers;
+using Markdig.Renderers.Html;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
 
@@ -13,6 +14,11 @@ public interface IMarkdownHtmlRenderer
 
 public sealed class MarkdigMarkdownHtmlRenderer : IMarkdownHtmlRenderer
 {
+    private static readonly HashSet<string> AllowedHtmlAttributeNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "title",
+    };
+
     private static readonly MarkdownPipeline MarkdownPipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
         .DisableHtml()
@@ -34,6 +40,11 @@ public sealed class MarkdigMarkdownHtmlRenderer : IMarkdownHtmlRenderer
 
     private static void SanitizeLinks(MarkdownDocument document)
     {
+        foreach (var markdownObject in document.Descendants<MarkdownObject>())
+        {
+            SanitizeRenderedAttributes(markdownObject);
+        }
+
         foreach (var link in document.Descendants<LinkInline>())
         {
             if (!IsSafeMarkdownUrl(link.Url))
@@ -41,6 +52,19 @@ public sealed class MarkdigMarkdownHtmlRenderer : IMarkdownHtmlRenderer
                 link.Url = string.Empty;
             }
         }
+    }
+
+    private static void SanitizeRenderedAttributes(MarkdownObject markdownObject)
+    {
+        var attributes = markdownObject.TryGetAttributes();
+
+        if (attributes?.Properties is null)
+        {
+            return;
+        }
+
+        attributes.Properties.RemoveAll(attribute =>
+            !AllowedHtmlAttributeNames.Contains(attribute.Key));
     }
 
     private static bool IsSafeMarkdownUrl(string? url)
@@ -51,6 +75,11 @@ public sealed class MarkdigMarkdownHtmlRenderer : IMarkdownHtmlRenderer
         }
 
         var trimmedUrl = url.Trim();
+        if (trimmedUrl.StartsWith("//"))
+        {
+            return false;
+        }
+
         if (trimmedUrl.StartsWith('/') ||
             trimmedUrl.StartsWith('#') ||
             trimmedUrl.StartsWith("./") ||

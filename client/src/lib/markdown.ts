@@ -47,13 +47,22 @@ export function htmlToMarkdown(html: string) {
 export function normalizeMarkdown(markdown: string) {
   return markdown
     .replaceAll('\r\n', '\n')
-    .replaceAll(/[\t ]+\n/g, '\n')
+    .replaceAll(/[\t ]+\n/g, normalizeMarkdownLineEnd)
     .replaceAll(/\n{3,}/g, '\n\n')
     .trim();
 }
 
+function normalizeMarkdownLineEnd(match: string) {
+  const whitespace = match.slice(0, -1);
+  return /^ {2,}$/.test(whitespace) ? '  \n' : '\n';
+}
+
 export function isSafeMarkdownUrl(url: string) {
   const trimmedUrl = url.trim();
+
+  if (trimmedUrl.startsWith('//')) {
+    return false;
+  }
 
   if (
     trimmedUrl.startsWith('/') ||
@@ -99,6 +108,10 @@ function nodeToMarkdown(node: Node): string {
 
   if (tagName === 'BR') {
     return '  \n';
+  }
+
+  if (tagName === 'HR') {
+    return '---\n\n';
   }
 
   if (tagName === 'P') {
@@ -159,11 +172,26 @@ function childrenToInlineMarkdown(element: Element) {
 }
 
 function cleanInlineText(text: string) {
-  return text.replaceAll(/\s+/g, ' ');
+  return escapeMarkdownText(text.replaceAll(/\s+/g, ' '));
+}
+
+function escapeMarkdownText(text: string) {
+  return text
+    .replaceAll(/[*_`\[\]]/g, (character) => `\\${character}`)
+    .replace(/^(\s*)([#>+-]|\d+\.)(?=\s)/, (_match, prefix, marker) => {
+      const escapedMarker = marker.endsWith('.')
+        ? `${marker.slice(0, -1)}\\.`
+        : `\\${marker}`;
+
+      return `${prefix}${escapedMarker}`;
+    });
 }
 
 function normalizeInline(text: string) {
-  return text.replaceAll(/[\t ]{2,}/g, ' ').trim();
+  return text
+    .replaceAll(/[\t ]+\n/g, normalizeMarkdownLineEnd)
+    .replaceAll(/[\t ]{2,}(?!\n)/g, ' ')
+    .trim();
 }
 
 function block(markdown: string) {
