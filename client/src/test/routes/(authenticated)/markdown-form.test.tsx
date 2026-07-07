@@ -46,4 +46,42 @@ describe('markdown form route', () => {
       cleanup();
     }
   });
+
+  it('emails the current markdown', async () => {
+    let emailedMarkdown = '';
+
+    server.use(
+      http.get('/api/user/me', () => HttpResponse.json({ id: 'user-1' })),
+      http.post('/api/markdown/preview', async ({ request }) => {
+        const body = (await request.json()) as { markdown: string };
+
+        return HttpResponse.json({
+          html: body.markdown.includes('Email **this**')
+            ? '<p>Email <strong>this</strong></p>'
+            : '<p>Preview</p>',
+        });
+      }),
+      http.post('/api/notification/markdown', async ({ request }) => {
+        const body = (await request.json()) as { markdown: string };
+        emailedMarkdown = body.markdown;
+
+        return HttpResponse.json({ to: 'person@example.com' });
+      })
+    );
+
+    const { cleanup } = renderRoute({ initialPath: '/markdown-form' });
+
+    try {
+      const textarea = await screen.findByLabelText(/markdown source/i);
+      fireEvent.change(textarea, { target: { value: 'Email **this**' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Email Markdown' }));
+
+      await waitFor(() => expect(emailedMarkdown).toBe('Email **this**'));
+      expect(
+        await screen.findByText('Markdown email sent to person@example.com.')
+      ).toBeInTheDocument();
+    } finally {
+      cleanup();
+    }
+  });
 });

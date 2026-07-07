@@ -69,6 +69,53 @@ public sealed class NotificationController : ApiControllerBase
         });
     }
 
+    [HttpPost("markdown")]
+    [ProducesResponseType(typeof(SendSampleNotificationResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SendMarkdownSample(
+        [FromBody] MarkdownNotificationRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!_environment.IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        var resolvedRecipient = ResolveRecipient(request.To);
+        if (string.IsNullOrWhiteSpace(resolvedRecipient))
+        {
+            return BadRequest("No email recipient was provided and the current user does not have an email claim.");
+        }
+
+        try
+        {
+            await _notificationService.SendMarkdownAsync(new EmailRecipients
+            {
+                To = [resolvedRecipient],
+            }, request.Subject, request.Header, request.Markdown, cancellationToken);
+        }
+        catch (ValidationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to deliver markdown notification email to {Recipient}.", resolvedRecipient);
+            return StatusCode(StatusCodes.Status502BadGateway,
+                "The notification email could not be sent due to a delivery error.");
+        }
+
+        return Ok(new SendSampleNotificationResponse
+        {
+            To = resolvedRecipient,
+        });
+    }
+
     [HttpPost("table")]
     [ProducesResponseType(typeof(SendSampleNotificationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

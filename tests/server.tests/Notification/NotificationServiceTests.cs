@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
+using Server.Core.Markdown;
 using Server.Core.Notification;
 
 namespace Server.Tests.Notification;
@@ -14,6 +15,7 @@ public class NotificationServiceTests
         var service = new NotificationService(
             emailService,
             notificationRenderer,
+            new CaptureMarkdownHtmlRenderer(),
             Options.Create(new NotificationOptions
             {
                 BaseUrl = "https://example.test",
@@ -61,6 +63,7 @@ public class NotificationServiceTests
         var service = new NotificationService(
             emailService,
             notificationRenderer,
+            new CaptureMarkdownHtmlRenderer(),
             Options.Create(new NotificationOptions
             {
                 BaseUrl = "",
@@ -84,6 +87,49 @@ public class NotificationServiceTests
     }
 
     [Fact]
+    public async Task SendMarkdownAsync_renders_markdown_html_into_the_template_and_sends_the_email()
+    {
+        var emailService = new CaptureEmailService();
+        var notificationRenderer = new CaptureNotificationRenderer();
+        var markdownRenderer = new CaptureMarkdownHtmlRenderer();
+        var service = new NotificationService(
+            emailService,
+            notificationRenderer,
+            markdownRenderer,
+            Options.Create(new NotificationOptions
+            {
+                BaseUrl = "https://example.test",
+                DefaultAppName = "Notification Center",
+                DefaultButtonText = "Open application",
+            }),
+            Options.Create(new SmtpOptions
+            {
+                FromName = "Template App",
+            }));
+
+        await service.SendMarkdownAsync(new EmailRecipients
+        {
+            To = ["person@example.com"],
+        }, "Markdown subject", "Markdown header", "This is **important**.");
+
+        markdownRenderer.Markdown.Should().Be("This is **important**.");
+        notificationRenderer.TemplatePath.Should().Be("/Views/Emails/MarkdownNotification_mjml.cshtml");
+
+        var model = notificationRenderer.Model.Should().BeOfType<MarkdownNotificationTemplateModel>().Subject;
+        model.AppName.Should().Be("Notification Center");
+        model.Header.Should().Be("Markdown header");
+        model.BodyHtml.Should().Be(CaptureMarkdownHtmlRenderer.RenderedHtml);
+        model.ButtonText.Should().Be("Open application");
+        model.ButtonUrl.Should().Be("https://example.test");
+
+        emailService.Message.Should().NotBeNull();
+        emailService.Message!.Subject.Should().Be("Markdown subject");
+        emailService.Message.TextBody.Should().Be(
+            $"Markdown header{Environment.NewLine}{Environment.NewLine}This is **important**.");
+        emailService.Message.HtmlBody.Should().Be(CaptureNotificationRenderer.RenderedHtml);
+    }
+
+    [Fact]
     public async Task SendTableAsync_renders_the_table_template_and_sends_the_email()
     {
         var emailService = new CaptureEmailService();
@@ -91,6 +137,7 @@ public class NotificationServiceTests
         var service = new NotificationService(
             emailService,
             notificationRenderer,
+            new CaptureMarkdownHtmlRenderer(),
             Options.Create(new NotificationOptions
             {
                 DefaultAppName = "Notification Center",
@@ -149,6 +196,19 @@ public class NotificationServiceTests
         {
             Message = message;
             return Task.CompletedTask;
+        }
+    }
+
+    private sealed class CaptureMarkdownHtmlRenderer : IMarkdownHtmlRenderer
+    {
+        public const string RenderedHtml = "<p>This is <strong>important</strong>.</p>";
+
+        public string? Markdown { get; private set; }
+
+        public string Render(string markdown)
+        {
+            Markdown = markdown;
+            return RenderedHtml;
         }
     }
 

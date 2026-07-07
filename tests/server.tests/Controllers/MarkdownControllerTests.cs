@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Server.Controllers;
+using Server.Core.Markdown;
 using Server.Models.Markdown;
 
 namespace Server.Tests.Controllers;
@@ -10,7 +11,7 @@ public class MarkdownControllerTests
     [Fact]
     public void Preview_renders_markdown_to_html()
     {
-        var controller = new MarkdownController();
+        var controller = new MarkdownController(new MarkdigMarkdownHtmlRenderer());
 
         var result = controller.Preview(new MarkdownPreviewRequest
         {
@@ -28,7 +29,7 @@ public class MarkdownControllerTests
     [Fact]
     public void Preview_removes_unsafe_markdown_link_urls()
     {
-        var controller = new MarkdownController();
+        var controller = new MarkdownController(new MarkdigMarkdownHtmlRenderer());
 
         var result = controller.Preview(new MarkdownPreviewRequest
         {
@@ -45,7 +46,7 @@ public class MarkdownControllerTests
     [Fact]
     public void Preview_encodes_raw_html()
     {
-        var controller = new MarkdownController();
+        var controller = new MarkdownController(new MarkdigMarkdownHtmlRenderer());
 
         var result = controller.Preview(new MarkdownPreviewRequest
         {

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   type ClipboardEvent,
   type FormEvent,
@@ -48,6 +48,10 @@ type MarkdownPreviewResponse = {
   html: string;
 };
 
+type SendMarkdownEmailResponse = {
+  to: string;
+};
+
 function MarkdownFormComponent() {
   const [markdown, setMarkdown] = useState(markdownExample);
   const [status, setStatus] = useState(
@@ -65,6 +69,23 @@ function MarkdownFormComponent() {
         signal
       ),
     queryKey: ['markdown-preview', markdown],
+  });
+  const emailMutation = useMutation({
+    mutationFn: () =>
+      fetchJson<SendMarkdownEmailResponse>('/api/notification/markdown', {
+        body: JSON.stringify({
+          header: 'Markdown Form Example',
+          markdown,
+          subject: 'Markdown Form Example',
+        }),
+        method: 'POST',
+      }),
+    onError: () => {
+      setStatus('The Markdown email could not be sent.');
+    },
+    onSuccess: (response) => {
+      setStatus(`Markdown email sent to ${response.to}.`);
+    },
   });
 
   function updateMarkdown(value: string) {
@@ -256,6 +277,16 @@ function MarkdownFormComponent() {
                       type="button"
                     >
                       Reset Example
+                    </button>
+                    <button
+                      className="btn btn-secondary"
+                      disabled={emailMutation.isPending}
+                      onClick={() => emailMutation.mutate()}
+                      type="button"
+                    >
+                      {emailMutation.isPending
+                        ? 'Sending...'
+                        : 'Email Markdown'}
                     </button>
                     <button className="btn btn-primary" type="submit">
                       Submit

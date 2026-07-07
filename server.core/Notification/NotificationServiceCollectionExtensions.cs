@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Razor.Templating.Core;
+using Server.Core.Markdown;
 
 namespace Server.Core.Notification;
 
@@ -21,6 +22,7 @@ public static class NotificationServiceCollectionExtensions
             .Bind(configuration.GetSection(NotificationOptions.SectionName));
 
         services.AddSingleton<MjmlRenderer>();
+        services.AddSingleton<IMarkdownHtmlRenderer, MarkdigMarkdownHtmlRenderer>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<INotificationRenderer, RazorMjmlNotificationRenderer>();
         services.AddScoped<INotificationService, NotificationService>();
