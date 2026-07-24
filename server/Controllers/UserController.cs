@@ -11,6 +11,7 @@ public class UserController : ApiControllerBase
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var userName = User.FindFirst("name")?.Value;
         var userEmail = User.FindFirst("preferred_username")?.Value;
+        var iamId = User.FindFirst("ucdPersonIAMID")?.Value;
 
         var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
 
@@ -24,6 +25,7 @@ public class UserController : ApiControllerBase
             Id = userId,
             Name = userName,
             Email = userEmail,
+            IamId = iamId,
             Roles = userRoles,
         };
 

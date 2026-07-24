@@ -118,6 +118,8 @@ The app uses OIDC with Microsoft Entra ID (Azure AD). The default settings in `a
 
 For a new application registration, redirect URIs, and app-specific auth settings, follow [the customization guide](README.customization.md#3-microsoft-entra-id-azure-ad-setup).
 
+To include the `ucdPersonIAMID` claim shown on the main page, follow [Authentication](https://app.notion.com/p/caes-cru/Authentication-2eae70f674118020ba74e953828d2591?source=copy_link).
+
 ### Google Analytics (GA4)
 
 This template includes GA4 wiring:
