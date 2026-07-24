@@ -62,6 +62,24 @@ public class MarkdownControllerTests
     }
 
     [Fact]
+    public void Preview_removes_backslash_protocol_relative_markdown_urls()
+    {
+        var controller = new MarkdownController(new MarkdigMarkdownHtmlRenderer());
+
+        var result = controller.Preview(new MarkdownPreviewRequest
+        {
+            Markdown = "[Unsafe](/\\evil.com/path)\n\n![Logo](/\\evil.com/logo.png)",
+        });
+
+        var response = result.Result.Should().BeOfType<OkObjectResult>().Subject;
+        var model = response.Value.Should().BeOfType<MarkdownPreviewResponse>().Subject;
+
+        model.Html.Should().NotContain("evil.com");
+        model.Html.Should().Contain("<a href=\"\">Unsafe</a>");
+        model.Html.Should().Contain("<img src=\"\" alt=\"Logo\"");
+    }
+
+    [Fact]
     public void Preview_removes_unsafe_rendered_attributes()
     {
         var controller = new MarkdownController(new MarkdigMarkdownHtmlRenderer());

@@ -172,7 +172,7 @@ public sealed class MarkdigMarkdownHtmlRenderer : IMarkdownHtmlRenderer
         }
 
         var trimmedUrl = url.Trim();
-        if (trimmedUrl.StartsWith("//"))
+        if (trimmedUrl.Contains('\\') || trimmedUrl.StartsWith("//"))
         {
             return false;
         }
