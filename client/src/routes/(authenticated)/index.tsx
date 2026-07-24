@@ -25,6 +25,9 @@ function RouteComponent() {
           {/* Hero Message */}
           <div className="mb-8">
             <h1 className="text-5xl font-bold mb-4">Hello {user.name}!</h1>
+            <p className="text-lg mb-4 text-base-content/70">
+              Your IAM Id: {user.iamId || 'Not Found'}
+            </p>
             <p className="text-xl max-w-2xl mx-auto text-base-content/70">
               Welcome to your modern app template. Built with Vite, React,
               TypeScript, and TanStack Router for rapid development.
