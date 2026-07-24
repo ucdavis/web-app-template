@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Server.Core.Notification;
+using Server.Core.Notification.Email;
 
 namespace Server.Tests.Notification;
 

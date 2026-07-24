@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Server.Controllers;
 using Server.Models.Notification;
 using Server.Core.Notification;
+using Server.Core.Notification.Email;
 
 namespace Server.Tests.Notification;
 
@@ -166,6 +167,36 @@ public class NotificationControllerTests
     }
 
     [Fact]
+    public async Task Markdown_endpoint_uses_current_user_email_and_passes_markdown()
+    {
+        var notificationService = new FakeNotificationService();
+        var controller = CreateController(
+            environmentName: Environments.Development,
+            notificationService: notificationService,
+            claims:
+            [
+                new Claim("preferred_username", "person@example.com"),
+            ]);
+
+        var result = await controller.SendMarkdownSample(new MarkdownNotificationRequest
+        {
+            Subject = "Subject",
+            Header = "Header",
+            Markdown = "This is **important**.",
+        }, CancellationToken.None);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeOfType<SendSampleNotificationResponse>()
+            .Which.To.Should().Be("person@example.com");
+
+        notificationService.MarkdownInvocations.Should().ContainSingle();
+        notificationService.MarkdownInvocations[0].Recipients.To.Should().Equal("person@example.com");
+        notificationService.MarkdownInvocations[0].Subject.Should().Be("Subject");
+        notificationService.MarkdownInvocations[0].Header.Should().Be("Header");
+        notificationService.MarkdownInvocations[0].Markdown.Should().Be("This is **important**.");
+    }
+
+    [Fact]
     public async Task Table_endpoint_uses_current_user_email_and_passes_rows_and_total()
     {
         var notificationService = new FakeNotificationService();
@@ -243,6 +274,7 @@ public class NotificationControllerTests
     private sealed class FakeNotificationService : INotificationService
     {
         public List<Invocation> Invocations { get; } = [];
+        public List<MarkdownInvocation> MarkdownInvocations { get; } = [];
         public List<TableInvocation> TableInvocations { get; } = [];
 
         public Task SendAsync(
@@ -256,6 +288,17 @@ public class NotificationControllerTests
             return Task.CompletedTask;
         }
 
+
+        public Task SendMarkdownAsync(
+            EmailRecipients recipients,
+            string subject,
+            string header,
+            string markdown,
+            CancellationToken cancellationToken = default)
+        {
+            MarkdownInvocations.Add(new MarkdownInvocation(recipients, subject, header, markdown));
+            return Task.CompletedTask;
+        }
         public Task SendTableAsync(
             EmailRecipients recipients,
             string subject,
@@ -284,6 +327,17 @@ public class NotificationControllerTests
             string subject,
             string header,
             string message,
+            CancellationToken cancellationToken = default)
+        {
+            throw _exception;
+        }
+
+
+        public Task SendMarkdownAsync(
+            EmailRecipients recipients,
+            string subject,
+            string header,
+            string markdown,
             CancellationToken cancellationToken = default)
         {
             throw _exception;
@@ -320,6 +374,12 @@ public class NotificationControllerTests
         string Subject,
         string Header,
         string Message);
+
+    private sealed record MarkdownInvocation(
+        EmailRecipients Recipients,
+        string Subject,
+        string Header,
+        string Markdown);
 
     private sealed record TableInvocation(
         EmailRecipients Recipients,

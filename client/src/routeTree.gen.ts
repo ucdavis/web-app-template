@@ -16,6 +16,7 @@ import { Route as authenticatedTableExportRouteImport } from './routes/(authenti
 import { Route as authenticatedStylesRouteImport } from './routes/(authenticated)/styles'
 import { Route as authenticatedNotificationRouteImport } from './routes/(authenticated)/notification'
 import { Route as authenticatedMeRouteImport } from './routes/(authenticated)/me'
+import { Route as authenticatedMarkdownFormRouteImport } from './routes/(authenticated)/markdown-form'
 import { Route as authenticatedFormRouteImport } from './routes/(authenticated)/form'
 import { Route as authenticatedFetchRouteImport } from './routes/(authenticated)/fetch'
 
@@ -55,6 +56,12 @@ const authenticatedMeRoute = authenticatedMeRouteImport.update({
   path: '/me',
   getParentRoute: () => authenticatedRouteRoute,
 } as any)
+const authenticatedMarkdownFormRoute =
+  authenticatedMarkdownFormRouteImport.update({
+    id: '/markdown-form',
+    path: '/markdown-form',
+    getParentRoute: () => authenticatedRouteRoute,
+  } as any)
 const authenticatedFormRoute = authenticatedFormRouteImport.update({
   id: '/form',
   path: '/form',
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/fetch': typeof authenticatedFetchRoute
   '/form': typeof authenticatedFormRoute
+  '/markdown-form': typeof authenticatedMarkdownFormRoute
   '/me': typeof authenticatedMeRoute
   '/notification': typeof authenticatedNotificationRoute
   '/styles': typeof authenticatedStylesRoute
@@ -80,6 +88,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/fetch': typeof authenticatedFetchRoute
   '/form': typeof authenticatedFormRoute
+  '/markdown-form': typeof authenticatedMarkdownFormRoute
   '/me': typeof authenticatedMeRoute
   '/notification': typeof authenticatedNotificationRoute
   '/styles': typeof authenticatedStylesRoute
@@ -92,6 +101,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/(authenticated)/fetch': typeof authenticatedFetchRoute
   '/(authenticated)/form': typeof authenticatedFormRoute
+  '/(authenticated)/markdown-form': typeof authenticatedMarkdownFormRoute
   '/(authenticated)/me': typeof authenticatedMeRoute
   '/(authenticated)/notification': typeof authenticatedNotificationRoute
   '/(authenticated)/styles': typeof authenticatedStylesRoute
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/fetch'
     | '/form'
+    | '/markdown-form'
     | '/me'
     | '/notification'
     | '/styles'
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/fetch'
     | '/form'
+    | '/markdown-form'
     | '/me'
     | '/notification'
     | '/styles'
@@ -125,6 +137,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/(authenticated)/fetch'
     | '/(authenticated)/form'
+    | '/(authenticated)/markdown-form'
     | '/(authenticated)/me'
     | '/(authenticated)/notification'
     | '/(authenticated)/styles'
@@ -188,6 +201,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authenticatedMeRouteImport
       parentRoute: typeof authenticatedRouteRoute
     }
+    '/(authenticated)/markdown-form': {
+      id: '/(authenticated)/markdown-form'
+      path: '/markdown-form'
+      fullPath: '/markdown-form'
+      preLoaderRoute: typeof authenticatedMarkdownFormRouteImport
+      parentRoute: typeof authenticatedRouteRoute
+    }
     '/(authenticated)/form': {
       id: '/(authenticated)/form'
       path: '/form'
@@ -208,6 +228,7 @@ declare module '@tanstack/react-router' {
 interface authenticatedRouteRouteChildren {
   authenticatedFetchRoute: typeof authenticatedFetchRoute
   authenticatedFormRoute: typeof authenticatedFormRoute
+  authenticatedMarkdownFormRoute: typeof authenticatedMarkdownFormRoute
   authenticatedMeRoute: typeof authenticatedMeRoute
   authenticatedNotificationRoute: typeof authenticatedNotificationRoute
   authenticatedStylesRoute: typeof authenticatedStylesRoute
@@ -218,6 +239,7 @@ interface authenticatedRouteRouteChildren {
 const authenticatedRouteRouteChildren: authenticatedRouteRouteChildren = {
   authenticatedFetchRoute: authenticatedFetchRoute,
   authenticatedFormRoute: authenticatedFormRoute,
+  authenticatedMarkdownFormRoute: authenticatedMarkdownFormRoute,
   authenticatedMeRoute: authenticatedMeRoute,
   authenticatedNotificationRoute: authenticatedNotificationRoute,
   authenticatedStylesRoute: authenticatedStylesRoute,

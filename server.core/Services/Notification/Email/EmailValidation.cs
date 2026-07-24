@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Server.Core.Notification;
+namespace Server.Core.Notification.Email;
 
 internal static class EmailValidation
 {

@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using Microsoft.Extensions.Options;
+using Server.Core.Notification.Email;
+using server.core.Services.Markdown;
 
 namespace Server.Core.Notification;
 
@@ -11,6 +13,13 @@ public interface INotificationService
         string subject,
         string header,
         string message,
+        CancellationToken cancellationToken = default);
+
+    Task SendMarkdownAsync(
+        EmailRecipients recipients,
+        string subject,
+        string header,
+        string markdown,
         CancellationToken cancellationToken = default);
 
     Task SendTableAsync(
@@ -26,10 +35,12 @@ public interface INotificationService
 public sealed class NotificationService : INotificationService
 {
     private const string DefaultTemplatePath = "/Views/Emails/DefaultNotification_mjml.cshtml";
+    private const string MarkdownTemplatePath = "/Views/Emails/MarkdownNotification_mjml.cshtml";
     private const string TableTemplatePath = "/Views/Emails/TableNotification_mjml.cshtml";
     private static readonly CultureInfo CurrencyCulture = CultureInfo.GetCultureInfo("en-US");
 
     private readonly IEmailService _emailService;
+    private readonly IMarkdownHtmlRenderer _markdownHtmlRenderer;
     private readonly NotificationOptions _notificationOptions;
     private readonly INotificationRenderer _notificationRenderer;
     private readonly SmtpOptions _smtpOptions;
@@ -37,11 +48,13 @@ public sealed class NotificationService : INotificationService
     public NotificationService(
         IEmailService emailService,
         INotificationRenderer notificationRenderer,
+        IMarkdownHtmlRenderer markdownHtmlRenderer,
         IOptions<NotificationOptions> notificationOptions,
         IOptions<SmtpOptions> smtpOptions)
     {
         _emailService = emailService;
         _notificationRenderer = notificationRenderer;
+        _markdownHtmlRenderer = markdownHtmlRenderer;
         _notificationOptions = notificationOptions.Value;
         _smtpOptions = smtpOptions.Value;
     }
@@ -70,9 +83,7 @@ public sealed class NotificationService : INotificationService
 
         EmailValidation.ValidateRecipients(recipients);
 
-        var appName = string.IsNullOrWhiteSpace(_notificationOptions.DefaultAppName)
-            ? _smtpOptions.FromName
-            : _notificationOptions.DefaultAppName;
+        var appName = ResolveAppName();
 
         var model = new DefaultNotificationTemplateModel
         {
@@ -89,6 +100,54 @@ public sealed class NotificationService : INotificationService
         var textBody = $"{header}{Environment.NewLine}{Environment.NewLine}{message}";
         var htmlBody = await _notificationRenderer.RenderAsync(
             DefaultTemplatePath,
+            model,
+            cancellationToken);
+
+        await _emailService.SendAsync(new EmailMessage
+        {
+            Recipients = recipients,
+            Subject = subject,
+            TextBody = textBody,
+            HtmlBody = htmlBody,
+        }, cancellationToken);
+    }
+
+    public async Task SendMarkdownAsync(
+        EmailRecipients recipients,
+        string subject,
+        string header,
+        string markdown,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(subject))
+        {
+            throw new ValidationException("Notification subject is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(header))
+        {
+            throw new ValidationException("Notification header is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(markdown))
+        {
+            throw new ValidationException("Notification markdown is required.");
+        }
+
+        EmailValidation.ValidateRecipients(recipients);
+
+        var model = new MarkdownNotificationTemplateModel
+        {
+            AppName = ResolveAppName(),
+            Header = header,
+            BodyHtml = _markdownHtmlRenderer.Render(markdown),
+            ButtonText = string.IsNullOrWhiteSpace(_notificationOptions.BaseUrl) ? string.Empty : _notificationOptions.DefaultButtonText,
+            ButtonUrl = _notificationOptions.BaseUrl,
+        };
+
+        var textBody = $"{header}{Environment.NewLine}{Environment.NewLine}{markdown}";
+        var htmlBody = await _notificationRenderer.RenderAsync(
+            MarkdownTemplatePath,
             model,
             cancellationToken);
 
@@ -132,13 +191,9 @@ public sealed class NotificationService : INotificationService
 
         EmailValidation.ValidateRecipients(recipients);
 
-        var appName = string.IsNullOrWhiteSpace(_notificationOptions.DefaultAppName)
-            ? _smtpOptions.FromName
-            : _notificationOptions.DefaultAppName;
-
         var model = new TableNotificationTemplateModel
         {
-            AppName = appName,
+            AppName = ResolveAppName(),
             Header = header,
             LayoutWidth = "800px",
             Message = message,
@@ -179,5 +234,12 @@ public sealed class NotificationService : INotificationService
             TextBody = textBody,
             HtmlBody = htmlBody,
         }, cancellationToken);
+    }
+
+    private string ResolveAppName()
+    {
+        return string.IsNullOrWhiteSpace(_notificationOptions.DefaultAppName)
+            ? _smtpOptions.FromName
+            : _notificationOptions.DefaultAppName;
     }
 }

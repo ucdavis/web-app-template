@@ -15,6 +15,12 @@ public sealed class DefaultNotificationTemplateModel : NotificationTemplateModel
 
 }
 
+public sealed class MarkdownNotificationTemplateModel : NotificationTemplateModelBase
+{
+    public string Header { get; init; } = string.Empty;
+    public string BodyHtml { get; init; } = string.Empty;
+}
+
 public sealed class TableNotificationTemplateModel : NotificationTemplateModelBase
 {
     public string Header { get; init; } = string.Empty;

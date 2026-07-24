@@ -84,6 +84,20 @@ function RouteComponent() {
             </div>
             <div className="card bg-base-100 shadow-md">
               <div className="card-body">
+                <h3 className="card-title">Markdown Form Example</h3>
+                <p className="text-base-content/70">
+                  Try a Markdown editor with rich-text paste conversion,
+                  formatting controls, and a live preview.
+                </p>
+                <div className="card-actions justify-end">
+                  <Link className="btn btn-primary" to="/markdown-form">
+                    Go to Markdown Form
+                  </Link>
+                </div>
+              </div>
+            </div>
+            <div className="card bg-base-100 shadow-md">
+              <div className="card-body">
                 <h3 className="card-title">Style Guide</h3>
                 <p className="text-base-content/70">
                   Explore the design system and UI components available in this
