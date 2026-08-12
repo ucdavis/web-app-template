@@ -67,7 +67,6 @@ const authenticatedFetchRoute = authenticatedFetchRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof authenticatedIndexRoute
   '/about': typeof AboutRoute
   '/fetch': typeof authenticatedFetchRoute
   '/form': typeof authenticatedFormRoute
@@ -75,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/notification': typeof authenticatedNotificationRoute
   '/styles': typeof authenticatedStylesRoute
   '/table-export': typeof authenticatedTableExportRoute
+  '/': typeof authenticatedIndexRoute
 }
 export interface FileRoutesByTo {
   '/about': typeof AboutRoute
@@ -101,7 +101,6 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/about'
     | '/fetch'
     | '/form'
@@ -109,6 +108,7 @@ export interface FileRouteTypes {
     | '/notification'
     | '/styles'
     | '/table-export'
+    | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/about'
@@ -148,8 +148,8 @@ declare module '@tanstack/react-router' {
     }
     '/(authenticated)': {
       id: '/(authenticated)'
-      path: '/'
-      fullPath: '/'
+      path: ''
+      fullPath: ''
       preLoaderRoute: typeof authenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
