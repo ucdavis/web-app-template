@@ -1,5 +1,22 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 
+const proximaNovaFaces = [
+  { label: 'Thin', className: 'font-thin' },
+  { label: 'Thin italic', className: 'font-thin italic' },
+  { label: 'Light', className: 'font-light' },
+  { label: 'Light italic', className: 'font-light italic' },
+  { label: 'Regular', className: 'font-normal' },
+  { label: 'Regular italic', className: 'font-normal italic' },
+  { label: 'Medium', className: 'font-medium' },
+  { label: 'Medium italic', className: 'font-medium italic' },
+  { label: 'Semibold', className: 'font-semibold' },
+  { label: 'Semibold italic', className: 'font-semibold italic' },
+  { label: 'Bold', className: 'font-bold' },
+  { label: 'Bold italic', className: 'font-bold italic' },
+  { label: 'Extra bold', className: 'font-extrabold' },
+  { label: 'Extra bold italic', className: 'font-extrabold italic' },
+];
+
 export const Route = createFileRoute('/(authenticated)/styles')({
   component: RouteComponent,
 });
@@ -28,14 +45,49 @@ function RouteComponent() {
         </Link>
       </div>
 
-      <div className="w-full max-w-1/2 space-y-8">
+      <div className="w-full max-w-4xl space-y-8">
         {/* Typography */}
-        <section>
+        <section className="space-y-3">
           <h1>Heading 1</h1>
           <h2>Heading 2</h2>
           <h3>Heading 3</h3>
           <p>This is a paragraph of base text.</p>
           <p>This is small, muted text.</p>
+        </section>
+
+        {/* Gunrock font preview */}
+        <section aria-labelledby="gunrock-fonts" className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-bold" id="gunrock-fonts">
+              Gunrock font preview
+            </h2>
+            <p className="text-base-content/70">
+              Gunrock Tailwind 2.6.0 provides fourteen Proxima Nova faces.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {proximaNovaFaces.map(({ label, className }) => (
+              <article
+                className="card border border-base-300 bg-base-100"
+                key={label}
+              >
+                <div className="card-body gap-2 p-5">
+                  <p className="text-sm text-base-content/70">
+                    Proxima Nova {label}
+                  </p>
+                  <p className={`font-sans text-2xl ${className}`}>
+                    Aggies lead the way
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+          <article className="card border border-base-300 bg-base-100">
+            <div className="card-body gap-2">
+              <p className="text-sm text-base-content/70">Ryman display</p>
+              <p className="font-display text-5xl">Aggies lead the way</p>
+            </div>
+          </article>
         </section>
 
         {/* Buttons */}
