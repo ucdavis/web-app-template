@@ -16,15 +16,104 @@ param expectedSubscriptionId string
 @description('Azure region for all resources.')
 param location string = resourceGroup().location
 
+// <deployment-settings:main-params>
+@description('OpenID Connect callback path used by Microsoft Identity Web.')
+param authCallbackPath string = '/signin-oidc'
+
+@description('Entra ID application client ID used by Microsoft Identity Web.')
+param authClientId string = ''
+
+@description('Entra ID domain used by Microsoft Identity Web.')
+param authDomain string = ''
+
+@description('Entra ID authority instance used by Microsoft Identity Web.')
+param authInstance string = environment().authentication.loginEndpoint
+
+@description('Entra ID tenant ID used by Microsoft Identity Web.')
+param authTenantId string = ''
+
+@description('Base URL used in generated notification emails. Defaults to the App Service hostname.')
+param notificationBaseUrl string = ''
+
+@description('Default application name used in generated notifications.')
+param notificationDefaultAppName string = appName
+
+@description('Default button text used in generated notifications.')
+param notificationDefaultButtonText string = 'Open the application'
+
+@description('Optional OTLP exporter endpoint. Leave empty when no external OTLP collector is configured.')
+param otelExporterOtlpEndpoint string = ''
+
+@secure()
+@description('Optional OTLP exporter headers, such as collector authorization.')
+param otelExporterOtlpHeaders string = ''
+
+@allowed([
+  'grpc'
+  'http/protobuf'
+])
+@description('OTLP exporter protocol used when an OTLP endpoint is configured.')
+param otelExporterOtlpProtocol string = 'http/protobuf'
+
+@description('Optional OpenTelemetry resource attributes.')
+param otelResourceAttributes string = ''
+
+@description('Optional OpenTelemetry service name.')
+param otelServiceName string = ''
+
+@description('BCC email address for outbound email.')
+param smtpBccEmail string = ''
+
+@description('From email address for outbound email.')
+param smtpFromEmail string = ''
+
+@description('From display name for outbound email.')
+param smtpFromName string = appName
+
+@description('SMTP host for outbound email.')
+param smtpHost string = ''
+
+@secure()
+@description('Optional SMTP password runtime setting.')
+param smtpPassword string = ''
+
+@description('SMTP port for outbound email.')
+param smtpPort int = 587
+
+@description('Reply-to email address for outbound email.')
+param smtpReplyToEmail string = ''
+
+@description('SMTP timeout in milliseconds.')
+param smtpTimeout int = 100000
+
+@description('Whether SMTP should use SSL.')
+param smtpUseSsl bool = true
+
+@description('SMTP username for outbound email.')
+param smtpUsername string = ''
+
 @description('SQL admin login for SQL authentication.')
 param sqlAdminLogin string
 
 @secure()
-@description('SQL admin password for SQL authentication.')
+@description('SQL admin password used when deploy_infra is true.')
 param sqlAdminPassword string
 
 @description('SQL database name.')
 param sqlDatabaseName string = appName
+
+@description('SQL database SKU name.')
+param sqlSkuName string = env == 'prod' ? 'S0' : 'Basic'
+
+@description('SQL database SKU tier.')
+param sqlSkuTier string = env == 'prod' ? 'Standard' : 'Basic'
+
+@description('App Service plan SKU name.')
+param webSkuName string = env == 'prod' ? 'B1' : 'B1'
+
+@description('App Service plan SKU tier.')
+param webSkuTier string = env == 'prod' ? 'Basic' : 'Basic'
+// </deployment-settings:main-params>
 
 @description('Additional resource tags to apply.')
 param tags object = {}
@@ -37,18 +126,6 @@ param appInsightsRetentionInDays int = 30
 @description('Linux App Service runtime stack.')
 param linuxFxVersion string = 'DOTNETCORE|10.0'
 
-@description('App Service plan SKU name.')
-param webSkuName string = env == 'prod' ? 'B1' : 'B1'
-
-@description('App Service plan SKU tier.')
-param webSkuTier string = env == 'prod' ? 'Basic' : 'Basic'
-
-@description('SQL database SKU name.')
-param sqlSkuName string = env == 'prod' ? 'S0' : 'Basic'
-
-@description('SQL database SKU tier.')
-param sqlSkuTier string = env == 'prod' ? 'Standard' : 'Basic'
-
 @description('Whether to allow Azure services and resources to access SQL server.')
 param sqlAllowAzureServices bool = env == 'test'
 
@@ -58,81 +135,6 @@ param sqlAllowAzureServices bool = env == 'test'
 ])
 @description('Public network access for SQL server.')
 param sqlPublicNetworkAccess string = 'Enabled'
-
-@description('Base URL used in generated notification emails. Defaults to the App Service hostname.')
-param notificationBaseUrl string = ''
-
-@description('Default application name used in generated notifications.')
-param notificationDefaultAppName string = appName
-
-@description('Default button text used in generated notifications.')
-param notificationDefaultButtonText string = 'Open the application'
-
-@description('Entra ID application client ID used by Microsoft Identity Web.')
-param authClientId string = ''
-
-@description('Entra ID tenant ID used by Microsoft Identity Web.')
-param authTenantId string = ''
-
-@description('Entra ID domain used by Microsoft Identity Web.')
-param authDomain string = ''
-
-@description('Entra ID authority instance used by Microsoft Identity Web.')
-param authInstance string = environment().authentication.loginEndpoint
-
-@description('OpenID Connect callback path used by Microsoft Identity Web.')
-param authCallbackPath string = '/signin-oidc'
-
-@description('SMTP host for outbound email.')
-param smtpHost string = ''
-
-@description('SMTP port for outbound email.')
-param smtpPort int = 587
-
-@description('SMTP timeout in milliseconds.')
-param smtpTimeout int = 100000
-
-@description('Whether SMTP should use SSL.')
-param smtpUseSsl bool = true
-
-@description('SMTP username for outbound email.')
-param smtpUsername string = ''
-
-@secure()
-@description('SMTP password for outbound email.')
-param smtpPassword string = ''
-
-@description('From email address for outbound email.')
-param smtpFromEmail string = ''
-
-@description('From display name for outbound email.')
-param smtpFromName string = appName
-
-@description('Reply-to email address for outbound email.')
-param smtpReplyToEmail string = ''
-
-@description('BCC email address for outbound email.')
-param smtpBccEmail string = ''
-
-@description('Optional OTLP exporter endpoint. Leave empty when no external OTLP collector is configured.')
-param otelExporterOtlpEndpoint string = ''
-
-@allowed([
-  'grpc'
-  'http/protobuf'
-])
-@description('OTLP exporter protocol used when an OTLP endpoint is configured.')
-param otelExporterOtlpProtocol string = 'http/protobuf'
-
-@secure()
-@description('Optional OTLP exporter headers. Use for collector authorization headers when required.')
-param otelExporterOtlpHeaders string = ''
-
-@description('Optional OpenTelemetry service name.')
-param otelServiceName string = ''
-
-@description('Optional OpenTelemetry resource attributes.')
-param otelResourceAttributes string = ''
 
 var appNameSafe = toLower(replace(replace(appName, ' ', ''), '_', ''))
 var nameToken = substring(uniqueString(resourceGroup().id, appName, env), 0, 6)
@@ -206,36 +208,38 @@ module compute 'modules/compute.bicep' = if (deploymentGuardPassed) {
     tags: resourceTags
     webPlanName: webPlanName
     webAppName: webAppName
-    webSkuName: webSkuName
-    webSkuTier: webSkuTier
     linuxFxVersion: linuxFxVersion
     sqlConnectionString: sqlConnectionString
     environmentName: env
     appInsightsConnectionString: appInsights!.properties.ConnectionString
     appInsightsInstrumentationKey: appInsights!.properties.InstrumentationKey
+    // <deployment-settings:main-compute-params>
+    authCallbackPath: authCallbackPath
+    authClientId: authClientId
+    authDomain: authDomain
+    authInstance: authInstance
+    authTenantId: authTenantId
     notificationBaseUrl: resolvedNotificationBaseUrl
     notificationDefaultAppName: notificationDefaultAppName
     notificationDefaultButtonText: notificationDefaultButtonText
-    authClientId: authClientId
-    authTenantId: authTenantId
-    authDomain: authDomain
-    authInstance: authInstance
-    authCallbackPath: authCallbackPath
+    otelExporterOtlpEndpoint: otelExporterOtlpEndpoint
+    otelExporterOtlpHeaders: otelExporterOtlpHeaders
+    otelExporterOtlpProtocol: otelExporterOtlpProtocol
+    otelResourceAttributes: otelResourceAttributes
+    otelServiceName: otelServiceName
+    smtpBccEmail: smtpBccEmail
+    smtpFromEmail: smtpFromEmail
+    smtpFromName: smtpFromName
     smtpHost: smtpHost
+    smtpPassword: smtpPassword
     smtpPort: smtpPort
+    smtpReplyToEmail: smtpReplyToEmail
     smtpTimeout: smtpTimeout
     smtpUseSsl: smtpUseSsl
     smtpUsername: smtpUsername
-    smtpPassword: smtpPassword
-    smtpFromEmail: smtpFromEmail
-    smtpFromName: smtpFromName
-    smtpReplyToEmail: smtpReplyToEmail
-    smtpBccEmail: smtpBccEmail
-    otelExporterOtlpEndpoint: otelExporterOtlpEndpoint
-    otelExporterOtlpProtocol: otelExporterOtlpProtocol
-    otelExporterOtlpHeaders: otelExporterOtlpHeaders
-    otelServiceName: otelServiceName
-    otelResourceAttributes: otelResourceAttributes
+    webSkuName: webSkuName
+    webSkuTier: webSkuTier
+    // </deployment-settings:main-compute-params>
   }
 }
 

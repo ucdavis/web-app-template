@@ -146,7 +146,7 @@ The template includes generic Azure App Service deployment scaffolding in `infra
 
 Cloud deployments are intentionally limited to `test` and `prod`. Before the first cloud deployment, replace placeholder names such as `webapp`, `rg-webapp-test`, and `rg-webapp-prod` with names for your application.
 
-For GitHub Environments, the one-time OIDC bootstrap, required variables/secrets, local deploy scripts, and first-deploy caveats, see [Azure Deployment Setup](README.customization.md#5-azure-deployment-setup). For the hosting flow and key deployment files, see [Development Architecture](docs/ARCHITECTURE.md#azure-hosting-flow).
+For GitHub Environments, the one-time OIDC bootstrap, deployment settings sync, local deploy scripts, and first-deploy caveats, see [Azure Deployment Setup](README.customization.md#5-azure-deployment-setup). For the hosting flow and key deployment files, see [Development Architecture](docs/ARCHITECTURE.md#azure-hosting-flow).
 
 ## Development
 

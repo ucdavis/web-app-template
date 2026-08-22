@@ -25,14 +25,23 @@ Common configuration:
 Existing infrastructure deployments:
   DEPLOY_INFRA=false WEB_APP_NAME=<app-service-name> infrastructure/azure/deploy.sh test
 
-Optional app settings use the same names as the GitHub Environment variables:
-  AUTH_CLIENT_ID, AUTH_TENANT_ID, AUTH_DOMAIN, AUTH_INSTANCE, AUTH_CALLBACK_PATH,
-  NOTIFICATION_BASE_URL, NOTIFICATION_DEFAULT_APP_NAME, NOTIFICATION_DEFAULT_BUTTON_TEXT,
-  SMTP_HOST, SMTP_PORT, SMTP_TIMEOUT, SMTP_USE_SSL, SMTP_USERNAME, SMTP_PASSWORD,
-  SMTP_FROM_EMAIL, SMTP_FROM_NAME, SMTP_REPLY_TO_EMAIL, SMTP_BCC_EMAIL,
-  OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_PROTOCOL, OTEL_EXPORTER_OTLP_HEADERS,
-  OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES, DB_CONNECTION
+Optional app settings use the same names as the GitHub Environment variables.
+DB_CONNECTION remains a hand-authored override for existing infrastructure deployments.
+Runtime platform settings are handled directly by the deploy script.
 USAGE
+  # <deployment-settings:deploy-sh-help>
+  printf '%s\n' \
+    'Deployment settings overlay: infrastructure/azure/deployment-settings.json' \
+    'Template defaults: infrastructure/azure/deployment-settings-defaults.json' \
+    'AUTH_CALLBACK_PATH, AUTH_CLIENT_ID, AUTH_DOMAIN, AUTH_INSTANCE, AUTH_TENANT_ID' \
+    '  NOTIFICATION_BASE_URL, NOTIFICATION_DEFAULT_APP_NAME' \
+    '  NOTIFICATION_DEFAULT_BUTTON_TEXT, OTEL_EXPORTER_OTLP_ENDPOINT' \
+    '  OTEL_EXPORTER_OTLP_HEADERS, OTEL_EXPORTER_OTLP_PROTOCOL' \
+    '  OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME, SMTP_BCC_EMAIL, SMTP_FROM_EMAIL' \
+    '  SMTP_FROM_NAME, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_REPLY_TO_EMAIL' \
+    '  SMTP_TIMEOUT, SMTP_USE_SSL, SMTP_USERNAME, SQL_ADMIN_LOGIN, SQL_ADMIN_PASSWORD' \
+    '  SQL_DATABASE_NAME, SQL_SKU_NAME, SQL_SKU_TIER, WEB_SKU_NAME, WEB_SKU_TIER'
+  # </deployment-settings:deploy-sh-help>
 }
 
 die() {
@@ -117,9 +126,13 @@ fi
 
 require_command az
 
+# <deployment-settings:deploy-sh-required-checks>
 if is_true "$DEPLOY_INFRA"; then
   [[ -n "${SQL_ADMIN_PASSWORD:-}" ]] || die "SQL_ADMIN_PASSWORD is required when DEPLOY_INFRA=true."
-else
+fi
+# </deployment-settings:deploy-sh-required-checks>
+
+if ! is_true "$DEPLOY_INFRA"; then
   [[ -n "${WEB_APP_NAME:-}" ]] || die "WEB_APP_NAME is required when DEPLOY_INFRA=false."
 fi
 
@@ -183,39 +196,41 @@ if is_true "$DEPLOY_INFRA"; then
     "appName=$APP_NAME"
     "env=$DEPLOY_ENV"
     "expectedSubscriptionId=$AZURE_SUBSCRIPTION_ID"
-    "sqlAdminLogin=$SQL_ADMIN_LOGIN"
-    "sqlAdminPassword=$SQL_ADMIN_PASSWORD"
   )
 
   add_param "location" "$AZURE_LOCATION"
-  add_param "sqlDatabaseName" "${SQL_DATABASE_NAME:-}"
-  add_param "webSkuName" "${WEB_SKU_NAME:-}"
-  add_param "webSkuTier" "${WEB_SKU_TIER:-}"
-  add_param "sqlSkuName" "${SQL_SKU_NAME:-}"
-  add_param "sqlSkuTier" "${SQL_SKU_TIER:-}"
+  # <deployment-settings:deploy-sh-bicep-params>
+  add_param "authCallbackPath" "${AUTH_CALLBACK_PATH:-}"
+  add_param "authClientId" "${AUTH_CLIENT_ID:-}"
+  add_param "authDomain" "${AUTH_DOMAIN:-}"
+  add_param "authInstance" "${AUTH_INSTANCE:-}"
+  add_param "authTenantId" "${AUTH_TENANT_ID:-}"
   add_param "notificationBaseUrl" "${NOTIFICATION_BASE_URL:-}"
   add_param "notificationDefaultAppName" "${NOTIFICATION_DEFAULT_APP_NAME:-}"
   add_param "notificationDefaultButtonText" "${NOTIFICATION_DEFAULT_BUTTON_TEXT:-}"
-  add_param "authClientId" "${AUTH_CLIENT_ID:-}"
-  add_param "authTenantId" "${AUTH_TENANT_ID:-}"
-  add_param "authDomain" "${AUTH_DOMAIN:-}"
-  add_param "authInstance" "${AUTH_INSTANCE:-}"
-  add_param "authCallbackPath" "${AUTH_CALLBACK_PATH:-}"
+  add_param "otelExporterOtlpEndpoint" "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+  add_param "otelExporterOtlpHeaders" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
+  add_param "otelExporterOtlpProtocol" "${OTEL_EXPORTER_OTLP_PROTOCOL:-}"
+  add_param "otelResourceAttributes" "${OTEL_RESOURCE_ATTRIBUTES:-}"
+  add_param "otelServiceName" "${OTEL_SERVICE_NAME:-}"
+  add_param "smtpBccEmail" "${SMTP_BCC_EMAIL:-}"
+  add_param "smtpFromEmail" "${SMTP_FROM_EMAIL:-}"
+  add_param "smtpFromName" "${SMTP_FROM_NAME:-}"
   add_param "smtpHost" "${SMTP_HOST:-}"
+  add_param "smtpPassword" "${SMTP_PASSWORD:-}"
   add_param "smtpPort" "${SMTP_PORT:-}"
+  add_param "smtpReplyToEmail" "${SMTP_REPLY_TO_EMAIL:-}"
   add_param "smtpTimeout" "${SMTP_TIMEOUT:-}"
   add_param "smtpUseSsl" "${SMTP_USE_SSL:-}"
   add_param "smtpUsername" "${SMTP_USERNAME:-}"
-  add_param "smtpPassword" "${SMTP_PASSWORD:-}"
-  add_param "smtpFromEmail" "${SMTP_FROM_EMAIL:-}"
-  add_param "smtpFromName" "${SMTP_FROM_NAME:-}"
-  add_param "smtpReplyToEmail" "${SMTP_REPLY_TO_EMAIL:-}"
-  add_param "smtpBccEmail" "${SMTP_BCC_EMAIL:-}"
-  add_param "otelExporterOtlpEndpoint" "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
-  add_param "otelExporterOtlpProtocol" "${OTEL_EXPORTER_OTLP_PROTOCOL:-}"
-  add_param "otelExporterOtlpHeaders" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
-  add_param "otelServiceName" "${OTEL_SERVICE_NAME:-}"
-  add_param "otelResourceAttributes" "${OTEL_RESOURCE_ATTRIBUTES:-}"
+  add_param "sqlAdminLogin" "${SQL_ADMIN_LOGIN:-}"
+  add_param "sqlAdminPassword" "${SQL_ADMIN_PASSWORD:-}"
+  add_param "sqlDatabaseName" "${SQL_DATABASE_NAME:-}"
+  add_param "sqlSkuName" "${SQL_SKU_NAME:-}"
+  add_param "sqlSkuTier" "${SQL_SKU_TIER:-}"
+  add_param "webSkuName" "${WEB_SKU_NAME:-}"
+  add_param "webSkuTier" "${WEB_SKU_TIER:-}"
+  # </deployment-settings:deploy-sh-bicep-params>
 
   printf 'Deploying infrastructure to %s...\n' "$RESOURCE_GROUP"
   az deployment group create \
@@ -254,29 +269,31 @@ app_settings=(
 )
 
 add_setting "DB_CONNECTION" "${DB_CONNECTION:-}"
+# <deployment-settings:deploy-sh-runtime-settings>
+add_setting "Auth__CallbackPath" "${AUTH_CALLBACK_PATH:-}"
+add_setting "Auth__ClientId" "${AUTH_CLIENT_ID:-}"
+add_setting "Auth__Domain" "${AUTH_DOMAIN:-}"
+add_setting "Auth__Instance" "${AUTH_INSTANCE:-}"
+add_setting "Auth__TenantId" "${AUTH_TENANT_ID:-}"
 add_setting "Notification__BaseUrl" "${NOTIFICATION_BASE_URL:-}"
 add_setting "Notification__DefaultAppName" "${NOTIFICATION_DEFAULT_APP_NAME:-}"
 add_setting "Notification__DefaultButtonText" "${NOTIFICATION_DEFAULT_BUTTON_TEXT:-}"
-add_setting "Auth__ClientId" "${AUTH_CLIENT_ID:-}"
-add_setting "Auth__TenantId" "${AUTH_TENANT_ID:-}"
-add_setting "Auth__Domain" "${AUTH_DOMAIN:-}"
-add_setting "Auth__Instance" "${AUTH_INSTANCE:-}"
-add_setting "Auth__CallbackPath" "${AUTH_CALLBACK_PATH:-}"
+add_setting "OTEL_EXPORTER_OTLP_ENDPOINT" "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+add_setting "OTEL_EXPORTER_OTLP_HEADERS" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
+add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "${OTEL_EXPORTER_OTLP_PROTOCOL:-}"
+add_setting "OTEL_RESOURCE_ATTRIBUTES" "${OTEL_RESOURCE_ATTRIBUTES:-}"
+add_setting "OTEL_SERVICE_NAME" "${OTEL_SERVICE_NAME:-}"
+add_setting "Smtp__BccEmail" "${SMTP_BCC_EMAIL:-}"
+add_setting "Smtp__FromEmail" "${SMTP_FROM_EMAIL:-}"
+add_setting "Smtp__FromName" "${SMTP_FROM_NAME:-}"
 add_setting "Smtp__Host" "${SMTP_HOST:-}"
+add_setting "Smtp__Password" "${SMTP_PASSWORD:-}"
 add_setting "Smtp__Port" "${SMTP_PORT:-}"
+add_setting "Smtp__ReplyToEmail" "${SMTP_REPLY_TO_EMAIL:-}"
 add_setting "Smtp__Timeout" "${SMTP_TIMEOUT:-}"
 add_setting "Smtp__UseSsl" "${SMTP_USE_SSL:-}"
 add_setting "Smtp__Username" "${SMTP_USERNAME:-}"
-add_setting "Smtp__Password" "${SMTP_PASSWORD:-}"
-add_setting "Smtp__FromEmail" "${SMTP_FROM_EMAIL:-}"
-add_setting "Smtp__FromName" "${SMTP_FROM_NAME:-}"
-add_setting "Smtp__ReplyToEmail" "${SMTP_REPLY_TO_EMAIL:-}"
-add_setting "Smtp__BccEmail" "${SMTP_BCC_EMAIL:-}"
-add_setting "OTEL_EXPORTER_OTLP_ENDPOINT" "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
-add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "${OTEL_EXPORTER_OTLP_PROTOCOL:-}"
-add_setting "OTEL_EXPORTER_OTLP_HEADERS" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
-add_setting "OTEL_SERVICE_NAME" "${OTEL_SERVICE_NAME:-}"
-add_setting "OTEL_RESOURCE_ATTRIBUTES" "${OTEL_RESOURCE_ATTRIBUTES:-}"
+# </deployment-settings:deploy-sh-runtime-settings>
 
 printf 'Applying runtime settings to %s...\n' "$WEB_APP_NAME"
 az webapp config appsettings set \

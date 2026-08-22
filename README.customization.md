@@ -90,14 +90,77 @@ When the workflow should create or update Azure SQL and App Service resources, a
 
 - `SQL_ADMIN_PASSWORD`
 
-Optional GitHub Environment variables/secrets used by the reusable deployment workflow include:
+### Deployment settings customization
 
-- App identity and location: `APP_NAME`, `AZURE_LOCATION`
-- Existing infrastructure deploys: `WEB_APP_NAME`, `DB_CONNECTION` secret
-- Auth: `AUTH_CLIENT_ID`, `AUTH_TENANT_ID`, `AUTH_DOMAIN`, `AUTH_INSTANCE`, `AUTH_CALLBACK_PATH`
-- Notifications and SMTP: `NOTIFICATION_BASE_URL`, `NOTIFICATION_DEFAULT_APP_NAME`, `NOTIFICATION_DEFAULT_BUTTON_TEXT`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_TIMEOUT`, `SMTP_USE_SSL`, `SMTP_USERNAME`, `SMTP_PASSWORD` secret, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`, `SMTP_REPLY_TO_EMAIL`, `SMTP_BCC_EMAIL`
-- Observability: `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_EXPORTER_OTLP_HEADERS` secret, `OTEL_SERVICE_NAME`, `OTEL_RESOURCE_ATTRIBUTES`
-- SKUs and database names: `WEB_SKU_NAME`, `WEB_SKU_TIER`, `SQL_DATABASE_NAME`, `SQL_SKU_NAME`, `SQL_SKU_TIER`, `SQL_ADMIN_LOGIN`
+Customizable deployment settings are generated from two files:
+
+- `infrastructure/azure/deployment-settings-defaults.json`: template-owned reference data for the built-in settings.
+- `infrastructure/azure/deployment-settings.json`: app-owned overlay for disabling built-ins, overriding defaults, and adding app settings.
+- `infrastructure/azure/deployment-settings.schema.json`: local editor schema documenting field meanings, examples, and allowed values.
+
+Most projects should edit only `deployment-settings.json`, then run:
+
+```bash
+npm run deployment-settings:sync
+```
+
+Pull request validation runs `npm run deployment-settings:check` so generated workflow, script, and Bicep regions cannot drift.
+
+Override a built-in default by GitHub Environment variable name:
+
+```json
+{
+  "version": 1,
+  "disabled": [],
+  "overrides": {
+    "SMTP_PORT": {
+      "bicep": {
+        "default": 2525
+      }
+    }
+  },
+  "additions": []
+}
+```
+
+Disable an optional runtime App Service built-in setting when the app does not need it:
+
+```json
+{
+  "version": 1,
+  "disabled": ["SMTP_BCC_EMAIL"],
+  "overrides": {},
+  "additions": []
+}
+```
+
+Settings used by core infrastructure wiring, such as SQL admin values, database and App Service SKUs, and generated notification base URLs, cannot be disabled. Override their defaults instead.
+
+Add a runtime App Service setting:
+
+```json
+{
+  "version": 1,
+  "disabled": [],
+  "overrides": {},
+  "additions": [
+    {
+      "githubName": "FEATURE_FLAGS__ENABLE_BETA",
+      "appServiceName": "FeatureFlags__EnableBeta",
+      "classification": "variable",
+      "valueType": "bool",
+      "description": "Enables beta-only UI features.",
+      "bicep": {
+        "default": false
+      }
+    }
+  ]
+}
+```
+
+Secrets use `"classification": "secret"` and are passed through reusable GitHub workflows as individually named secrets. The template intentionally does not use `secrets: inherit`.
+
+`DB_CONNECTION`, App Insights settings, `ASPNETCORE_ENVIRONMENT`, and `WEBSITE_RUN_FROM_PACKAGE` remain hand-authored or platform-derived settings rather than overlay entries.
 
 ### One-time OIDC bootstrap
 

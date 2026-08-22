@@ -47,7 +47,15 @@ jobs:
         with:
           node-version: 22.x
           cache: npm
-          cache-dependency-path: client/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            client/package-lock.json
+
+      - name: Restore deployment tooling dependencies
+        run: npm ci
+
+      - name: Check deployment settings
+        run: npm run deployment-settings:check
 
       - name: Restore frontend dependencies
         working-directory: client
@@ -81,9 +89,11 @@ jobs:
       environment: test
       deploy_infra: true
     secrets:
-      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      # <deployment-settings:ci-cd-deploy-test-secrets>
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      # </deployment-settings:ci-cd-deploy-test-secrets>
       DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
 
   deploy_manual:
@@ -97,7 +107,9 @@ jobs:
       environment: ${{ inputs.environment }}
       deploy_infra: ${{ inputs.deploy_infra }}
     secrets:
-      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      # <deployment-settings:ci-cd-deploy-manual-secrets>
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
+      # </deployment-settings:ci-cd-deploy-manual-secrets>
       DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
