@@ -46,6 +46,7 @@ const allowedClassifications = new Set(['variable', 'secret']);
 const allowedValueTypes = new Set(['string', 'int', 'bool']);
 const allowedRequiredWhen = new Set(['always', 'deploy_infra', 'existing_infra', 'never']);
 const allowedEmitWhen = new Set(['always', 'nonEmpty']);
+const allowedOverrideKeys = new Set(['classification', 'valueType', 'description', 'requiredWhen', 'emitWhen', 'appServiceName']);
 
 function fail(message: string): never {
   throw new Error(message);
@@ -89,6 +90,10 @@ function githubNameToId(githubName: string): string {
 
 function shellQuote(value: string): string {
   return String(value).replaceAll("'", "'\"'\"'");
+}
+
+function yamlQuotedString(value: string): string {
+  return JSON.stringify(value);
 }
 
 function replaceBlock(content: string, id: string, generatedLines: string[]): string {
@@ -207,8 +212,16 @@ function validateOverlay(overlay: unknown, defaults: DeploymentSettingsContract)
     }
 
     assertPlainObject(override, `deployment-settings.json overrides.${githubName}`);
-    if ('id' in override || 'githubName' in override) {
-      fail(`deployment-settings.json overrides.${githubName} cannot change id or githubName; use additions for new settings.`);
+    for (const key of Object.keys(override)) {
+      if (key === 'id' || key === 'githubName') {
+        fail(`deployment-settings.json overrides.${githubName} cannot change id or githubName; use additions for new settings.`);
+      }
+
+      if (!allowedOverrideKeys.has(key)) {
+        fail(
+          `deployment-settings.json overrides.${githubName} cannot use unsupported property '${key}'; permitted keys are classification, valueType, description, requiredWhen, emitWhen, and appServiceName.`,
+        );
+      }
     }
   }
 
@@ -292,7 +305,7 @@ function requiredSettings(settings: DeploymentSetting[], requiredWhen: RequiredW
 function renderWorkflowSecrets(settings: DeploymentSetting[]): string[] {
   return secretSettings(settings).flatMap((setting) => [
     `${setting.githubName}:`,
-    `  description: ${setting.description}`,
+    `  description: ${yamlQuotedString(setting.description)}`,
     '  required: false',
   ]);
 }
@@ -345,6 +358,23 @@ function renderWorkflowRuntimeSettings(settings: DeploymentSetting[]): string[] 
 
     return `add_setting "${setting.appServiceName}" "$${setting.githubName}"`;
   });
+}
+
+function renderWorkflowDisabledSettings(settings: DeploymentSetting[]): string[] {
+  return [
+    'disabled_settings=(',
+    ...settings.map((setting) => `  "${setting.appServiceName}"`),
+    ')',
+    '',
+    'if (( ${#disabled_settings[@]} > 0 )); then',
+    '  az webapp config appsettings delete \\',
+    '    --resource-group "$RESOURCE_GROUP" \\',
+    '    --name "$WEB_APP_NAME" \\',
+    '    --setting-names "${disabled_settings[@]}" \\',
+    '    --output none',
+    'fi',
+    '',
+  ];
 }
 
 function renderCiCdSecrets(settings: DeploymentSetting[]): string[] {
@@ -415,7 +445,29 @@ function renderDeployShRuntimeSettings(settings: DeploymentSetting[]): string[] 
   });
 }
 
-function renderFile(relativePath: string, originalContent: string, settings: DeploymentSetting[]): string {
+function renderDeployShDisabledSettings(settings: DeploymentSetting[]): string[] {
+  return [
+    'disabled_settings=(',
+    ...settings.map((setting) => `  "${setting.appServiceName}"`),
+    ')',
+    '',
+    'if (( ${#disabled_settings[@]} > 0 )); then',
+    '  az webapp config appsettings delete \\',
+    '    --resource-group "$RESOURCE_GROUP" \\',
+    '    --name "$WEB_APP_NAME" \\',
+    '    --setting-names "${disabled_settings[@]}" \\',
+    '    --output none',
+    'fi',
+    '',
+  ];
+}
+
+function renderFile(
+  relativePath: string,
+  originalContent: string,
+  settings: DeploymentSetting[],
+  disabledSettings: DeploymentSetting[],
+): string {
   let content = originalContent;
 
   switch (relativePath) {
@@ -423,7 +475,10 @@ function renderFile(relativePath: string, originalContent: string, settings: Dep
       content = replaceBlock(content, 'workflow-secrets', renderWorkflowSecrets(settings));
       content = replaceBlock(content, 'workflow-env', renderWorkflowEnv(settings));
       content = replaceBlock(content, 'workflow-required-checks', renderWorkflowRequiredChecks(settings));
-      content = replaceBlock(content, 'workflow-runtime-settings', renderWorkflowRuntimeSettings(settings));
+      content = replaceBlock(content, 'workflow-runtime-settings', [
+        ...renderWorkflowDisabledSettings(disabledSettings),
+        ...renderWorkflowRuntimeSettings(settings),
+      ]);
       return content;
     case '.github/workflows/ci-cd.yml':
       content = replaceBlock(content, 'ci-cd-deploy-test-secrets', renderCiCdSecrets(settings));
@@ -432,7 +487,10 @@ function renderFile(relativePath: string, originalContent: string, settings: Dep
     case 'infrastructure/azure/deploy.sh':
       content = replaceBlock(content, 'deploy-sh-help', renderDeployShHelp(settings));
       content = replaceBlock(content, 'deploy-sh-required-checks', renderDeployShRequiredChecks(settings));
-      content = replaceBlock(content, 'deploy-sh-runtime-settings', renderDeployShRuntimeSettings(settings));
+      content = replaceBlock(content, 'deploy-sh-runtime-settings', [
+        ...renderDeployShDisabledSettings(disabledSettings),
+        ...renderDeployShRuntimeSettings(settings),
+      ]);
       return content;
     default:
       fail(`No renderer configured for ${relativePath}.`);
@@ -452,12 +510,20 @@ async function main(): Promise<void> {
   const overlay = JSON.parse(await readFile(overlayPath, 'utf8'));
   const contract = resolveSettings(defaults, overlay);
   const settings = contractSettings(contract);
+  const defaultSettings = new Map(contractSettings(defaults).map((setting) => [setting.githubName, setting]));
+  const disabledSettings = overlay.disabled.map((githubName: string) => {
+    const setting = defaultSettings.get(githubName);
+    if (setting === undefined) {
+      fail(`deployment-settings.json disables unknown default setting ${githubName}.`);
+    }
+    return setting;
+  });
   const staleFiles: string[] = [];
 
   for (const relativePath of generatedTargets) {
     const fullPath = path.join(repoRoot, relativePath);
     const originalContent = await readFile(fullPath, 'utf8');
-    const renderedContent = renderFile(relativePath, originalContent, settings);
+    const renderedContent = renderFile(relativePath, originalContent, settings, disabledSettings);
 
     if (renderedContent !== originalContent) {
       staleFiles.push(relativePath);

@@ -92,11 +92,12 @@ When the workflow should create or update Azure SQL and App Service resources, a
 
 ### Deployment settings customization
 
-Customizable runtime App Service settings are generated from two files:
+Customizable runtime App Service settings are generated from two JSON input files:
 
 - `infrastructure/azure/deployment-settings-defaults.json`: template-owned reference data for built-in direct runtime settings.
 - `infrastructure/azure/deployment-settings.json`: app-owned overlay for disabling built-ins, overriding runtime mappings, and adding app settings.
-- `infrastructure/azure/deployment-settings.schema.json`: local editor schema documenting field meanings, examples, and allowed values.
+
+The local schema `infrastructure/azure/deployment-settings.schema.json` documents field meanings, examples, and allowed values for editor support; it is not a generation input.
 
 Most projects should edit only `deployment-settings.json`, then run:
 

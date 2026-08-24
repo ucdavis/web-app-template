@@ -246,6 +246,17 @@ app_settings=(
 
 add_setting "DB_CONNECTION" "${DB_CONNECTION:-}"
 # <deployment-settings:deploy-sh-runtime-settings>
+disabled_settings=(
+)
+
+if (( ${#disabled_settings[@]} > 0 )); then
+  az webapp config appsettings delete \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$WEB_APP_NAME" \
+    --setting-names "${disabled_settings[@]}" \
+    --output none
+fi
+
 add_setting "Auth__CallbackPath" "${AUTH_CALLBACK_PATH:-}"
 add_setting "Auth__ClientId" "${AUTH_CLIENT_ID:-}"
 add_setting "Auth__Domain" "${AUTH_DOMAIN:-}"
@@ -254,7 +265,7 @@ add_setting "Auth__TenantId" "${AUTH_TENANT_ID:-}"
 add_setting "Notification__BaseUrl" "${NOTIFICATION_BASE_URL:-}"
 add_setting "Notification__DefaultAppName" "${NOTIFICATION_DEFAULT_APP_NAME:-}"
 add_setting "Notification__DefaultButtonText" "${NOTIFICATION_DEFAULT_BUTTON_TEXT:-}"
-add_setting "OTEL_EXPORTER_OTLP_ENDPOINT" "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
+app_settings+=("OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-}")
 add_setting "OTEL_EXPORTER_OTLP_HEADERS" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
 add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "${OTEL_EXPORTER_OTLP_PROTOCOL:-}"
 add_setting "OTEL_RESOURCE_ATTRIBUTES" "${OTEL_RESOURCE_ATTRIBUTES:-}"

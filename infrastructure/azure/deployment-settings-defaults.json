@@ -81,6 +81,7 @@
       "valueType": "string",
       "description": "Optional OTLP exporter endpoint. Leave empty when no external OTLP collector is configured.",
       "requiredWhen": "never",
+      "emitWhen": "always",
       "appServiceName": "OTEL_EXPORTER_OTLP_ENDPOINT"
     },
     {
