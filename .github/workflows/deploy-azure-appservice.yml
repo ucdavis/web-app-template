@@ -50,10 +50,10 @@ on:
       SMTP_PASSWORD:
         description: Optional SMTP password runtime setting.
         required: false
+      # </deployment-settings:workflow-secrets>
       SQL_ADMIN_PASSWORD:
         description: SQL admin password used when deploy_infra is true.
         required: false
-      # </deployment-settings:workflow-secrets>
       DB_CONNECTION:
         description: Optional DB_CONNECTION override for existing infrastructure deployments.
         required: false
@@ -96,6 +96,7 @@ jobs:
       SMTP_TIMEOUT: ${{ vars.SMTP_TIMEOUT }}
       SMTP_USE_SSL: ${{ vars.SMTP_USE_SSL }}
       SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
+      # </deployment-settings:workflow-env>
       SQL_ADMIN_LOGIN: ${{ vars.SQL_ADMIN_LOGIN || 'sqladmin' }}
       SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
       SQL_DATABASE_NAME: ${{ vars.SQL_DATABASE_NAME }}
@@ -103,7 +104,6 @@ jobs:
       SQL_SKU_TIER: ${{ vars.SQL_SKU_TIER }}
       WEB_SKU_NAME: ${{ vars.WEB_SKU_NAME }}
       WEB_SKU_TIER: ${{ vars.WEB_SKU_TIER }}
-      # </deployment-settings:workflow-env>
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_LOCATION: ${{ inputs.azure_location || vars.AZURE_LOCATION }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
@@ -142,11 +142,13 @@ jobs:
           fi
 
           # <deployment-settings:workflow-required-checks>
+          # No generated required deployment setting checks.
+          # </deployment-settings:workflow-required-checks>
+
           if [[ "${{ inputs.deploy_infra }}" == "true" && -z "$SQL_ADMIN_PASSWORD" ]]; then
             echo "SQL_ADMIN_PASSWORD must be configured as a GitHub Environment secret when deploy_infra is true."
             exit 1
           fi
-          # </deployment-settings:workflow-required-checks>
 
           if [[ "${{ inputs.deploy_infra }}" != "true" && -z "$WEB_APP_NAME_INPUT" ]]; then
             echo "WEB_APP_NAME or the web_app_name input must be configured when deploy_infra is false."
@@ -228,30 +230,6 @@ jobs:
           }
 
           add_param "location" "$AZURE_LOCATION"
-          # <deployment-settings:workflow-bicep-params>
-          add_param "authCallbackPath" "$AUTH_CALLBACK_PATH"
-          add_param "authClientId" "$AUTH_CLIENT_ID"
-          add_param "authDomain" "$AUTH_DOMAIN"
-          add_param "authInstance" "$AUTH_INSTANCE"
-          add_param "authTenantId" "$AUTH_TENANT_ID"
-          add_param "notificationBaseUrl" "$NOTIFICATION_BASE_URL"
-          add_param "notificationDefaultAppName" "$NOTIFICATION_DEFAULT_APP_NAME"
-          add_param "notificationDefaultButtonText" "$NOTIFICATION_DEFAULT_BUTTON_TEXT"
-          add_param "otelExporterOtlpEndpoint" "$OTEL_EXPORTER_OTLP_ENDPOINT"
-          add_param "otelExporterOtlpHeaders" "$OTEL_EXPORTER_OTLP_HEADERS"
-          add_param "otelExporterOtlpProtocol" "$OTEL_EXPORTER_OTLP_PROTOCOL"
-          add_param "otelResourceAttributes" "$OTEL_RESOURCE_ATTRIBUTES"
-          add_param "otelServiceName" "$OTEL_SERVICE_NAME"
-          add_param "smtpBccEmail" "$SMTP_BCC_EMAIL"
-          add_param "smtpFromEmail" "$SMTP_FROM_EMAIL"
-          add_param "smtpFromName" "$SMTP_FROM_NAME"
-          add_param "smtpHost" "$SMTP_HOST"
-          add_param "smtpPassword" "$SMTP_PASSWORD"
-          add_param "smtpPort" "$SMTP_PORT"
-          add_param "smtpReplyToEmail" "$SMTP_REPLY_TO_EMAIL"
-          add_param "smtpTimeout" "$SMTP_TIMEOUT"
-          add_param "smtpUseSsl" "$SMTP_USE_SSL"
-          add_param "smtpUsername" "$SMTP_USERNAME"
           add_param "sqlAdminLogin" "$SQL_ADMIN_LOGIN"
           add_param "sqlAdminPassword" "$SQL_ADMIN_PASSWORD"
           add_param "sqlDatabaseName" "$SQL_DATABASE_NAME"
@@ -259,7 +237,6 @@ jobs:
           add_param "sqlSkuTier" "$SQL_SKU_TIER"
           add_param "webSkuName" "$WEB_SKU_NAME"
           add_param "webSkuTier" "$WEB_SKU_TIER"
-          # </deployment-settings:workflow-bicep-params>
 
           az deployment group create \
             --name "$deployment_name" \

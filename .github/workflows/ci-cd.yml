@@ -57,6 +57,9 @@ jobs:
       - name: Check deployment settings
         run: npm run deployment-settings:check
 
+      - name: Check Bicep templates
+        run: az bicep build --file infrastructure/azure/main.bicep --stdout > /dev/null
+
       - name: Restore frontend dependencies
         working-directory: client
         run: npm ci
@@ -92,8 +95,8 @@ jobs:
       # <deployment-settings:ci-cd-deploy-test-secrets>
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
       # </deployment-settings:ci-cd-deploy-test-secrets>
+      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
       DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
 
   deploy_manual:
@@ -110,6 +113,6 @@ jobs:
       # <deployment-settings:ci-cd-deploy-manual-secrets>
       OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
       # </deployment-settings:ci-cd-deploy-manual-secrets>
+      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
       DB_CONNECTION: ${{ secrets.DB_CONNECTION }}

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./deployment-settings.schema.json",
   "title": "Deployment settings",
-  "description": "Schema for the deployment settings overlay and the template-owned defaults catalog.",
+  "description": "Schema for direct runtime App Service settings and the app-owned overlay.",
   "oneOf": [
     {
       "$ref": "#/definitions/overlay"
@@ -25,7 +25,7 @@
     },
     "valueType": {
       "type": "string",
-      "description": "Primitive value type used for generated workflow and Bicep wiring.",
+      "description": "Primitive value type for documentation and validation.",
       "enum": ["string", "int", "bool"]
     },
     "requiredWhen": {
@@ -39,141 +39,9 @@
       "enum": ["always", "nonEmpty"],
       "default": "nonEmpty"
     },
-    "bicepDefaultExpression": {
-      "type": "object",
-      "description": "Allow-listed Bicep expression used as a generated parameter default.",
-      "required": ["expression"],
-      "properties": {
-        "expression": {
-          "type": "string",
-          "enum": [
-            "appName",
-            "env == 'prod' ? 'B1' : 'B1'",
-            "env == 'prod' ? 'Basic' : 'Basic'",
-            "env == 'prod' ? 'S0' : 'Basic'",
-            "env == 'prod' ? 'Standard' : 'Basic'",
-            "environment().authentication.loginEndpoint"
-          ]
-        }
-      },
-      "additionalProperties": false
-    },
-    "bicepDefault": {
-      "description": "Generated Bicep parameter default. Literal values must match valueType; expression objects must use the allow-list.",
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "integer",
-          "minimum": 0
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "$ref": "#/definitions/bicepDefaultExpression"
-        }
-      ]
-    },
-    "bicepAllowed": {
-      "type": "array",
-      "description": "Generated Bicep @allowed literal values. Values must match valueType.",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "anyOf": [
-          {
-            "type": "string"
-          },
-          {
-            "type": "integer",
-            "minimum": 0
-          },
-          {
-            "type": "boolean"
-          }
-        ]
-      }
-    },
-    "bicepConfig": {
-      "type": "object",
-      "description": "Bicep wiring for a full resolved setting.",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "paramName": {
-          "type": "string",
-          "minLength": 1
-        },
-        "secure": {
-          "type": "boolean"
-        },
-        "computeParam": {
-          "type": "boolean"
-        },
-        "default": {
-          "$ref": "#/definitions/bicepDefault"
-        },
-        "allowed": {
-          "$ref": "#/definitions/bicepAllowed"
-        },
-        "moduleValueExpression": {
-          "type": "string",
-          "minLength": 1
-        }
-      },
-      "allOf": [
-        {
-          "if": {
-            "required": ["enabled"],
-            "properties": {
-              "enabled": {
-                "const": true
-              }
-            }
-          },
-          "then": {
-            "required": ["paramName"]
-          }
-        }
-      ],
-      "additionalProperties": false
-    },
-    "partialBicepConfig": {
-      "type": "object",
-      "description": "Partial Bicep wiring override merged onto a template default.",
-      "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
-        "paramName": {
-          "type": "string",
-          "minLength": 1
-        },
-        "secure": {
-          "type": "boolean"
-        },
-        "computeParam": {
-          "type": "boolean"
-        },
-        "default": {
-          "$ref": "#/definitions/bicepDefault"
-        },
-        "allowed": {
-          "$ref": "#/definitions/bicepAllowed"
-        },
-        "moduleValueExpression": {
-          "type": "string",
-          "minLength": 1
-        }
-      },
-      "additionalProperties": false
-    },
     "fullDeploymentSetting": {
       "type": "object",
-      "required": ["id", "githubName", "classification", "valueType", "description", "requiredWhen"],
+      "required": ["id", "githubName", "classification", "valueType", "description", "requiredWhen", "appServiceName"],
       "properties": {
         "id": {
           "type": "string",
@@ -198,19 +66,9 @@
         "emitWhen": {
           "$ref": "#/definitions/emitWhen"
         },
-        "githubDefault": {
-          "type": "string"
-        },
         "appServiceName": {
           "type": "string",
           "minLength": 1
-        },
-        "appServiceConditionParam": {
-          "type": "string",
-          "minLength": 1
-        },
-        "bicep": {
-          "$ref": "#/definitions/bicepConfig"
         }
       },
       "additionalProperties": false
@@ -218,13 +76,6 @@
     "partialDeploymentSetting": {
       "type": "object",
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1
-        },
-        "githubName": {
-          "$ref": "#/definitions/githubName"
-        },
         "classification": {
           "$ref": "#/definitions/classification"
         },
@@ -241,27 +92,17 @@
         "emitWhen": {
           "$ref": "#/definitions/emitWhen"
         },
-        "githubDefault": {
-          "type": "string"
-        },
         "appServiceName": {
           "type": "string",
           "minLength": 1
-        },
-        "appServiceConditionParam": {
-          "type": "string",
-          "minLength": 1
-        },
-        "bicep": {
-          "$ref": "#/definitions/partialBicepConfig"
         }
       },
       "additionalProperties": false
     },
     "addition": {
       "type": "object",
-      "description": "App-owned deployment setting added by deployment-settings.json.",
-      "required": ["githubName", "classification", "valueType", "description"],
+      "description": "App-owned direct runtime App Service setting added by deployment-settings.json.",
+      "required": ["githubName", "appServiceName", "classification", "valueType", "description"],
       "properties": {
         "id": {
           "type": "string",
@@ -269,6 +110,10 @@
         },
         "githubName": {
           "$ref": "#/definitions/githubName"
+        },
+        "appServiceName": {
+          "type": "string",
+          "minLength": 1
         },
         "classification": {
           "$ref": "#/definitions/classification"
@@ -286,20 +131,6 @@
         },
         "emitWhen": {
           "$ref": "#/definitions/emitWhen"
-        },
-        "githubDefault": {
-          "type": "string"
-        },
-        "appServiceName": {
-          "type": "string",
-          "minLength": 1
-        },
-        "appServiceConditionParam": {
-          "type": "string",
-          "minLength": 1
-        },
-        "bicep": {
-          "$ref": "#/definitions/partialBicepConfig"
         }
       },
       "examples": [
@@ -308,17 +139,14 @@
           "appServiceName": "FeatureFlags__EnableBeta",
           "classification": "variable",
           "valueType": "bool",
-          "description": "Enables beta-only UI features.",
-          "bicep": {
-            "default": false
-          }
+          "description": "Enables beta-only UI features."
         }
       ],
       "additionalProperties": false
     },
     "overlay": {
       "type": "object",
-      "description": "App-owned overlay for disabling built-ins, overriding defaults, and adding app settings.",
+      "description": "App-owned overlay for disabling built-ins, overriding built-in runtime mappings, and adding app settings.",
       "required": ["version", "disabled", "overrides", "additions"],
       "properties": {
         "$schema": {
@@ -329,7 +157,7 @@
         },
         "disabled": {
           "type": "array",
-          "description": "Built-in GitHub Environment setting names to disable.",
+          "description": "Built-in GitHub Environment setting names to stop applying.",
           "items": {
             "$ref": "#/definitions/githubName"
           },
@@ -337,7 +165,7 @@
         },
         "overrides": {
           "type": "object",
-          "description": "Partial overrides keyed by built-in GitHub Environment setting name.",
+          "description": "Partial runtime mapping overrides keyed by built-in GitHub Environment setting name.",
           "propertyNames": {
             "$ref": "#/definitions/githubName"
           },
@@ -347,7 +175,7 @@
         },
         "additions": {
           "type": "array",
-          "description": "App-owned settings to add to generated workflow and Bicep wiring.",
+          "description": "App-owned direct runtime settings to add to generated workflow and deploy script wiring.",
           "items": {
             "$ref": "#/definitions/addition"
           }
@@ -357,7 +185,7 @@
     },
     "defaultsCatalog": {
       "type": "object",
-      "description": "Template-owned catalog of built-in deployment setting metadata.",
+      "description": "Template-owned catalog of built-in direct runtime deployment settings.",
       "required": ["version", "settings"],
       "properties": {
         "$schema": {

@@ -92,10 +92,10 @@ When the workflow should create or update Azure SQL and App Service resources, a
 
 ### Deployment settings customization
 
-Customizable deployment settings are generated from two files:
+Customizable runtime App Service settings are generated from two files:
 
-- `infrastructure/azure/deployment-settings-defaults.json`: template-owned reference data for the built-in settings.
-- `infrastructure/azure/deployment-settings.json`: app-owned overlay for disabling built-ins, overriding defaults, and adding app settings.
+- `infrastructure/azure/deployment-settings-defaults.json`: template-owned reference data for built-in direct runtime settings.
+- `infrastructure/azure/deployment-settings.json`: app-owned overlay for disabling built-ins, overriding runtime mappings, and adding app settings.
 - `infrastructure/azure/deployment-settings.schema.json`: local editor schema documenting field meanings, examples, and allowed values.
 
 Most projects should edit only `deployment-settings.json`, then run:
@@ -104,19 +104,17 @@ Most projects should edit only `deployment-settings.json`, then run:
 npm run deployment-settings:sync
 ```
 
-Pull request validation runs `npm run deployment-settings:check` so generated workflow, script, and Bicep regions cannot drift.
+Pull request validation runs `npm run deployment-settings:check` so generated workflow and deploy script regions cannot drift.
 
-Override a built-in default by GitHub Environment variable name:
+Override a built-in runtime mapping by GitHub Environment variable name:
 
 ```json
 {
   "version": 1,
   "disabled": [],
   "overrides": {
-    "SMTP_PORT": {
-      "bicep": {
-        "default": 2525
-      }
+    "NOTIFICATION_BASE_URL": {
+      "requiredWhen": "always"
     }
   },
   "additions": []
@@ -134,7 +132,7 @@ Disable an optional runtime App Service built-in setting when the app does not n
 }
 ```
 
-Settings used by core infrastructure wiring, such as SQL admin values, database and App Service SKUs, and generated notification base URLs, cannot be disabled. Override their defaults instead.
+Infrastructure deployment inputs, such as SQL admin values, database and App Service SKUs, and platform-derived app settings, are hand-authored in the deployment workflow, local deploy script, and Bicep files rather than managed by the deployment settings overlay.
 
 Add a runtime App Service setting:
 
@@ -149,10 +147,7 @@ Add a runtime App Service setting:
       "appServiceName": "FeatureFlags__EnableBeta",
       "classification": "variable",
       "valueType": "bool",
-      "description": "Enables beta-only UI features.",
-      "bicep": {
-        "default": false
-      }
+      "description": "Enables beta-only UI features."
     }
   ]
 }
@@ -160,7 +155,7 @@ Add a runtime App Service setting:
 
 Secrets use `"classification": "secret"` and are passed through reusable GitHub workflows as individually named secrets. The template intentionally does not use `secrets: inherit`.
 
-`DB_CONNECTION`, App Insights settings, `ASPNETCORE_ENVIRONMENT`, and `WEBSITE_RUN_FROM_PACKAGE` remain hand-authored or platform-derived settings rather than overlay entries.
+`DB_CONNECTION`, App Insights settings, `ASPNETCORE_ENVIRONMENT`, and `WEBSITE_RUN_FROM_PACKAGE` remain hand-authored or platform-derived settings rather than overlay entries. `NOTIFICATION_BASE_URL` is a direct runtime setting; set it explicitly when notification links should use a stable hostname or custom domain.
 
 ### One-time OIDC bootstrap
 

@@ -120,7 +120,7 @@ Responsibilities:
 Responsibilities:
 
 - Creates Azure SQL, Linux App Service, Log Analytics, and workspace-based Application Insights
-- Passes generated deployment-setting parameters into the compute module
+- Passes infrastructure and platform-derived settings into the compute module
 - Emits deployment outputs consumed by scripts and GitHub Actions
 
 ### `infrastructure/azure/modules/compute.bicep`
@@ -129,15 +129,14 @@ Responsibilities:
 
 - Creates the Linux App Service plan and Web App
 - Applies platform runtime settings for database connectivity, Application Insights, and package deployment
-- Applies generated App Service settings from the deployment settings contract
 
 ### Deployment settings files
 
 Responsibilities:
 
 - `infrastructure/azure/deployment-settings.json` is the app-facing overlay for setting overrides, additions, and disabled built-ins
-- `infrastructure/azure/deployment-settings-defaults.json` is the template-owned catalog for built-in deployment setting metadata
-- `scripts/sync-deployment-settings.mts` resolves the overlay with defaults and rewrites generated regions in workflows, Bicep files, and the local deploy script
+- `infrastructure/azure/deployment-settings-defaults.json` is the template-owned catalog for built-in direct runtime setting metadata
+- `scripts/sync-deployment-settings.mts` resolves the overlay with defaults and rewrites generated regions in workflows and the local deploy script
 
 ### `infrastructure/azure/github-oidc.bicep`
 

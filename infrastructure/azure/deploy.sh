@@ -39,8 +39,7 @@ USAGE
     '  OTEL_EXPORTER_OTLP_HEADERS, OTEL_EXPORTER_OTLP_PROTOCOL' \
     '  OTEL_RESOURCE_ATTRIBUTES, OTEL_SERVICE_NAME, SMTP_BCC_EMAIL, SMTP_FROM_EMAIL' \
     '  SMTP_FROM_NAME, SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_REPLY_TO_EMAIL' \
-    '  SMTP_TIMEOUT, SMTP_USE_SSL, SMTP_USERNAME, SQL_ADMIN_LOGIN, SQL_ADMIN_PASSWORD' \
-    '  SQL_DATABASE_NAME, SQL_SKU_NAME, SQL_SKU_TIER, WEB_SKU_NAME, WEB_SKU_TIER'
+    '  SMTP_TIMEOUT, SMTP_USE_SSL, SMTP_USERNAME'
   # </deployment-settings:deploy-sh-help>
 }
 
@@ -127,10 +126,12 @@ fi
 require_command az
 
 # <deployment-settings:deploy-sh-required-checks>
+# No generated required deployment setting checks.
+# </deployment-settings:deploy-sh-required-checks>
+
 if is_true "$DEPLOY_INFRA"; then
   [[ -n "${SQL_ADMIN_PASSWORD:-}" ]] || die "SQL_ADMIN_PASSWORD is required when DEPLOY_INFRA=true."
 fi
-# </deployment-settings:deploy-sh-required-checks>
 
 if ! is_true "$DEPLOY_INFRA"; then
   [[ -n "${WEB_APP_NAME:-}" ]] || die "WEB_APP_NAME is required when DEPLOY_INFRA=false."
@@ -199,30 +200,6 @@ if is_true "$DEPLOY_INFRA"; then
   )
 
   add_param "location" "$AZURE_LOCATION"
-  # <deployment-settings:deploy-sh-bicep-params>
-  add_param "authCallbackPath" "${AUTH_CALLBACK_PATH:-}"
-  add_param "authClientId" "${AUTH_CLIENT_ID:-}"
-  add_param "authDomain" "${AUTH_DOMAIN:-}"
-  add_param "authInstance" "${AUTH_INSTANCE:-}"
-  add_param "authTenantId" "${AUTH_TENANT_ID:-}"
-  add_param "notificationBaseUrl" "${NOTIFICATION_BASE_URL:-}"
-  add_param "notificationDefaultAppName" "${NOTIFICATION_DEFAULT_APP_NAME:-}"
-  add_param "notificationDefaultButtonText" "${NOTIFICATION_DEFAULT_BUTTON_TEXT:-}"
-  add_param "otelExporterOtlpEndpoint" "${OTEL_EXPORTER_OTLP_ENDPOINT:-}"
-  add_param "otelExporterOtlpHeaders" "${OTEL_EXPORTER_OTLP_HEADERS:-}"
-  add_param "otelExporterOtlpProtocol" "${OTEL_EXPORTER_OTLP_PROTOCOL:-}"
-  add_param "otelResourceAttributes" "${OTEL_RESOURCE_ATTRIBUTES:-}"
-  add_param "otelServiceName" "${OTEL_SERVICE_NAME:-}"
-  add_param "smtpBccEmail" "${SMTP_BCC_EMAIL:-}"
-  add_param "smtpFromEmail" "${SMTP_FROM_EMAIL:-}"
-  add_param "smtpFromName" "${SMTP_FROM_NAME:-}"
-  add_param "smtpHost" "${SMTP_HOST:-}"
-  add_param "smtpPassword" "${SMTP_PASSWORD:-}"
-  add_param "smtpPort" "${SMTP_PORT:-}"
-  add_param "smtpReplyToEmail" "${SMTP_REPLY_TO_EMAIL:-}"
-  add_param "smtpTimeout" "${SMTP_TIMEOUT:-}"
-  add_param "smtpUseSsl" "${SMTP_USE_SSL:-}"
-  add_param "smtpUsername" "${SMTP_USERNAME:-}"
   add_param "sqlAdminLogin" "${SQL_ADMIN_LOGIN:-}"
   add_param "sqlAdminPassword" "${SQL_ADMIN_PASSWORD:-}"
   add_param "sqlDatabaseName" "${SQL_DATABASE_NAME:-}"
@@ -230,7 +207,6 @@ if is_true "$DEPLOY_INFRA"; then
   add_param "sqlSkuTier" "${SQL_SKU_TIER:-}"
   add_param "webSkuName" "${WEB_SKU_NAME:-}"
   add_param "webSkuTier" "${WEB_SKU_TIER:-}"
-  # </deployment-settings:deploy-sh-bicep-params>
 
   printf 'Deploying infrastructure to %s...\n' "$RESOURCE_GROUP"
   az deployment group create \
