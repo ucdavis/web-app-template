@@ -135,6 +135,8 @@ Disable an optional runtime App Service built-in setting when the app does not n
 
 Infrastructure deployment inputs, such as SQL admin values, database and App Service SKUs, and platform-derived app settings, are hand-authored in the deployment workflow, local deploy script, and Bicep files rather than managed by the deployment settings overlay.
 
+Use `defaultValue` on a built-in override or added setting when generated deployment scripts should apply a stable fallback if the GitHub Environment variable is unset.
+
 Add a runtime App Service setting:
 
 ```json

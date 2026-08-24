@@ -18,6 +18,7 @@ interface DeploymentSetting {
   valueType: ValueType;
   requiredWhen: RequiredWhen;
   emitWhen?: EmitWhen;
+  defaultValue?: string;
 }
 
 interface DeploymentSettingsContract {
@@ -46,7 +47,15 @@ const allowedClassifications = new Set(['variable', 'secret']);
 const allowedValueTypes = new Set(['string', 'int', 'bool']);
 const allowedRequiredWhen = new Set(['always', 'deploy_infra', 'existing_infra', 'never']);
 const allowedEmitWhen = new Set(['always', 'nonEmpty']);
-const allowedOverrideKeys = new Set(['classification', 'valueType', 'description', 'requiredWhen', 'emitWhen', 'appServiceName']);
+const allowedOverrideKeys = new Set([
+  'classification',
+  'valueType',
+  'description',
+  'requiredWhen',
+  'emitWhen',
+  'appServiceName',
+  'defaultValue',
+]);
 
 function fail(message: string): never {
   throw new Error(message);
@@ -94,6 +103,16 @@ function shellQuote(value: string): string {
 
 function yamlQuotedString(value: string): string {
   return JSON.stringify(value);
+}
+
+function githubExpressionString(value: string): string {
+  return `'${value.replaceAll("'", "''")}'`;
+}
+
+function envReference(setting: DeploymentSetting): string {
+  return setting.defaultValue === undefined
+    ? `\${${setting.githubName}:-}`
+    : `\${${setting.githubName}:-${setting.defaultValue}}`;
 }
 
 function replaceBlock(content: string, id: string, generatedLines: string[]): string {
@@ -159,6 +178,10 @@ function validateContract(contract: unknown): asserts contract is DeploymentSett
       fail(`${setting.githubName} has invalid emitWhen '${emitWhen}'.`);
     }
 
+    if (setting.defaultValue !== undefined && typeof setting.defaultValue !== 'string') {
+      fail(`${setting.githubName} has invalid defaultValue; defaultValue must be a string.`);
+    }
+
     if (githubNames.has(setting.githubName)) {
       fail(`Duplicate GitHub setting name '${setting.githubName}' in ${githubNames.get(setting.githubName)} and ${setting.id}.`);
     }
@@ -219,7 +242,7 @@ function validateOverlay(overlay: unknown, defaults: DeploymentSettingsContract)
 
       if (!allowedOverrideKeys.has(key)) {
         fail(
-          `deployment-settings.json overrides.${githubName} cannot use unsupported property '${key}'; permitted keys are classification, valueType, description, requiredWhen, emitWhen, and appServiceName.`,
+          `deployment-settings.json overrides.${githubName} cannot use unsupported property '${key}'; permitted keys are classification, valueType, description, requiredWhen, emitWhen, appServiceName, and defaultValue.`,
         );
       }
     }
@@ -313,7 +336,9 @@ function renderWorkflowSecrets(settings: DeploymentSetting[]): string[] {
 function renderWorkflowEnv(settings: DeploymentSetting[]): string[] {
   return settings.map((setting) => {
     const source = setting.classification === 'secret' ? `secrets.${setting.githubName}` : `vars.${setting.githubName}`;
-    return `${setting.githubName}: \${{ ${source} }}`;
+    const expression =
+      setting.defaultValue === undefined ? source : `${source} || ${githubExpressionString(setting.defaultValue)}`;
+    return `${setting.githubName}: \${{ ${expression} }}`;
   });
 }
 
@@ -437,11 +462,12 @@ function renderDeployShRequiredChecks(settings: DeploymentSetting[]): string[] {
 
 function renderDeployShRuntimeSettings(settings: DeploymentSetting[]): string[] {
   return settings.map((setting) => {
+    const reference = envReference(setting);
     if ((setting.emitWhen ?? 'nonEmpty') === 'always') {
-      return `app_settings+=("${setting.appServiceName}=\${${setting.githubName}:-}")`;
+      return `app_settings+=("${setting.appServiceName}=${reference}")`;
     }
 
-    return `add_setting "${setting.appServiceName}" "\${${setting.githubName}:-}"`;
+    return `add_setting "${setting.appServiceName}" "${reference}"`;
   });
 }
 

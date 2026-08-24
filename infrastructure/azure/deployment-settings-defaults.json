@@ -100,6 +100,7 @@
       "valueType": "string",
       "description": "OTLP exporter protocol used when an OTLP endpoint is configured.",
       "requiredWhen": "never",
+      "defaultValue": "http/protobuf",
       "appServiceName": "OTEL_EXPORTER_OTLP_PROTOCOL"
     },
     {
