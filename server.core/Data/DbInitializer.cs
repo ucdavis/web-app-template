@@ -27,7 +27,7 @@ public class DbInitializer : IDbInitializer
 
         if (includeSampleData)
         {
-            await SeedSampleWeatherForecastsAsync(cancellationToken);
+            await SeedDevelopmentAsync(cancellationToken);
         }
         else
         {
@@ -35,7 +35,7 @@ public class DbInitializer : IDbInitializer
         }
     }
 
-    private async Task SeedSampleWeatherForecastsAsync(CancellationToken ct)
+    private async Task SeedDevelopmentAsync(CancellationToken ct)
     {
         if (!await _db.WeatherForecasts.AnyAsync(ct))
         {
