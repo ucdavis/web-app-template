@@ -90,7 +90,8 @@ try
     {
         var init = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
         var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
-        await init.InitializeAsync(env.IsDevelopment());
+        var includeSampleData = env.IsDevelopment() || env.IsEnvironment("test");
+        await init.InitializeAsync(includeSampleData);
     }
 
     app.UseForwardedHeaders();

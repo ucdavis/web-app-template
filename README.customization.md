@@ -320,7 +320,7 @@ The template includes a reusable email notification stack in `server.core`:
 - Shared services live in `server.core/Notification/`.
 - Razor + MJML templates live in `server.core/Views/Emails/` and `server.core/Views/Shared/`.
 - The notification UI lives at `client/src/routes/(authenticated)/notification.tsx`.
-- The default notification trigger lives at `POST /api/notification/default` and is development-only.
+- The default notification trigger lives at `POST /api/notification/default` and is enabled for local development and the deployed `test` environment.
 
 For local development, point the `Smtp` settings in `server/.env.Development` or `server/appsettings.Development.json` at your Mailtrap SMTP inbox. At minimum, review:
 

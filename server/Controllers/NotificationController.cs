@@ -30,7 +30,7 @@ public sealed class NotificationController : ApiControllerBase
         [FromBody] NotificationRequest request,
         CancellationToken cancellationToken)
     {
-        if (!_environment.IsDevelopment())
+        if (!SampleEndpointsEnabled())
         {
             return NotFound();
         }
@@ -77,7 +77,7 @@ public sealed class NotificationController : ApiControllerBase
         [FromBody] TableNotificationRequest request,
         CancellationToken cancellationToken)
     {
-        if (!_environment.IsDevelopment())
+        if (!SampleEndpointsEnabled())
         {
             return NotFound();
         }
@@ -131,5 +131,10 @@ public sealed class NotificationController : ApiControllerBase
 
         return User.FindFirst("preferred_username")?.Value
                ?? User.FindFirst(ClaimTypes.Email)?.Value;
+    }
+
+    private bool SampleEndpointsEnabled()
+    {
+        return _environment.IsDevelopment() || _environment.IsEnvironment("test");
     }
 }
