@@ -1,0 +1,217 @@
+{
+  "$schema": "./deployment-settings.schema.json",
+  "version": 1,
+  "settings": [
+    {
+      "id": "auth-callback-path",
+      "githubName": "AUTH_CALLBACK_PATH",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "OpenID Connect callback path used by Microsoft Identity Web.",
+      "requiredWhen": "never",
+      "defaultValue": "/signin-oidc",
+      "appServiceName": "Auth__CallbackPath"
+    },
+    {
+      "id": "auth-client-id",
+      "githubName": "AUTH_CLIENT_ID",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Entra ID application client ID used by Microsoft Identity Web.",
+      "requiredWhen": "never",
+      "appServiceName": "Auth__ClientId"
+    },
+    {
+      "id": "auth-domain",
+      "githubName": "AUTH_DOMAIN",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Entra ID domain used by Microsoft Identity Web.",
+      "requiredWhen": "never",
+      "appServiceName": "Auth__Domain"
+    },
+    {
+      "id": "auth-instance",
+      "githubName": "AUTH_INSTANCE",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Entra ID authority instance used by Microsoft Identity Web.",
+      "requiredWhen": "never",
+      "defaultValue": "https://login.microsoftonline.com/",
+      "appServiceName": "Auth__Instance"
+    },
+    {
+      "id": "auth-tenant-id",
+      "githubName": "AUTH_TENANT_ID",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Entra ID tenant ID used by Microsoft Identity Web.",
+      "requiredWhen": "never",
+      "appServiceName": "Auth__TenantId"
+    },
+    {
+      "id": "notification-base-url",
+      "githubName": "NOTIFICATION_BASE_URL",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Base URL used in generated notification emails.",
+      "requiredWhen": "never",
+      "appServiceName": "Notification__BaseUrl"
+    },
+    {
+      "id": "notification-default-app-name",
+      "githubName": "NOTIFICATION_DEFAULT_APP_NAME",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Default application name used in generated notifications.",
+      "requiredWhen": "never",
+      "appServiceName": "Notification__DefaultAppName"
+    },
+    {
+      "id": "notification-default-button-text",
+      "githubName": "NOTIFICATION_DEFAULT_BUTTON_TEXT",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Default button text used in generated notifications.",
+      "requiredWhen": "never",
+      "appServiceName": "Notification__DefaultButtonText"
+    },
+    {
+      "id": "otel-exporter-otlp-endpoint",
+      "githubName": "OTEL_EXPORTER_OTLP_ENDPOINT",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Optional OTLP exporter endpoint. Leave empty when no external OTLP collector is configured.",
+      "requiredWhen": "never",
+      "emitWhen": "always",
+      "appServiceName": "OTEL_EXPORTER_OTLP_ENDPOINT"
+    },
+    {
+      "id": "otel-exporter-otlp-headers",
+      "githubName": "OTEL_EXPORTER_OTLP_HEADERS",
+      "classification": "secret",
+      "valueType": "string",
+      "description": "Optional OTLP exporter headers, such as collector authorization.",
+      "requiredWhen": "never",
+      "appServiceName": "OTEL_EXPORTER_OTLP_HEADERS"
+    },
+    {
+      "id": "otel-exporter-otlp-protocol",
+      "githubName": "OTEL_EXPORTER_OTLP_PROTOCOL",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "OTLP exporter protocol used when an OTLP endpoint is configured.",
+      "requiredWhen": "never",
+      "defaultValue": "http/protobuf",
+      "appServiceName": "OTEL_EXPORTER_OTLP_PROTOCOL"
+    },
+    {
+      "id": "otel-resource-attributes",
+      "githubName": "OTEL_RESOURCE_ATTRIBUTES",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Optional OpenTelemetry resource attributes.",
+      "requiredWhen": "never",
+      "appServiceName": "OTEL_RESOURCE_ATTRIBUTES"
+    },
+    {
+      "id": "otel-service-name",
+      "githubName": "OTEL_SERVICE_NAME",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Optional OpenTelemetry service name.",
+      "requiredWhen": "never",
+      "appServiceName": "OTEL_SERVICE_NAME"
+    },
+    {
+      "id": "smtp-bcc-email",
+      "githubName": "SMTP_BCC_EMAIL",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "BCC email address for outbound email.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__BccEmail"
+    },
+    {
+      "id": "smtp-from-email",
+      "githubName": "SMTP_FROM_EMAIL",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "From email address for outbound email.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__FromEmail"
+    },
+    {
+      "id": "smtp-from-name",
+      "githubName": "SMTP_FROM_NAME",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "From display name for outbound email.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__FromName"
+    },
+    {
+      "id": "smtp-host",
+      "githubName": "SMTP_HOST",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "SMTP host for outbound email.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__Host"
+    },
+    {
+      "id": "smtp-password",
+      "githubName": "SMTP_PASSWORD",
+      "classification": "secret",
+      "valueType": "string",
+      "description": "Optional SMTP password runtime setting.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__Password"
+    },
+    {
+      "id": "smtp-port",
+      "githubName": "SMTP_PORT",
+      "classification": "variable",
+      "valueType": "int",
+      "description": "SMTP port for outbound email.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__Port"
+    },
+    {
+      "id": "smtp-reply-to-email",
+      "githubName": "SMTP_REPLY_TO_EMAIL",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "Reply-to email address for outbound email.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__ReplyToEmail"
+    },
+    {
+      "id": "smtp-timeout",
+      "githubName": "SMTP_TIMEOUT",
+      "classification": "variable",
+      "valueType": "int",
+      "description": "SMTP timeout in milliseconds.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__Timeout"
+    },
+    {
+      "id": "smtp-username",
+      "githubName": "SMTP_USERNAME",
+      "classification": "variable",
+      "valueType": "string",
+      "description": "SMTP username for outbound email.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__Username"
+    },
+    {
+      "id": "smtp-use-ssl",
+      "githubName": "SMTP_USE_SSL",
+      "classification": "variable",
+      "valueType": "bool",
+      "description": "Whether SMTP should use SSL.",
+      "requiredWhen": "never",
+      "appServiceName": "Smtp__UseSsl"
+    }
+  ]
+}

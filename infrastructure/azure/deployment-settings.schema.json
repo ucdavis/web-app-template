@@ -1,0 +1,220 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./deployment-settings.schema.json",
+  "title": "Deployment settings",
+  "description": "Schema for direct runtime App Service settings and the app-owned overlay.",
+  "oneOf": [
+    {
+      "$ref": "#/definitions/overlay"
+    },
+    {
+      "$ref": "#/definitions/defaultsCatalog"
+    }
+  ],
+  "definitions": {
+    "githubName": {
+      "type": "string",
+      "description": "GitHub Environment variable or secret name. Use upper snake case.",
+      "pattern": "^[A-Z][A-Z0-9_]*$",
+      "examples": ["SMTP_PORT", "FEATURE_FLAGS__ENABLE_BETA"]
+    },
+    "classification": {
+      "type": "string",
+      "description": "Whether the setting is configured as a GitHub Environment variable or secret.",
+      "enum": ["variable", "secret"]
+    },
+    "valueType": {
+      "type": "string",
+      "description": "Primitive value type for documentation and validation.",
+      "enum": ["string", "int", "bool"]
+    },
+    "requiredWhen": {
+      "type": "string",
+      "description": "Controls when generated deployment workflows require the GitHub Environment setting.",
+      "enum": ["always", "deploy_infra", "existing_infra", "never"]
+    },
+    "emitWhen": {
+      "type": "string",
+      "description": "Controls whether generated App Service settings are emitted for empty string values.",
+      "enum": ["always", "nonEmpty"],
+      "default": "nonEmpty"
+    },
+    "defaultValue": {
+      "type": "string",
+      "description": "Optional default used by generated deployment scripts when the GitHub Environment setting is not configured."
+    },
+    "fullDeploymentSetting": {
+      "type": "object",
+      "required": ["id", "githubName", "classification", "valueType", "description", "requiredWhen", "appServiceName"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "githubName": {
+          "$ref": "#/definitions/githubName"
+        },
+        "classification": {
+          "$ref": "#/definitions/classification"
+        },
+        "valueType": {
+          "$ref": "#/definitions/valueType"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredWhen": {
+          "$ref": "#/definitions/requiredWhen"
+        },
+        "emitWhen": {
+          "$ref": "#/definitions/emitWhen"
+        },
+        "defaultValue": {
+          "$ref": "#/definitions/defaultValue"
+        },
+        "appServiceName": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "partialDeploymentSetting": {
+      "type": "object",
+      "properties": {
+        "classification": {
+          "$ref": "#/definitions/classification"
+        },
+        "valueType": {
+          "$ref": "#/definitions/valueType"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredWhen": {
+          "$ref": "#/definitions/requiredWhen"
+        },
+        "emitWhen": {
+          "$ref": "#/definitions/emitWhen"
+        },
+        "defaultValue": {
+          "$ref": "#/definitions/defaultValue"
+        },
+        "appServiceName": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "addition": {
+      "type": "object",
+      "description": "App-owned direct runtime App Service setting added by deployment-settings.json.",
+      "required": ["githubName", "appServiceName", "classification", "valueType", "description"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "githubName": {
+          "$ref": "#/definitions/githubName"
+        },
+        "appServiceName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classification": {
+          "$ref": "#/definitions/classification"
+        },
+        "valueType": {
+          "$ref": "#/definitions/valueType"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredWhen": {
+          "$ref": "#/definitions/requiredWhen",
+          "default": "never"
+        },
+        "emitWhen": {
+          "$ref": "#/definitions/emitWhen"
+        },
+        "defaultValue": {
+          "$ref": "#/definitions/defaultValue"
+        }
+      },
+      "examples": [
+        {
+          "githubName": "FEATURE_FLAGS__ENABLE_BETA",
+          "appServiceName": "FeatureFlags__EnableBeta",
+          "classification": "variable",
+          "valueType": "bool",
+          "description": "Enables beta-only UI features."
+        }
+      ],
+      "additionalProperties": false
+    },
+    "overlay": {
+      "type": "object",
+      "description": "App-owned overlay for disabling built-ins, overriding built-in runtime mappings, and adding app settings.",
+      "required": ["version", "disabled", "overrides", "additions"],
+      "properties": {
+        "$schema": {
+          "type": "string"
+        },
+        "version": {
+          "const": 1
+        },
+        "disabled": {
+          "type": "array",
+          "description": "Built-in GitHub Environment setting names to stop applying.",
+          "items": {
+            "$ref": "#/definitions/githubName"
+          },
+          "uniqueItems": true
+        },
+        "overrides": {
+          "type": "object",
+          "description": "Partial runtime mapping overrides keyed by built-in GitHub Environment setting name.",
+          "propertyNames": {
+            "$ref": "#/definitions/githubName"
+          },
+          "additionalProperties": {
+            "$ref": "#/definitions/partialDeploymentSetting"
+          }
+        },
+        "additions": {
+          "type": "array",
+          "description": "App-owned direct runtime settings to add to generated workflow and deploy script wiring.",
+          "items": {
+            "$ref": "#/definitions/addition"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "defaultsCatalog": {
+      "type": "object",
+      "description": "Template-owned catalog of built-in direct runtime deployment settings.",
+      "required": ["version", "settings"],
+      "properties": {
+        "$schema": {
+          "type": "string"
+        },
+        "version": {
+          "const": 1
+        },
+        "settings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/fullDeploymentSetting"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

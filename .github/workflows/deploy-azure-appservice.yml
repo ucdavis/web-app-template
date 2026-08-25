@@ -43,14 +43,16 @@ on:
         type: string
         default: 22.x
     secrets:
-      SQL_ADMIN_PASSWORD:
-        description: SQL admin password used when deploy_infra is true.
+      # <deployment-settings:workflow-secrets>
+      OTEL_EXPORTER_OTLP_HEADERS:
+        description: "Optional OTLP exporter headers, such as collector authorization."
         required: false
       SMTP_PASSWORD:
-        description: Optional SMTP password runtime setting.
+        description: "Optional SMTP password runtime setting."
         required: false
-      OTEL_EXPORTER_OTLP_HEADERS:
-        description: Optional OTLP exporter headers, such as collector authorization.
+      # </deployment-settings:workflow-secrets>
+      SQL_ADMIN_PASSWORD:
+        description: SQL admin password used when deploy_infra is true.
         required: false
       DB_CONNECTION:
         description: Optional DB_CONNECTION override for existing infrastructure deployments.
@@ -70,26 +72,20 @@ jobs:
       cancel-in-progress: false
     env:
       APP_NAME: ${{ vars.APP_NAME || inputs.app_name }}
-      AUTH_CALLBACK_PATH: ${{ vars.AUTH_CALLBACK_PATH }}
+      # <deployment-settings:workflow-env>
+      AUTH_CALLBACK_PATH: ${{ vars.AUTH_CALLBACK_PATH || '/signin-oidc' }}
       AUTH_CLIENT_ID: ${{ vars.AUTH_CLIENT_ID }}
       AUTH_DOMAIN: ${{ vars.AUTH_DOMAIN }}
-      AUTH_INSTANCE: ${{ vars.AUTH_INSTANCE }}
+      AUTH_INSTANCE: ${{ vars.AUTH_INSTANCE || 'https://login.microsoftonline.com/' }}
       AUTH_TENANT_ID: ${{ vars.AUTH_TENANT_ID }}
-      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-      AZURE_LOCATION: ${{ inputs.azure_location || vars.AZURE_LOCATION }}
-      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
-      DEPLOY_ENV: ${{ inputs.environment }}
       NOTIFICATION_BASE_URL: ${{ vars.NOTIFICATION_BASE_URL }}
       NOTIFICATION_DEFAULT_APP_NAME: ${{ vars.NOTIFICATION_DEFAULT_APP_NAME }}
       NOTIFICATION_DEFAULT_BUTTON_TEXT: ${{ vars.NOTIFICATION_DEFAULT_BUTTON_TEXT }}
-      OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
       OTEL_EXPORTER_OTLP_ENDPOINT: ${{ vars.OTEL_EXPORTER_OTLP_ENDPOINT }}
-      OTEL_EXPORTER_OTLP_PROTOCOL: ${{ vars.OTEL_EXPORTER_OTLP_PROTOCOL }}
+      OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${{ vars.OTEL_EXPORTER_OTLP_PROTOCOL || 'http/protobuf' }}
       OTEL_RESOURCE_ATTRIBUTES: ${{ vars.OTEL_RESOURCE_ATTRIBUTES }}
       OTEL_SERVICE_NAME: ${{ vars.OTEL_SERVICE_NAME }}
-      RESOURCE_GROUP: ${{ inputs.resource_group || vars.RESOURCE_GROUP }}
       SMTP_BCC_EMAIL: ${{ vars.SMTP_BCC_EMAIL }}
       SMTP_FROM_EMAIL: ${{ vars.SMTP_FROM_EMAIL }}
       SMTP_FROM_NAME: ${{ vars.SMTP_FROM_NAME }}
@@ -98,16 +94,24 @@ jobs:
       SMTP_PORT: ${{ vars.SMTP_PORT }}
       SMTP_REPLY_TO_EMAIL: ${{ vars.SMTP_REPLY_TO_EMAIL }}
       SMTP_TIMEOUT: ${{ vars.SMTP_TIMEOUT }}
-      SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
       SMTP_USE_SSL: ${{ vars.SMTP_USE_SSL }}
+      SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
+      # </deployment-settings:workflow-env>
       SQL_ADMIN_LOGIN: ${{ vars.SQL_ADMIN_LOGIN || 'sqladmin' }}
       SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
       SQL_DATABASE_NAME: ${{ vars.SQL_DATABASE_NAME }}
       SQL_SKU_NAME: ${{ vars.SQL_SKU_NAME }}
       SQL_SKU_TIER: ${{ vars.SQL_SKU_TIER }}
-      WEB_APP_NAME_INPUT: ${{ inputs.web_app_name || vars.WEB_APP_NAME }}
       WEB_SKU_NAME: ${{ vars.WEB_SKU_NAME }}
       WEB_SKU_TIER: ${{ vars.WEB_SKU_TIER }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_LOCATION: ${{ inputs.azure_location || vars.AZURE_LOCATION }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
+      DEPLOY_ENV: ${{ inputs.environment }}
+      RESOURCE_GROUP: ${{ inputs.resource_group || vars.RESOURCE_GROUP }}
+      WEB_APP_NAME_INPUT: ${{ inputs.web_app_name || vars.WEB_APP_NAME }}
 
     steps:
       - name: Checkout
@@ -136,6 +140,10 @@ jobs:
             printf 'Missing required GitHub Environment variable(s): %s\n' "${missing[*]}"
             exit 1
           fi
+
+          # <deployment-settings:workflow-required-checks>
+          # No generated required deployment setting checks.
+          # </deployment-settings:workflow-required-checks>
 
           if [[ "${{ inputs.deploy_infra }}" == "true" && -z "$SQL_ADMIN_PASSWORD" ]]; then
             echo "SQL_ADMIN_PASSWORD must be configured as a GitHub Environment secret when deploy_infra is true."
@@ -210,8 +218,6 @@ jobs:
             "appName=$APP_NAME"
             "env=$DEPLOY_ENV"
             "expectedSubscriptionId=$AZURE_SUBSCRIPTION_ID"
-            "sqlAdminLogin=$SQL_ADMIN_LOGIN"
-            "sqlAdminPassword=$SQL_ADMIN_PASSWORD"
           )
 
           add_param() {
@@ -224,34 +230,13 @@ jobs:
           }
 
           add_param "location" "$AZURE_LOCATION"
+          add_param "sqlAdminLogin" "$SQL_ADMIN_LOGIN"
+          add_param "sqlAdminPassword" "$SQL_ADMIN_PASSWORD"
           add_param "sqlDatabaseName" "$SQL_DATABASE_NAME"
-          add_param "webSkuName" "$WEB_SKU_NAME"
-          add_param "webSkuTier" "$WEB_SKU_TIER"
           add_param "sqlSkuName" "$SQL_SKU_NAME"
           add_param "sqlSkuTier" "$SQL_SKU_TIER"
-          add_param "notificationBaseUrl" "$NOTIFICATION_BASE_URL"
-          add_param "notificationDefaultAppName" "$NOTIFICATION_DEFAULT_APP_NAME"
-          add_param "notificationDefaultButtonText" "$NOTIFICATION_DEFAULT_BUTTON_TEXT"
-          add_param "authClientId" "$AUTH_CLIENT_ID"
-          add_param "authTenantId" "$AUTH_TENANT_ID"
-          add_param "authDomain" "$AUTH_DOMAIN"
-          add_param "authInstance" "$AUTH_INSTANCE"
-          add_param "authCallbackPath" "$AUTH_CALLBACK_PATH"
-          add_param "smtpHost" "$SMTP_HOST"
-          add_param "smtpPort" "$SMTP_PORT"
-          add_param "smtpTimeout" "$SMTP_TIMEOUT"
-          add_param "smtpUseSsl" "$SMTP_USE_SSL"
-          add_param "smtpUsername" "$SMTP_USERNAME"
-          add_param "smtpPassword" "$SMTP_PASSWORD"
-          add_param "smtpFromEmail" "$SMTP_FROM_EMAIL"
-          add_param "smtpFromName" "$SMTP_FROM_NAME"
-          add_param "smtpReplyToEmail" "$SMTP_REPLY_TO_EMAIL"
-          add_param "smtpBccEmail" "$SMTP_BCC_EMAIL"
-          add_param "otelExporterOtlpEndpoint" "$OTEL_EXPORTER_OTLP_ENDPOINT"
-          add_param "otelExporterOtlpProtocol" "$OTEL_EXPORTER_OTLP_PROTOCOL"
-          add_param "otelExporterOtlpHeaders" "$OTEL_EXPORTER_OTLP_HEADERS"
-          add_param "otelServiceName" "$OTEL_SERVICE_NAME"
-          add_param "otelResourceAttributes" "$OTEL_RESOURCE_ATTRIBUTES"
+          add_param "webSkuName" "$WEB_SKU_NAME"
+          add_param "webSkuTier" "$WEB_SKU_TIER"
 
           az deployment group create \
             --name "$deployment_name" \
@@ -303,29 +288,42 @@ jobs:
           }
 
           add_setting "DB_CONNECTION" "$DB_CONNECTION"
+          # <deployment-settings:workflow-runtime-settings>
+          disabled_settings=(
+          )
+
+          if (( ${#disabled_settings[@]} > 0 )); then
+            az webapp config appsettings delete \
+              --resource-group "$RESOURCE_GROUP" \
+              --name "$WEB_APP_NAME" \
+              --setting-names "${disabled_settings[@]}" \
+              --output none
+          fi
+
+          add_setting "Auth__CallbackPath" "$AUTH_CALLBACK_PATH"
+          add_setting "Auth__ClientId" "$AUTH_CLIENT_ID"
+          add_setting "Auth__Domain" "$AUTH_DOMAIN"
+          add_setting "Auth__Instance" "$AUTH_INSTANCE"
+          add_setting "Auth__TenantId" "$AUTH_TENANT_ID"
           add_setting "Notification__BaseUrl" "$NOTIFICATION_BASE_URL"
           add_setting "Notification__DefaultAppName" "$NOTIFICATION_DEFAULT_APP_NAME"
           add_setting "Notification__DefaultButtonText" "$NOTIFICATION_DEFAULT_BUTTON_TEXT"
-          add_setting "Auth__ClientId" "$AUTH_CLIENT_ID"
-          add_setting "Auth__TenantId" "$AUTH_TENANT_ID"
-          add_setting "Auth__Domain" "$AUTH_DOMAIN"
-          add_setting "Auth__Instance" "$AUTH_INSTANCE"
-          add_setting "Auth__CallbackPath" "$AUTH_CALLBACK_PATH"
+          settings+=("OTEL_EXPORTER_OTLP_ENDPOINT=$OTEL_EXPORTER_OTLP_ENDPOINT")
+          add_setting "OTEL_EXPORTER_OTLP_HEADERS" "$OTEL_EXPORTER_OTLP_HEADERS"
+          add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "$OTEL_EXPORTER_OTLP_PROTOCOL"
+          add_setting "OTEL_RESOURCE_ATTRIBUTES" "$OTEL_RESOURCE_ATTRIBUTES"
+          add_setting "OTEL_SERVICE_NAME" "$OTEL_SERVICE_NAME"
+          add_setting "Smtp__BccEmail" "$SMTP_BCC_EMAIL"
+          add_setting "Smtp__FromEmail" "$SMTP_FROM_EMAIL"
+          add_setting "Smtp__FromName" "$SMTP_FROM_NAME"
           add_setting "Smtp__Host" "$SMTP_HOST"
+          add_setting "Smtp__Password" "$SMTP_PASSWORD"
           add_setting "Smtp__Port" "$SMTP_PORT"
+          add_setting "Smtp__ReplyToEmail" "$SMTP_REPLY_TO_EMAIL"
           add_setting "Smtp__Timeout" "$SMTP_TIMEOUT"
           add_setting "Smtp__UseSsl" "$SMTP_USE_SSL"
           add_setting "Smtp__Username" "$SMTP_USERNAME"
-          add_setting "Smtp__Password" "$SMTP_PASSWORD"
-          add_setting "Smtp__FromEmail" "$SMTP_FROM_EMAIL"
-          add_setting "Smtp__FromName" "$SMTP_FROM_NAME"
-          add_setting "Smtp__ReplyToEmail" "$SMTP_REPLY_TO_EMAIL"
-          add_setting "Smtp__BccEmail" "$SMTP_BCC_EMAIL"
-          add_setting "OTEL_EXPORTER_OTLP_ENDPOINT" "$OTEL_EXPORTER_OTLP_ENDPOINT"
-          add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "$OTEL_EXPORTER_OTLP_PROTOCOL"
-          add_setting "OTEL_EXPORTER_OTLP_HEADERS" "$OTEL_EXPORTER_OTLP_HEADERS"
-          add_setting "OTEL_SERVICE_NAME" "$OTEL_SERVICE_NAME"
-          add_setting "OTEL_RESOURCE_ATTRIBUTES" "$OTEL_RESOURCE_ATTRIBUTES"
+          # </deployment-settings:workflow-runtime-settings>
 
           az webapp config appsettings set \
             --resource-group "$RESOURCE_GROUP" \

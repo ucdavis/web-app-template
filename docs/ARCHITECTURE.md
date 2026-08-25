@@ -120,8 +120,23 @@ Responsibilities:
 Responsibilities:
 
 - Creates Azure SQL, Linux App Service, Log Analytics, and workspace-based Application Insights
-- Applies generic runtime settings for auth, notifications, SMTP, database connectivity, and optional OTLP export
+- Passes infrastructure and platform-derived settings into the compute module
 - Emits deployment outputs consumed by scripts and GitHub Actions
+
+### `infrastructure/azure/modules/compute.bicep`
+
+Responsibilities:
+
+- Creates the Linux App Service plan and Web App
+- Applies platform runtime settings for database connectivity, Application Insights, and package deployment
+
+### Deployment settings files
+
+Responsibilities:
+
+- `infrastructure/azure/deployment-settings.json` is the app-facing overlay for setting overrides, additions, and disabled built-ins
+- `infrastructure/azure/deployment-settings-defaults.json` is the template-owned catalog for built-in direct runtime setting metadata
+- `scripts/sync-deployment-settings.mts` resolves the overlay with defaults and rewrites generated regions in workflows and the local deploy script
 
 ### `infrastructure/azure/github-oidc.bicep`
 
@@ -136,6 +151,7 @@ Responsibilities:
 Responsibilities:
 
 - Validates pull requests
+- Checks deployment-setting generated regions for drift
 - Deploys pushes to `main` to the `test` GitHub Environment
 - Supports manual deployments to `test` or `prod`
 
@@ -147,6 +163,7 @@ Responsibilities:
 - Builds, tests, publishes, and packages the app
 - Logs in to Azure with GitHub OIDC
 - Optionally deploys infrastructure and then zip deploys the app package
+- Uses generated regions for app-specific deployment variables, secrets, Bicep parameters, and runtime App Service settings
 
 ## Development Workflows
 

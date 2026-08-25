@@ -59,81 +59,6 @@ param sqlAllowAzureServices bool = env == 'test'
 @description('Public network access for SQL server.')
 param sqlPublicNetworkAccess string = 'Enabled'
 
-@description('Base URL used in generated notification emails. Defaults to the App Service hostname.')
-param notificationBaseUrl string = ''
-
-@description('Default application name used in generated notifications.')
-param notificationDefaultAppName string = appName
-
-@description('Default button text used in generated notifications.')
-param notificationDefaultButtonText string = 'Open the application'
-
-@description('Entra ID application client ID used by Microsoft Identity Web.')
-param authClientId string = ''
-
-@description('Entra ID tenant ID used by Microsoft Identity Web.')
-param authTenantId string = ''
-
-@description('Entra ID domain used by Microsoft Identity Web.')
-param authDomain string = ''
-
-@description('Entra ID authority instance used by Microsoft Identity Web.')
-param authInstance string = environment().authentication.loginEndpoint
-
-@description('OpenID Connect callback path used by Microsoft Identity Web.')
-param authCallbackPath string = '/signin-oidc'
-
-@description('SMTP host for outbound email.')
-param smtpHost string = ''
-
-@description('SMTP port for outbound email.')
-param smtpPort int = 587
-
-@description('SMTP timeout in milliseconds.')
-param smtpTimeout int = 100000
-
-@description('Whether SMTP should use SSL.')
-param smtpUseSsl bool = true
-
-@description('SMTP username for outbound email.')
-param smtpUsername string = ''
-
-@secure()
-@description('SMTP password for outbound email.')
-param smtpPassword string = ''
-
-@description('From email address for outbound email.')
-param smtpFromEmail string = ''
-
-@description('From display name for outbound email.')
-param smtpFromName string = appName
-
-@description('Reply-to email address for outbound email.')
-param smtpReplyToEmail string = ''
-
-@description('BCC email address for outbound email.')
-param smtpBccEmail string = ''
-
-@description('Optional OTLP exporter endpoint. Leave empty when no external OTLP collector is configured.')
-param otelExporterOtlpEndpoint string = ''
-
-@allowed([
-  'grpc'
-  'http/protobuf'
-])
-@description('OTLP exporter protocol used when an OTLP endpoint is configured.')
-param otelExporterOtlpProtocol string = 'http/protobuf'
-
-@secure()
-@description('Optional OTLP exporter headers. Use for collector authorization headers when required.')
-param otelExporterOtlpHeaders string = ''
-
-@description('Optional OpenTelemetry service name.')
-param otelServiceName string = ''
-
-@description('Optional OpenTelemetry resource attributes.')
-param otelResourceAttributes string = ''
-
 var appNameSafe = toLower(replace(replace(appName, ' ', ''), '_', ''))
 var nameToken = substring(uniqueString(resourceGroup().id, appName, env), 0, 6)
 var normalizedExpectedSubscriptionId = toLower(expectedSubscriptionId)
@@ -194,7 +119,6 @@ module sql 'modules/sql.bicep' = if (deploymentGuardPassed) {
 var sqlServerHostnameSuffix = environment().suffixes.sqlServerHostname
 var sqlServerFqdn = '${sqlServerName}${startsWith(sqlServerHostnameSuffix, '.') ? '' : '.'}${sqlServerHostnameSuffix}'
 var sqlConnectionString = 'Server=tcp:${sqlServerFqdn},1433;Initial Catalog=${sqlDatabaseName};Persist Security Info=False;User ID=${sqlAdminLogin};Password=${sqlAdminPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
-var resolvedNotificationBaseUrl = empty(notificationBaseUrl) ? 'https://${webAppName}.azurewebsites.net' : notificationBaseUrl
 
 module compute 'modules/compute.bicep' = if (deploymentGuardPassed) {
   name: 'compute-${env}'
@@ -213,29 +137,6 @@ module compute 'modules/compute.bicep' = if (deploymentGuardPassed) {
     environmentName: env
     appInsightsConnectionString: appInsights!.properties.ConnectionString
     appInsightsInstrumentationKey: appInsights!.properties.InstrumentationKey
-    notificationBaseUrl: resolvedNotificationBaseUrl
-    notificationDefaultAppName: notificationDefaultAppName
-    notificationDefaultButtonText: notificationDefaultButtonText
-    authClientId: authClientId
-    authTenantId: authTenantId
-    authDomain: authDomain
-    authInstance: authInstance
-    authCallbackPath: authCallbackPath
-    smtpHost: smtpHost
-    smtpPort: smtpPort
-    smtpTimeout: smtpTimeout
-    smtpUseSsl: smtpUseSsl
-    smtpUsername: smtpUsername
-    smtpPassword: smtpPassword
-    smtpFromEmail: smtpFromEmail
-    smtpFromName: smtpFromName
-    smtpReplyToEmail: smtpReplyToEmail
-    smtpBccEmail: smtpBccEmail
-    otelExporterOtlpEndpoint: otelExporterOtlpEndpoint
-    otelExporterOtlpProtocol: otelExporterOtlpProtocol
-    otelExporterOtlpHeaders: otelExporterOtlpHeaders
-    otelServiceName: otelServiceName
-    otelResourceAttributes: otelResourceAttributes
   }
 }
 
@@ -245,7 +146,6 @@ output appServiceDefaultHostName string = deploymentGuardPassed ? compute!.outpu
 output appServicePrincipalId string = deploymentGuardPassed ? compute!.outputs.principalId : ''
 output deploymentGuardPassed bool = deploymentGuardPassed
 output logAnalyticsWorkspaceName string = deploymentGuardPassed ? logAnalyticsWorkspace!.name : ''
-output notificationBaseUrl string = deploymentGuardPassed ? resolvedNotificationBaseUrl : ''
 output sqlDatabaseName string = sqlDatabaseName
 output sqlServerName string = deploymentGuardPassed ? sql!.outputs.serverName : ''
 output webAppName string = deploymentGuardPassed ? compute!.outputs.webAppName : ''

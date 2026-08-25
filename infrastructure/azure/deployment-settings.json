@@ -1,0 +1,7 @@
+{
+  "$schema": "./deployment-settings.schema.json",
+  "version": 1,
+  "disabled": [],
+  "overrides": {},
+  "additions": []
+}
