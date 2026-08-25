@@ -83,6 +83,33 @@ public class NotificationControllerTests
     }
 
     [Fact]
+    public async Task Default_endpoint_is_available_in_test_environment()
+    {
+        var notificationService = new FakeNotificationService();
+        var controller = CreateController(
+            environmentName: "test",
+            notificationService: notificationService,
+            claims:
+            [
+                new Claim("preferred_username", "person@example.com"),
+            ]);
+
+        var result = await controller.SendSample(new NotificationRequest
+        {
+            Subject = "Subject",
+            Header = "Header",
+            Message = "Message",
+            To = "",
+        }, CancellationToken.None);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeOfType<SendSampleNotificationResponse>()
+            .Which.To.Should().Be("person@example.com");
+
+        notificationService.Invocations.Should().ContainSingle();
+    }
+
+    [Fact]
     public async Task Default_endpoint_uses_email_claim_when_preferred_username_is_absent()
     {
         var notificationService = new FakeNotificationService();
@@ -217,6 +244,42 @@ public class NotificationControllerTests
         notificationService.TableInvocations[0].Rows[1].Details.Should().Be("Implementation");
         notificationService.TableInvocations[0].Rows[1].Amount.Should().Be(125m);
         notificationService.TableInvocations[0].TotalAmount.Should().Be(200m);
+    }
+
+    [Fact]
+    public async Task Table_endpoint_is_available_in_test_environment()
+    {
+        var notificationService = new FakeNotificationService();
+        var controller = CreateController(
+            environmentName: "test",
+            notificationService: notificationService,
+            claims:
+            [
+                new Claim("preferred_username", "person@example.com"),
+            ]);
+
+        var result = await controller.SendTableSample(new TableNotificationRequest
+        {
+            Subject = "Subject",
+            Header = "Header",
+            Message = "Summary message",
+            Rows =
+            [
+                new TableNotificationRowRequest
+                {
+                    Title = "Design",
+                    Details = "Initial exploration",
+                    Amount = 75m,
+                },
+            ],
+            TotalAmount = 75m,
+        }, CancellationToken.None);
+
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeOfType<SendSampleNotificationResponse>()
+            .Which.To.Should().Be("person@example.com");
+
+        notificationService.TableInvocations.Should().ContainSingle();
     }
 
     private static NotificationController CreateController(

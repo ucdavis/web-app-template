@@ -5,7 +5,7 @@ using Server.Core.Domain;
 
 public interface IDbInitializer
 {
-    Task InitializeAsync(bool includeDevSeed, CancellationToken cancellationToken = default);
+    Task InitializeAsync(bool includeSampleData, CancellationToken cancellationToken = default);
 }
 
 public class DbInitializer : IDbInitializer
@@ -19,13 +19,13 @@ public class DbInitializer : IDbInitializer
         _logger = logger;
     }
 
-    public async Task InitializeAsync(bool includeDevSeed, CancellationToken cancellationToken = default)
+    public async Task InitializeAsync(bool includeSampleData, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Applying database migrations...");
         await _db.Database.MigrateAsync(cancellationToken);
         _logger.LogInformation("Migrations applied.");
 
-        if (includeDevSeed)
+        if (includeSampleData)
         {
             await SeedDevelopmentAsync(cancellationToken);
         }
