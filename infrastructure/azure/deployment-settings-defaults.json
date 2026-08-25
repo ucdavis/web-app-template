@@ -9,6 +9,7 @@
       "valueType": "string",
       "description": "OpenID Connect callback path used by Microsoft Identity Web.",
       "requiredWhen": "never",
+      "defaultValue": "/signin-oidc",
       "appServiceName": "Auth__CallbackPath"
     },
     {
@@ -36,6 +37,7 @@
       "valueType": "string",
       "description": "Entra ID authority instance used by Microsoft Identity Web.",
       "requiredWhen": "never",
+      "defaultValue": "https://login.microsoftonline.com/",
       "appServiceName": "Auth__Instance"
     },
     {

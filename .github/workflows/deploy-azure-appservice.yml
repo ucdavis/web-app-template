@@ -73,10 +73,10 @@ jobs:
     env:
       APP_NAME: ${{ vars.APP_NAME || inputs.app_name }}
       # <deployment-settings:workflow-env>
-      AUTH_CALLBACK_PATH: ${{ vars.AUTH_CALLBACK_PATH }}
+      AUTH_CALLBACK_PATH: ${{ vars.AUTH_CALLBACK_PATH || '/signin-oidc' }}
       AUTH_CLIENT_ID: ${{ vars.AUTH_CLIENT_ID }}
       AUTH_DOMAIN: ${{ vars.AUTH_DOMAIN }}
-      AUTH_INSTANCE: ${{ vars.AUTH_INSTANCE }}
+      AUTH_INSTANCE: ${{ vars.AUTH_INSTANCE || 'https://login.microsoftonline.com/' }}
       AUTH_TENANT_ID: ${{ vars.AUTH_TENANT_ID }}
       NOTIFICATION_BASE_URL: ${{ vars.NOTIFICATION_BASE_URL }}
       NOTIFICATION_DEFAULT_APP_NAME: ${{ vars.NOTIFICATION_DEFAULT_APP_NAME }}

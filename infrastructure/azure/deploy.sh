@@ -257,10 +257,10 @@ if (( ${#disabled_settings[@]} > 0 )); then
     --output none
 fi
 
-add_setting "Auth__CallbackPath" "${AUTH_CALLBACK_PATH:-}"
+add_setting "Auth__CallbackPath" "${AUTH_CALLBACK_PATH:-/signin-oidc}"
 add_setting "Auth__ClientId" "${AUTH_CLIENT_ID:-}"
 add_setting "Auth__Domain" "${AUTH_DOMAIN:-}"
-add_setting "Auth__Instance" "${AUTH_INSTANCE:-}"
+add_setting "Auth__Instance" "${AUTH_INSTANCE:-https://login.microsoftonline.com/}"
 add_setting "Auth__TenantId" "${AUTH_TENANT_ID:-}"
 add_setting "Notification__BaseUrl" "${NOTIFICATION_BASE_URL:-}"
 add_setting "Notification__DefaultAppName" "${NOTIFICATION_DEFAULT_APP_NAME:-}"
