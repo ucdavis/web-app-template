@@ -27,12 +27,22 @@ param resourceGroupName string = 'rg-${appName}-${env}'
 @description('Display name for this deployment app registration.')
 param applicationName string = '${appName}-github-${env}-deploy'
 
-@description('Assign Contributor on the target resource group. Requires Owner or User Access Administrator at the target scope.')
+@description('Existing App Service plan name that deployment may join.')
+param webPlanName string = env == 'prod' ? 'Nibbler' : 'DefaultPlan2'
+
+@description('Resource group containing the existing App Service plan that deployment may join.')
+param webPlanResourceGroup string = env == 'prod' ? 'service-plans-linux' : 'Default-Web-WestUS'
+
+@description('Assign deployment RBAC on the target resource group and existing App Service plan. Requires permission to create the resource group and role assignments at both target scopes.')
 param assignRbac bool = true
 
 var githubIssuer = 'https://token.actions.githubusercontent.com'
 var azureTokenExchangeAudience = 'api://AzureADTokenExchange'
 var contributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')
+var websiteContributorRoleDefinitionId = subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'de139f84-1756-47ae-9be6-808fbbe84772')
+var appNameSafe = toLower(replace(replace(appName, ' ', ''), '_', ''))
+var webPlanRoleAssignmentDeploymentToken = substring(uniqueString(repository, applicationName), 0, 8)
+var webPlanRoleAssignmentDeploymentName = '${take(appNameSafe, 32)}-${env}-web-plan-${webPlanRoleAssignmentDeploymentToken}'
 var normalizedExpectedSubscriptionId = toLower(expectedSubscriptionId)
 var normalizedCurrentSubscriptionId = toLower(subscription().subscriptionId)
 var expectedResourceGroupSuffix = '-${env}'
@@ -76,6 +86,16 @@ module contributorAssignment 'modules/role-assignment.bicep' = if (deploymentGua
   }
 }
 
+module webPlanRoleAssignment 'modules/web-plan-role-assignment.bicep' = if (deploymentGuardPassed && assignRbac) {
+  name: webPlanRoleAssignmentDeploymentName
+  scope: resourceGroup(webPlanResourceGroup)
+  params: {
+    principalId: servicePrincipal!.id
+    roleDefinitionId: websiteContributorRoleDefinitionId
+    webPlanName: webPlanName
+  }
+}
+
 output applicationName string = deploymentGuardPassed ? application!.displayName : ''
 output clientId string = deploymentGuardPassed ? application!.appId : ''
 output deploymentGuardPassed bool = deploymentGuardPassed
@@ -85,3 +105,4 @@ output resourceGroupName string = deploymentGuardPassed ? environmentResourceGro
 output roleAssignmentId string = deploymentGuardPassed && assignRbac ? contributorAssignment!.outputs.roleAssignmentId : ''
 output subscriptionId string = deploymentGuardPassed ? subscription().subscriptionId : ''
 output tenantId string = deploymentGuardPassed ? tenant().tenantId : ''
+output webPlanRoleAssignmentId string = deploymentGuardPassed && assignRbac ? webPlanRoleAssignment!.outputs.roleAssignmentId : ''

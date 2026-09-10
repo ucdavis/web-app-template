@@ -102,8 +102,8 @@ jobs:
       SQL_DATABASE_NAME: ${{ vars.SQL_DATABASE_NAME }}
       SQL_SKU_NAME: ${{ vars.SQL_SKU_NAME }}
       SQL_SKU_TIER: ${{ vars.SQL_SKU_TIER }}
-      WEB_SKU_NAME: ${{ vars.WEB_SKU_NAME }}
-      WEB_SKU_TIER: ${{ vars.WEB_SKU_TIER }}
+      WEB_PLAN_NAME: ${{ vars.WEB_PLAN_NAME }}
+      WEB_PLAN_RESOURCE_GROUP: ${{ vars.WEB_PLAN_RESOURCE_GROUP }}
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_LOCATION: ${{ inputs.azure_location || vars.AZURE_LOCATION }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
@@ -147,6 +147,13 @@ jobs:
 
           if [[ "${{ inputs.deploy_infra }}" == "true" && -z "$SQL_ADMIN_PASSWORD" ]]; then
             echo "SQL_ADMIN_PASSWORD must be configured as a GitHub Environment secret when deploy_infra is true."
+            exit 1
+          fi
+
+          if [[ "${{ inputs.deploy_infra }}" == "true" ]] &&
+             { [[ -n "$WEB_PLAN_NAME" && -z "$WEB_PLAN_RESOURCE_GROUP" ]] ||
+               [[ -z "$WEB_PLAN_NAME" && -n "$WEB_PLAN_RESOURCE_GROUP" ]]; }; then
+            echo "WEB_PLAN_NAME and WEB_PLAN_RESOURCE_GROUP must either both be set or both be unset."
             exit 1
           fi
 
@@ -235,8 +242,8 @@ jobs:
           add_param "sqlDatabaseName" "$SQL_DATABASE_NAME"
           add_param "sqlSkuName" "$SQL_SKU_NAME"
           add_param "sqlSkuTier" "$SQL_SKU_TIER"
-          add_param "webSkuName" "$WEB_SKU_NAME"
-          add_param "webSkuTier" "$WEB_SKU_TIER"
+          add_param "webPlanName" "$WEB_PLAN_NAME"
+          add_param "webPlanResourceGroup" "$WEB_PLAN_RESOURCE_GROUP"
 
           az deployment group create \
             --name "$deployment_name" \

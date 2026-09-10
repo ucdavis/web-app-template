@@ -18,6 +18,8 @@ Common configuration:
   AZURE_SUBSCRIPTION_ID  Expected subscription. Default: current az account
   AZURE_LOCATION         Azure region used when creating the resource group. Default: westus2
   RESOURCE_GROUP         Target resource group. Default: rg-${APP_NAME}-${DEPLOY_ENV}
+  WEB_PLAN_NAME          Existing App Service plan name. Defaults by environment in Bicep.
+  WEB_PLAN_RESOURCE_GROUP Resource group containing the existing App Service plan. Defaults by environment in Bicep.
   DEPLOY_INFRA           Deploy infrastructure before app deploy. Default: true
   BUILD_APP              Restore, build, test, publish, and package locally. Default: true
   RUN_TESTS              Run frontend and .NET tests during BUILD_APP. Default: true
@@ -131,6 +133,11 @@ require_command az
 
 if is_true "$DEPLOY_INFRA"; then
   [[ -n "${SQL_ADMIN_PASSWORD:-}" ]] || die "SQL_ADMIN_PASSWORD is required when DEPLOY_INFRA=true."
+
+  if [[ -n "${WEB_PLAN_NAME:-}" && -z "${WEB_PLAN_RESOURCE_GROUP:-}" ]] ||
+     [[ -z "${WEB_PLAN_NAME:-}" && -n "${WEB_PLAN_RESOURCE_GROUP:-}" ]]; then
+    die "WEB_PLAN_NAME and WEB_PLAN_RESOURCE_GROUP must either both be set or both be unset."
+  fi
 fi
 
 if ! is_true "$DEPLOY_INFRA"; then
@@ -205,8 +212,8 @@ if is_true "$DEPLOY_INFRA"; then
   add_param "sqlDatabaseName" "${SQL_DATABASE_NAME:-}"
   add_param "sqlSkuName" "${SQL_SKU_NAME:-}"
   add_param "sqlSkuTier" "${SQL_SKU_TIER:-}"
-  add_param "webSkuName" "${WEB_SKU_NAME:-}"
-  add_param "webSkuTier" "${WEB_SKU_TIER:-}"
+  add_param "webPlanName" "${WEB_PLAN_NAME:-}"
+  add_param "webPlanResourceGroup" "${WEB_PLAN_RESOURCE_GROUP:-}"
 
   printf 'Deploying infrastructure to %s...\n' "$RESOURCE_GROUP"
   az deployment group create \
