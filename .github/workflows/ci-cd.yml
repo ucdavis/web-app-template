@@ -58,7 +58,9 @@ jobs:
         run: npm run deployment-settings:check
 
       - name: Check Bicep templates
-        run: az bicep build --file infrastructure/azure/main.bicep --stdout > /dev/null
+        run: |
+          az bicep build --file infrastructure/azure/main.bicep --stdout > /dev/null
+          az bicep build --file infrastructure/azure/github-oidc.bicep --stdout > /dev/null
 
       - name: Restore frontend dependencies
         working-directory: client

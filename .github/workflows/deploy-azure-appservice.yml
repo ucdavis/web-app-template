@@ -102,8 +102,8 @@ jobs:
       SQL_DATABASE_NAME: ${{ vars.SQL_DATABASE_NAME }}
       SQL_SKU_NAME: ${{ vars.SQL_SKU_NAME }}
       SQL_SKU_TIER: ${{ vars.SQL_SKU_TIER }}
-      WEB_SKU_NAME: ${{ vars.WEB_SKU_NAME }}
-      WEB_SKU_TIER: ${{ vars.WEB_SKU_TIER }}
+      WEB_PLAN_NAME: ${{ vars.WEB_PLAN_NAME }}
+      WEB_PLAN_RESOURCE_GROUP: ${{ vars.WEB_PLAN_RESOURCE_GROUP }}
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_LOCATION: ${{ inputs.azure_location || vars.AZURE_LOCATION }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
@@ -235,8 +235,8 @@ jobs:
           add_param "sqlDatabaseName" "$SQL_DATABASE_NAME"
           add_param "sqlSkuName" "$SQL_SKU_NAME"
           add_param "sqlSkuTier" "$SQL_SKU_TIER"
-          add_param "webSkuName" "$WEB_SKU_NAME"
-          add_param "webSkuTier" "$WEB_SKU_TIER"
+          add_param "webPlanName" "$WEB_PLAN_NAME"
+          add_param "webPlanResourceGroup" "$WEB_PLAN_RESOURCE_GROUP"
 
           az deployment group create \
             --name "$deployment_name" \

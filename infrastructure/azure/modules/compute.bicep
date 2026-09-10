@@ -7,14 +7,11 @@ param tags object
 @description('App Service plan name.')
 param webPlanName string
 
+@description('Resource group containing the existing App Service plan.')
+param webPlanResourceGroup string
+
 @description('Web App name.')
 param webAppName string
-
-@description('App Service plan SKU name.')
-param webSkuName string
-
-@description('App Service plan SKU tier.')
-param webSkuTier string
 
 @description('Linux App Service runtime stack.')
 param linuxFxVersion string
@@ -59,20 +56,9 @@ var baseAppSettings = [
   }
 ]
 
-resource webPlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+resource webPlan 'Microsoft.Web/serverfarms@2023-12-01' existing = {
   name: webPlanName
-  location: location
-  kind: 'linux'
-  sku: {
-    name: webSkuName
-    tier: webSkuTier
-    size: webSkuName
-    capacity: 1
-  }
-  tags: tags
-  properties: {
-    reserved: true
-  }
+  scope: resourceGroup(webPlanResourceGroup)
 }
 
 resource webApp 'Microsoft.Web/sites@2023-12-01' = {

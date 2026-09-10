@@ -66,6 +66,13 @@ Replace all placeholder deployment names before the first cloud deployment. The 
 
 The Azure deployment templates only allow `test` and `prod`. Resource groups must end with the matching environment suffix, and deployments must pass the expected subscription ID guard before resources are created.
 
+New applications use the existing organizational App Service plans by default:
+
+- `test`: `DefaultPlan2` in `Default-Web-WestUS`
+- `prod`: `Nibbler` in `service-plans-linux`
+
+Set `WEB_PLAN_NAME` and `WEB_PLAN_RESOURCE_GROUP` in a GitHub Environment, or export them for a local deployment, when an application needs to override both coordinates. The plan must already exist in the deployment subscription and be region-compatible with the web app.
+
 ### GitHub Environments
 
 Create GitHub Environments named `test` and `prod`. Configure production reviewers or approval gates as appropriate for your project.
@@ -85,6 +92,8 @@ Each environment needs these variables from the OIDC bootstrap output or your Az
 - `AZURE_TENANT_ID`: bootstrap `tenantId` output
 - `AZURE_SUBSCRIPTION_ID`: bootstrap `subscriptionId` output
 - `RESOURCE_GROUP`: bootstrap `resourceGroupName` output
+
+The shared App Service plan defaults normally require no GitHub variables. If you override them, configure both `WEB_PLAN_NAME` and `WEB_PLAN_RESOURCE_GROUP` and use the same values when running the OIDC bootstrap.
 
 When the workflow should create or update Azure SQL and App Service resources, add this secret:
 
@@ -133,7 +142,7 @@ Disable an optional runtime App Service built-in setting when the app does not n
 }
 ```
 
-Infrastructure deployment inputs, such as SQL admin values, database and App Service SKUs, and platform-derived app settings, are hand-authored in the deployment workflow, local deploy script, and Bicep files rather than managed by the deployment settings overlay.
+Infrastructure deployment inputs, such as SQL admin values, database SKUs, existing App Service plan coordinates, and platform-derived app settings, are hand-authored in the deployment workflow, local deploy script, and Bicep files rather than managed by the deployment settings overlay.
 
 Use `defaultValue` on a built-in override or added setting when generated deployment scripts should apply a stable fallback if the GitHub Environment variable is unset.
 
@@ -162,18 +171,39 @@ Secrets use `"classification": "secret"` and are passed through reusable GitHub 
 
 ### One-time OIDC bootstrap
 
-Run `infrastructure/azure/github-oidc.bicep` once per environment before the first GitHub deployment. Run it again after repository, organization, GitHub Environment, resource group, subscription, or identity changes, or if the generated Entra app/service principal is deleted.
+Run `infrastructure/azure/github-oidc.bicep` once per environment before the first GitHub deployment. Run it again after repository, organization, GitHub Environment, resource group, subscription, shared App Service plan, or identity changes, or if the generated Entra app/service principal is deleted.
 
 Why OIDC is used: GitHub Actions receives short-lived Azure tokens scoped to this repository and GitHub Environment. That removes the need to store long-lived Azure client secrets in GitHub.
 
-This bootstrap is only for deployment authentication from GitHub Actions to Azure. It does not create or configure the Microsoft Identity Web app registration used for end-user sign-in in section 3.
+This bootstrap is only for deployment authentication from GitHub Actions to Azure. It does not create or configure the Microsoft Identity Web app registration used for end-user sign-in in section 3. By default it grants the deployment identity Contributor on the application resource group and Website Contributor on the exact shared App Service plan.
 
-Example for `test`:
+Validate the bootstrap for `test` before applying it:
 
 ```bash
 az login
 az account set --subscription "<subscription-id>"
 deployment_name="github-oidc-<app-name>"
+web_plan_name="DefaultPlan2"
+web_plan_resource_group="Default-Web-WestUS"
+az deployment sub validate \
+  --location westus2 \
+  --template-file infrastructure/azure/github-oidc.bicep \
+  --parameters \
+    appName="<app-name>" \
+    repository="<owner>/<repo>" \
+    env="test" \
+    expectedSubscriptionId="<subscription-id>" \
+    resourceGroupName="rg-<app-name>-test" \
+    webPlanName="$web_plan_name" \
+    webPlanResourceGroup="$web_plan_resource_group"
+```
+
+Apply the bootstrap once validation succeeds:
+
+```bash
+deployment_name="github-oidc-<app-name>"
+web_plan_name="DefaultPlan2"
+web_plan_resource_group="Default-Web-WestUS"
 az deployment sub create \
   --name "$deployment_name" \
   --location westus2 \
@@ -183,10 +213,12 @@ az deployment sub create \
     repository="<owner>/<repo>" \
     env="test" \
     expectedSubscriptionId="<subscription-id>" \
-    resourceGroupName="rg-<app-name>-test"
+    resourceGroupName="rg-<app-name>-test" \
+    webPlanName="$web_plan_name" \
+    webPlanResourceGroup="$web_plan_resource_group"
 ```
 
-For example, with the default `APP_NAME=webapp`, use `deployment_name="github-oidc-webapp"`. Repeat with `env="prod"`, a production deployment name such as `deployment_name="github-oidc-<app-name>-prod"`, and a `-prod` resource group for production. The bootstrap output should include `deploymentGuardPassed=true`, `clientId`, `tenantId`, `subscriptionId`, `principalId`, `resourceGroupName`, and `federatedCredentialSubject`.
+For example, with the default `APP_NAME=webapp`, use `deployment_name="github-oidc-webapp"`. For production, repeat with `env="prod"`, a production deployment name such as `deployment_name="github-oidc-<app-name>-prod"`, a `-prod` resource group, `webPlanName="Nibbler"`, and `webPlanResourceGroup="service-plans-linux"`. The bootstrap output should include `deploymentGuardPassed=true`, `clientId`, `tenantId`, `subscriptionId`, `principalId`, `resourceGroupName`, `federatedCredentialSubject`, and `webPlanRoleAssignmentId`.
 
 If you did not set `--name`, Azure CLI usually names the deployment after the template file, for example `github-oidc`. Find recent subscription deployments with:
 
@@ -214,13 +246,20 @@ gh variable set AZURE_SUBSCRIPTION_ID --env test --body "$(az deployment sub sho
 gh variable set RESOURCE_GROUP --env test --body "$(az deployment sub show --name "$deployment_name" --query properties.outputs.resourceGroupName.value --output tsv)"
 ```
 
+When overriding the organizational plan defaults, also configure the matching GitHub Environment variables:
+
+```bash
+gh variable set WEB_PLAN_NAME --env test --body "$web_plan_name"
+gh variable set WEB_PLAN_RESOURCE_GROUP --env test --body "$web_plan_resource_group"
+```
+
 Then add the SQL admin password as a GitHub Environment secret:
 
 ```bash
 gh secret set SQL_ADMIN_PASSWORD --env test
 ```
 
-The operator needs permission to create Entra applications/service principals. With the default `assignRbac=true`, the operator also needs Owner or User Access Administrator at the target resource group scope. If they do not have that permission, run with `assignRbac=false`, then have an Azure owner assign Contributor to the emitted `principalId` on the target resource group.
+The operator needs permission to create Entra applications/service principals. With the default `assignRbac=true`, the operator also needs permission to create the application resource group and role assignments at both the application resource group and shared App Service plan scopes. Owner at subscription scope is sufficient; equivalent narrower permissions can combine resource-group creation rights with User Access Administrator at the required role-assignment scopes. If those permissions are unavailable, run with `assignRbac=false`, then have an Azure owner assign Contributor to the emitted `principalId` on the application resource group and Website Contributor on the exact shared App Service plan.
 
 The first Bicep build or deployment may restore the Microsoft Graph extension configured in `infrastructure/azure/bicepconfig.json`.
 
@@ -240,6 +279,8 @@ export AZURE_SUBSCRIPTION_ID="<subscription-id>"
 export SQL_ADMIN_PASSWORD="<strong-password>"
 infrastructure/azure/deploy_test.sh
 ```
+
+The local script uses the organizational shared-plan defaults. Export both `WEB_PLAN_NAME` and `WEB_PLAN_RESOURCE_GROUP` before running it when an application needs a different existing plan.
 
 Use `infrastructure/azure/deploy_prod.sh` for production. For existing Azure infrastructure, run:
 

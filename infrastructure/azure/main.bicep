@@ -37,11 +37,11 @@ param appInsightsRetentionInDays int = 30
 @description('Linux App Service runtime stack.')
 param linuxFxVersion string = 'DOTNETCORE|10.0'
 
-@description('App Service plan SKU name.')
-param webSkuName string = env == 'prod' ? 'B1' : 'B1'
+@description('Existing App Service plan name.')
+param webPlanName string = env == 'prod' ? 'Nibbler' : 'DefaultPlan2'
 
-@description('App Service plan SKU tier.')
-param webSkuTier string = env == 'prod' ? 'Basic' : 'Basic'
+@description('Resource group containing the existing App Service plan.')
+param webPlanResourceGroup string = env == 'prod' ? 'service-plans-linux' : 'Default-Web-WestUS'
 
 @description('SQL database SKU name.')
 param sqlSkuName string = env == 'prod' ? 'S0' : 'Basic'
@@ -67,7 +67,6 @@ var expectedResourceGroupSuffix = '-${env}'
 var deploymentGuardPassed = !empty(expectedSubscriptionId) && normalizedCurrentSubscriptionId == normalizedExpectedSubscriptionId && endsWith(toLower(resourceGroup().name), expectedResourceGroupSuffix)
 
 var sqlServerName = toLower('sql-${appNameSafe}-${env}-${nameToken}')
-var webPlanName = toLower('asp-${appNameSafe}-${env}-${nameToken}')
 var webAppName = toLower('web-${appNameSafe}-${env}-${nameToken}')
 var appInsightsName = toLower('appi-${appNameSafe}-${env}-${nameToken}')
 var logAnalyticsWorkspaceName = toLower('log-${appNameSafe}-${env}-${nameToken}')
@@ -129,9 +128,8 @@ module compute 'modules/compute.bicep' = if (deploymentGuardPassed) {
     location: location
     tags: resourceTags
     webPlanName: webPlanName
+    webPlanResourceGroup: webPlanResourceGroup
     webAppName: webAppName
-    webSkuName: webSkuName
-    webSkuTier: webSkuTier
     linuxFxVersion: linuxFxVersion
     sqlConnectionString: sqlConnectionString
     environmentName: env
