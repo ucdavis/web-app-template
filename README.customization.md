@@ -71,7 +71,7 @@ New applications use the existing organizational App Service plans by default:
 - `test`: `DefaultPlan2` in `Default-Web-WestUS`
 - `prod`: `Nibbler` in `service-plans-linux`
 
-Set `WEB_PLAN_NAME` and `WEB_PLAN_RESOURCE_GROUP` in a GitHub Environment, or export them for a local deployment, when an application needs to override both coordinates. The plan must already exist in the deployment subscription and be region-compatible with the web app.
+Set `WEB_PLAN_NAME` and `WEB_PLAN_RESOURCE_GROUP` in a GitHub Environment, or export them for a local deployment, when an application needs to override both coordinates. The plan must already exist in the deployment subscription. The web app automatically uses the plan's region; `AZURE_LOCATION` continues to control the other regional resources created by the deployment.
 
 ### GitHub Environments
 

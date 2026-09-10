@@ -133,6 +133,11 @@ require_command az
 
 if is_true "$DEPLOY_INFRA"; then
   [[ -n "${SQL_ADMIN_PASSWORD:-}" ]] || die "SQL_ADMIN_PASSWORD is required when DEPLOY_INFRA=true."
+
+  if [[ -n "${WEB_PLAN_NAME:-}" && -z "${WEB_PLAN_RESOURCE_GROUP:-}" ]] ||
+     [[ -z "${WEB_PLAN_NAME:-}" && -n "${WEB_PLAN_RESOURCE_GROUP:-}" ]]; then
+    die "WEB_PLAN_NAME and WEB_PLAN_RESOURCE_GROUP must either both be set or both be unset."
+  fi
 fi
 
 if ! is_true "$DEPLOY_INFRA"; then

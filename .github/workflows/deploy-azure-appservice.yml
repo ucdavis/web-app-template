@@ -150,6 +150,13 @@ jobs:
             exit 1
           fi
 
+          if [[ "${{ inputs.deploy_infra }}" == "true" ]] &&
+             { [[ -n "$WEB_PLAN_NAME" && -z "$WEB_PLAN_RESOURCE_GROUP" ]] ||
+               [[ -z "$WEB_PLAN_NAME" && -n "$WEB_PLAN_RESOURCE_GROUP" ]]; }; then
+            echo "WEB_PLAN_NAME and WEB_PLAN_RESOURCE_GROUP must either both be set or both be unset."
+            exit 1
+          fi
+
           if [[ "${{ inputs.deploy_infra }}" != "true" && -z "$WEB_APP_NAME_INPUT" ]]; then
             echo "WEB_APP_NAME or the web_app_name input must be configured when deploy_infra is false."
             exit 1

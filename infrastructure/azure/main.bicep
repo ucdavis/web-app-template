@@ -13,7 +13,7 @@ param env string
 @description('Expected Azure subscription ID. Resources are created only when this matches the current subscription and the resource group name ends with the environment suffix.')
 param expectedSubscriptionId string
 
-@description('Azure region for all resources.')
+@description('Azure region for regional resources other than the web app, which uses the existing App Service plan location.')
 param location string = resourceGroup().location
 
 @description('SQL admin login for SQL authentication.')
@@ -76,6 +76,11 @@ var resourceTags = union(tags, {
   environment: env
 })
 
+resource webPlan 'Microsoft.Web/serverfarms@2023-12-01' existing = {
+  name: webPlanName
+  scope: resourceGroup(webPlanResourceGroup)
+}
+
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (deploymentGuardPassed) {
   name: logAnalyticsWorkspaceName
   location: location
@@ -125,10 +130,9 @@ module compute 'modules/compute.bicep' = if (deploymentGuardPassed) {
     sql
   ]
   params: {
-    location: location
+    webAppLocation: webPlan.location
     tags: resourceTags
-    webPlanName: webPlanName
-    webPlanResourceGroup: webPlanResourceGroup
+    webPlanId: webPlan.id
     webAppName: webAppName
     linuxFxVersion: linuxFxVersion
     sqlConnectionString: sqlConnectionString

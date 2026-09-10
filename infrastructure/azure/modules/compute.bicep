@@ -1,14 +1,11 @@
-@description('Azure region for compute resources.')
-param location string
+@description('App Service plan region used by the web app.')
+param webAppLocation string
 
 @description('Tags to apply to compute resources.')
 param tags object
 
-@description('App Service plan name.')
-param webPlanName string
-
-@description('Resource group containing the existing App Service plan.')
-param webPlanResourceGroup string
+@description('Resource ID of the existing App Service plan.')
+param webPlanId string
 
 @description('Web App name.')
 param webAppName string
@@ -56,21 +53,16 @@ var baseAppSettings = [
   }
 ]
 
-resource webPlan 'Microsoft.Web/serverfarms@2023-12-01' existing = {
-  name: webPlanName
-  scope: resourceGroup(webPlanResourceGroup)
-}
-
 resource webApp 'Microsoft.Web/sites@2023-12-01' = {
   name: webAppName
-  location: location
+  location: webAppLocation
   kind: 'app,linux'
   identity: {
     type: 'SystemAssigned'
   }
   tags: tags
   properties: {
-    serverFarmId: webPlan.id
+    serverFarmId: webPlanId
     httpsOnly: true
     siteConfig: {
       alwaysOn: true
