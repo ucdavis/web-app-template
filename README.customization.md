@@ -93,11 +93,21 @@ Each environment needs these variables from the OIDC bootstrap output or your Az
 - `AZURE_SUBSCRIPTION_ID`: bootstrap `subscriptionId` output
 - `RESOURCE_GROUP`: bootstrap `resourceGroupName` output
 
+The subscription-scoped OIDC bootstrap creates the application resource group and grants the deployment identity access to it. The Configure Azure workflow verifies that the group exists but does not create it. If the group is missing, verify `RESOURCE_GROUP` or rerun the bootstrap.
+
+`AZURE_LOCATION` is optional for the Configure Azure workflow. When it is unset, Bicep uses the existing resource group's location for regional resources. The local deployment script defaults it to `westus2` because that script can create the resource group.
+
 The shared App Service plan defaults normally require no GitHub variables. If you override them, configure both `WEB_PLAN_NAME` and `WEB_PLAN_RESOURCE_GROUP` and use the same values when running the OIDC bootstrap.
 
-When the workflow should create or update Azure SQL and App Service resources, add this secret:
+For the Configure Azure workflow to create or update Azure SQL and App Service resources, add this secret:
 
 - `SQL_ADMIN_PASSWORD`
+
+Optionally configure `DB_CONNECTION` as an environment secret when the App Service should use a connection string other than the one produced by the Bicep-managed Azure SQL resources.
+
+Routine package deployments use `APP_NAME` to find the App Service by its `application` and `environment` tags. Set `WEB_APP_NAME` only when the workflow should target an App Service by its exact name instead.
+
+Application health verification defaults to a 60-second deadline. Set the optional GitHub Environment variable `APP_HEALTH_TIMEOUT_SECONDS` to a positive integer when an environment needs a longer startup window.
 
 ### Deployment settings customization
 
@@ -114,7 +124,7 @@ Most projects should edit only `deployment-settings.json`, then run:
 npm run deployment-settings:sync
 ```
 
-Pull request validation runs `npm run deployment-settings:check` so generated workflow and deploy script regions cannot drift.
+Pull request validation runs `npm run deployment-settings:check` so generated Configure Azure workflow and local deploy script regions cannot drift.
 
 Override a built-in runtime mapping by GitHub Environment variable name:
 
@@ -146,6 +156,8 @@ Infrastructure deployment inputs, such as SQL admin values, database SKUs, exist
 
 Use `defaultValue` on a built-in override or added setting when generated deployment scripts should apply a stable fallback if the GitHub Environment variable is unset.
 
+`requiredWhen` values apply to the generated tooling as follows: `always` is required by Configure Azure and all local deployments; `deploy_infra` is required by Configure Azure and local infrastructure deployments; `existing_infra` applies only to local deployments with `DEPLOY_INFRA=false`; and `never` remains optional.
+
 Add a runtime App Service setting:
 
 ```json
@@ -165,7 +177,7 @@ Add a runtime App Service setting:
 }
 ```
 
-Secrets use `"classification": "secret"` and are passed through reusable GitHub workflows as individually named secrets. The template intentionally does not use `secrets: inherit`.
+Secrets use `"classification": "secret"` and are read from the selected GitHub Environment by the manual Configure Azure workflow. Routine package deployments do not receive application runtime secrets.
 
 `DB_CONNECTION`, App Insights settings, `ASPNETCORE_ENVIRONMENT`, and `WEBSITE_RUN_FROM_PACKAGE` remain hand-authored or platform-derived settings rather than overlay entries. `NOTIFICATION_BASE_URL` is a direct runtime setting; set it explicitly when notification links should use a stable hostname or custom domain.
 
@@ -268,8 +280,10 @@ The first Bicep build or deployment may restore the Microsoft Graph extension co
 The `CI/CD` workflow:
 
 - Validates pull requests.
-- Deploys pushes to `main` to the `test` environment.
-- Supports manual deployments to `test` or `prod`, including a `deploy_infra` toggle.
+- Deploys pushes to `main` to the `test` environment without changing infrastructure or App Service settings.
+- Supports manual package deployments to `test` or `prod`.
+
+Before the first package deployment, run the manual `Configure Azure` workflow for the target environment. Run it again whenever Bicep, deployment settings, GitHub Environment variables, or GitHub Environment secrets change. Wait for configuration to finish before starting a package deployment. Both workflows use the same environment-specific FIFO concurrency queue, so configuration and package deployment for one environment cannot overlap, pending operations do not displace one another, and running operations are not canceled. The `test` and `prod` queues are independent, and GitHub retains up to 100 pending operations in each queue.
 
 For local deployment:
 

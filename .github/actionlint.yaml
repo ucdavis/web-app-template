@@ -1,0 +1,10 @@
+# actionlint 1.7.12 predates GitHub Actions support for concurrency.queue.
+# Remove these scoped ignores after an actionlint release includes
+# https://github.com/rhysd/actionlint/pull/654.
+paths:
+  .github/workflows/configure-azure.yml:
+    ignore:
+      - 'unexpected key "queue" for "concurrency" section'
+  .github/workflows/deploy-azure-appservice.yml:
+    ignore:
+      - 'unexpected key "queue" for "concurrency" section'

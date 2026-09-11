@@ -69,9 +69,9 @@ App Service serves /api, auth, health, static assets, and SPA fallback
 Azure SQL, Application Insights, and Log Analytics
 ```
 
-Each deployment validates the expected subscription ID and requires the target resource group to end with the matching environment suffix before resources are created.
+Each infrastructure configuration validates the expected subscription ID and requires the target resource group to end with the matching environment suffix before resources are created.
 
-GitHub deployments authenticate to Azure with OIDC through a per-environment Entra app registration. The one-time bootstrap template creates the app registration, service principal, GitHub Environment federated credential, and optional Contributor assignment on the environment resource group.
+GitHub deployments authenticate to Azure with OIDC through a per-environment Entra app registration. The one-time bootstrap template creates the app registration, service principal, GitHub Environment federated credential, and optional role assignments on the environment resource group and shared App Service plan.
 
 ## Key Files
 
@@ -127,7 +127,7 @@ Responsibilities:
 
 Responsibilities:
 
-- Creates the Linux App Service plan and Web App
+- Creates the Linux Web App on an existing shared App Service plan
 - Applies platform runtime settings for database connectivity, Application Insights, and package deployment
 
 ### Deployment settings files
@@ -136,7 +136,7 @@ Responsibilities:
 
 - `infrastructure/azure/deployment-settings.json` is the app-facing overlay for setting overrides, additions, and disabled built-ins
 - `infrastructure/azure/deployment-settings-defaults.json` is the template-owned catalog for built-in direct runtime setting metadata
-- `scripts/sync-deployment-settings.mts` resolves the overlay with defaults and rewrites generated regions in workflows and the local deploy script
+- `scripts/sync-deployment-settings.mts` resolves the overlay with defaults and rewrites generated regions in the Configure Azure workflow and local deploy script
 
 ### `infrastructure/azure/github-oidc.bicep`
 
@@ -144,7 +144,7 @@ Responsibilities:
 
 - Creates the per-environment GitHub OIDC deployment identity
 - Adds the federated credential for `repo:<owner>/<repo>:environment:<env>`
-- Optionally assigns Contributor on the target resource group
+- Optionally assigns Contributor on the target resource group and Website Contributor on the shared App Service plan
 
 ### `.github/workflows/ci-cd.yml`
 
@@ -162,8 +162,18 @@ Responsibilities:
 - Provides the reusable App Service deployment job
 - Builds, tests, publishes, and packages the app
 - Logs in to Azure with GitHub OIDC
-- Optionally deploys infrastructure and then zip deploys the app package
-- Uses generated regions for app-specific deployment variables, secrets, Bicep parameters, and runtime App Service settings
+- Resolves the existing App Service by environment tags or an explicit name
+- Checks SCM readiness, deploys the app package without changing configuration, and verifies application health
+
+### `.github/workflows/configure-azure.yml`
+
+Responsibilities:
+
+- Provides the manual `Configure Azure` workflow for `test` and `prod`
+- Applies Bicep-managed infrastructure and generated runtime App Service settings
+- Waits for the App Service SCM endpoint to recover after configuration
+- Uses the same environment-specific FIFO concurrency queue as package deployment, preserving up to 100 pending operations without canceling running work
+- Keeps the `test` and `prod` operation queues independent
 
 ## Development Workflows
 

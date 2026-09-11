@@ -30,7 +30,7 @@
     },
     "requiredWhen": {
       "type": "string",
-      "description": "Controls when generated deployment workflows require the GitHub Environment setting.",
+      "description": "Controls when generated deployment tooling requires the setting. 'always' applies to Configure Azure and every local deployment; 'deploy_infra' applies to Configure Azure and local infrastructure deployments; 'existing_infra' applies only to local existing-infrastructure deployments; 'never' is optional.",
       "enum": ["always", "deploy_infra", "existing_infra", "never"]
     },
     "emitWhen": {
