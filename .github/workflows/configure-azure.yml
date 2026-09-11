@@ -112,6 +112,16 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Verify target resource group
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if ! az group show --name "$RESOURCE_GROUP" --output none; then
+            echo "::error title=Azure resource group unavailable::Resource group '$RESOURCE_GROUP' does not exist in subscription '$AZURE_SUBSCRIPTION_ID' or the workflow identity cannot access it. Verify the RESOURCE_GROUP environment variable or rerun the subscription-scoped OIDC bootstrap."
+            exit 1
+          fi
+
       - name: Apply infrastructure
         id: configure
         shell: bash

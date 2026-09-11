@@ -48,6 +48,7 @@ jobs:
       queue: max
     env:
       APP_NAME: ${{ vars.APP_NAME || inputs.app_name }}
+      APP_HEALTH_TIMEOUT_SECONDS: ${{ vars.APP_HEALTH_TIMEOUT_SECONDS || '60' }}
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
@@ -80,6 +81,11 @@ jobs:
 
           if (( ${#missing[@]} > 0 )); then
             printf 'Missing required GitHub Environment variable(s): %s\n' "${missing[*]}"
+            exit 1
+          fi
+
+          if [[ ! "$APP_HEALTH_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]]; then
+            echo "APP_HEALTH_TIMEOUT_SECONDS must be a positive integer."
             exit 1
           fi
 
@@ -210,25 +216,41 @@ jobs:
           set -euo pipefail
 
           app_url="https://${WEB_APP_NAME}.azurewebsites.net/health"
+          start_time=$SECONDS
+          deadline=$((start_time + APP_HEALTH_TIMEOUT_SECONDS))
           ready_count=0
+          attempt=0
 
-          for attempt in {1..12}; do
-            app_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 10 "$app_url" || true)"
+          while (( SECONDS < deadline )); do
+            ((attempt += 1))
+            remaining=$((deadline - SECONDS))
+            if (( remaining <= 0 )); then
+              break
+            fi
+
+            request_timeout=$((remaining < 10 ? remaining : 10))
+            app_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time "$request_timeout" "$app_url" || true)"
+            elapsed=$((SECONDS - start_time))
 
             if [[ "$app_status" == "200" ]]; then
               ((ready_count += 1))
               if (( ready_count == 2 )); then
-                echo "The deployed application is healthy."
+                echo "The deployed application is healthy after ${elapsed} seconds."
                 exit 0
               fi
             else
               ready_count=0
+              echo "Health check attempt $attempt returned HTTP ${app_status:-000} after ${elapsed} seconds."
             fi
 
-            if (( attempt < 12 )); then
-              sleep 5
+            remaining=$((deadline - SECONDS))
+            if (( remaining <= 0 )); then
+              break
             fi
+
+            sleep_seconds=$((remaining < 5 ? remaining : 5))
+            sleep "$sleep_seconds"
           done
 
-          echo "The deployed application did not become healthy."
+          echo "The package was deployed, but the application did not become healthy within ${APP_HEALTH_TIMEOUT_SECONDS} seconds."
           exit 1
