@@ -38,8 +38,7 @@ const overlayPath = path.join(repoRoot, 'infrastructure/azure/deployment-setting
 const defaultsPath = path.join(repoRoot, 'infrastructure/azure/deployment-settings-defaults.json');
 
 const generatedTargets = [
-  '.github/workflows/deploy-azure-appservice.yml',
-  '.github/workflows/ci-cd.yml',
+  '.github/workflows/configure-azure.yml',
   'infrastructure/azure/deploy.sh',
 ];
 
@@ -99,10 +98,6 @@ function githubNameToId(githubName: string): string {
 
 function shellQuote(value: string): string {
   return String(value).replaceAll("'", "'\"'\"'");
-}
-
-function yamlQuotedString(value: string): string {
-  return JSON.stringify(value);
 }
 
 function githubExpressionString(value: string): string {
@@ -317,20 +312,8 @@ function contractSettings(contract: DeploymentSettingsContract): DeploymentSetti
   return sortSettings(contract.settings);
 }
 
-function secretSettings(settings: DeploymentSetting[]): DeploymentSetting[] {
-  return settings.filter((setting) => setting.classification === 'secret');
-}
-
 function requiredSettings(settings: DeploymentSetting[], requiredWhen: RequiredWhen): DeploymentSetting[] {
   return settings.filter((setting) => setting.requiredWhen === requiredWhen);
-}
-
-function renderWorkflowSecrets(settings: DeploymentSetting[]): string[] {
-  return secretSettings(settings).flatMap((setting) => [
-    `${setting.githubName}:`,
-    `  description: ${yamlQuotedString(setting.description)}`,
-    '  required: false',
-  ]);
 }
 
 function renderWorkflowEnv(settings: DeploymentSetting[]): string[] {
@@ -342,10 +325,9 @@ function renderWorkflowEnv(settings: DeploymentSetting[]): string[] {
   });
 }
 
-function renderWorkflowRequiredChecks(settings: DeploymentSetting[]): string[] {
+function renderConfigureWorkflowRequiredChecks(settings: DeploymentSetting[]): string[] {
   const lines: string[] = [];
   const deployInfraSettings = requiredSettings(settings, 'deploy_infra');
-  const existingInfraSettings = requiredSettings(settings, 'existing_infra');
   const alwaysSettings = requiredSettings(settings, 'always');
 
   for (const setting of alwaysSettings) {
@@ -357,16 +339,8 @@ function renderWorkflowRequiredChecks(settings: DeploymentSetting[]): string[] {
   }
 
   for (const setting of deployInfraSettings) {
-    lines.push(`if [[ "\${{ inputs.deploy_infra }}" == "true" && -z "$${setting.githubName}" ]]; then`);
-    lines.push(`  echo "${setting.githubName} must be configured as a GitHub Environment ${setting.classification} when deploy_infra is true."`);
-    lines.push('  exit 1');
-    lines.push('fi');
-    lines.push('');
-  }
-
-  for (const setting of existingInfraSettings) {
-    lines.push(`if [[ "\${{ inputs.deploy_infra }}" != "true" && -z "$${setting.githubName}" ]]; then`);
-    lines.push(`  echo "${setting.githubName} must be configured as a GitHub Environment ${setting.classification} when deploy_infra is false."`);
+    lines.push(`if [[ -z "$${setting.githubName}" ]]; then`);
+    lines.push(`  echo "${setting.githubName} must be configured as a GitHub Environment ${setting.classification} when configuring Azure."`);
     lines.push('  exit 1');
     lines.push('fi');
     lines.push('');
@@ -400,10 +374,6 @@ function renderWorkflowDisabledSettings(settings: DeploymentSetting[]): string[]
     'fi',
     '',
   ];
-}
-
-function renderCiCdSecrets(settings: DeploymentSetting[]): string[] {
-  return secretSettings(settings).map((setting) => `${setting.githubName}: \${{ secrets.${setting.githubName} }}`);
 }
 
 function wrapNames(names: string[]): string[] {
@@ -497,18 +467,13 @@ function renderFile(
   let content = originalContent;
 
   switch (relativePath) {
-    case '.github/workflows/deploy-azure-appservice.yml':
-      content = replaceBlock(content, 'workflow-secrets', renderWorkflowSecrets(settings));
+    case '.github/workflows/configure-azure.yml':
       content = replaceBlock(content, 'workflow-env', renderWorkflowEnv(settings));
-      content = replaceBlock(content, 'workflow-required-checks', renderWorkflowRequiredChecks(settings));
+      content = replaceBlock(content, 'workflow-required-checks', renderConfigureWorkflowRequiredChecks(settings));
       content = replaceBlock(content, 'workflow-runtime-settings', [
         ...renderWorkflowDisabledSettings(disabledSettings),
         ...renderWorkflowRuntimeSettings(settings),
       ]);
-      return content;
-    case '.github/workflows/ci-cd.yml':
-      content = replaceBlock(content, 'ci-cd-deploy-test-secrets', renderCiCdSecrets(settings));
-      content = replaceBlock(content, 'ci-cd-deploy-manual-secrets', renderCiCdSecrets(settings));
       return content;
     case 'infrastructure/azure/deploy.sh':
       content = replaceBlock(content, 'deploy-sh-help', renderDeployShHelp(settings));

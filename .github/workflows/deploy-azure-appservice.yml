@@ -7,28 +7,18 @@ on:
         description: GitHub Environment and Azure deployment environment.
         required: true
         type: string
-      deploy_infra:
-        description: Deploy Azure infrastructure before deploying the app package.
-        required: false
-        type: boolean
-        default: true
       app_name:
-        description: Base application name used by the Azure Bicep template.
+        description: Application tag used to find the existing App Service.
         required: false
         type: string
         default: webapp
       web_app_name:
-        description: Existing App Service name to deploy when deploy_infra is false.
+        description: Existing App Service name. Defaults to tag-based discovery.
         required: false
         type: string
         default: ""
       resource_group:
         description: Azure resource group. Defaults to the RESOURCE_GROUP environment variable.
-        required: false
-        type: string
-        default: ""
-      azure_location:
-        description: Azure region override for infrastructure deployment.
         required: false
         type: string
         default: ""
@@ -42,21 +32,6 @@ on:
         required: false
         type: string
         default: 22.x
-    secrets:
-      # <deployment-settings:workflow-secrets>
-      OTEL_EXPORTER_OTLP_HEADERS:
-        description: "Optional OTLP exporter headers, such as collector authorization."
-        required: false
-      SMTP_PASSWORD:
-        description: "Optional SMTP password runtime setting."
-        required: false
-      # </deployment-settings:workflow-secrets>
-      SQL_ADMIN_PASSWORD:
-        description: SQL admin password used when deploy_infra is true.
-        required: false
-      DB_CONNECTION:
-        description: Optional DB_CONNECTION override for existing infrastructure deployments.
-        required: false
 
 permissions:
   contents: read
@@ -70,52 +45,19 @@ jobs:
     concurrency:
       group: azure-${{ inputs.environment }}
       cancel-in-progress: false
+      queue: max
     env:
       APP_NAME: ${{ vars.APP_NAME || inputs.app_name }}
-      # <deployment-settings:workflow-env>
-      AUTH_CALLBACK_PATH: ${{ vars.AUTH_CALLBACK_PATH || '/signin-oidc' }}
-      AUTH_CLIENT_ID: ${{ vars.AUTH_CLIENT_ID }}
-      AUTH_DOMAIN: ${{ vars.AUTH_DOMAIN }}
-      AUTH_INSTANCE: ${{ vars.AUTH_INSTANCE || 'https://login.microsoftonline.com/' }}
-      AUTH_TENANT_ID: ${{ vars.AUTH_TENANT_ID }}
-      NOTIFICATION_BASE_URL: ${{ vars.NOTIFICATION_BASE_URL }}
-      NOTIFICATION_DEFAULT_APP_NAME: ${{ vars.NOTIFICATION_DEFAULT_APP_NAME }}
-      NOTIFICATION_DEFAULT_BUTTON_TEXT: ${{ vars.NOTIFICATION_DEFAULT_BUTTON_TEXT }}
-      OTEL_EXPORTER_OTLP_ENDPOINT: ${{ vars.OTEL_EXPORTER_OTLP_ENDPOINT }}
-      OTEL_EXPORTER_OTLP_HEADERS: ${{ secrets.OTEL_EXPORTER_OTLP_HEADERS }}
-      OTEL_EXPORTER_OTLP_PROTOCOL: ${{ vars.OTEL_EXPORTER_OTLP_PROTOCOL || 'http/protobuf' }}
-      OTEL_RESOURCE_ATTRIBUTES: ${{ vars.OTEL_RESOURCE_ATTRIBUTES }}
-      OTEL_SERVICE_NAME: ${{ vars.OTEL_SERVICE_NAME }}
-      SMTP_BCC_EMAIL: ${{ vars.SMTP_BCC_EMAIL }}
-      SMTP_FROM_EMAIL: ${{ vars.SMTP_FROM_EMAIL }}
-      SMTP_FROM_NAME: ${{ vars.SMTP_FROM_NAME }}
-      SMTP_HOST: ${{ vars.SMTP_HOST }}
-      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-      SMTP_PORT: ${{ vars.SMTP_PORT }}
-      SMTP_REPLY_TO_EMAIL: ${{ vars.SMTP_REPLY_TO_EMAIL }}
-      SMTP_TIMEOUT: ${{ vars.SMTP_TIMEOUT }}
-      SMTP_USE_SSL: ${{ vars.SMTP_USE_SSL }}
-      SMTP_USERNAME: ${{ vars.SMTP_USERNAME }}
-      # </deployment-settings:workflow-env>
-      SQL_ADMIN_LOGIN: ${{ vars.SQL_ADMIN_LOGIN || 'sqladmin' }}
-      SQL_ADMIN_PASSWORD: ${{ secrets.SQL_ADMIN_PASSWORD }}
-      SQL_DATABASE_NAME: ${{ vars.SQL_DATABASE_NAME }}
-      SQL_SKU_NAME: ${{ vars.SQL_SKU_NAME }}
-      SQL_SKU_TIER: ${{ vars.SQL_SKU_TIER }}
-      WEB_PLAN_NAME: ${{ vars.WEB_PLAN_NAME }}
-      WEB_PLAN_RESOURCE_GROUP: ${{ vars.WEB_PLAN_RESOURCE_GROUP }}
       AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
-      AZURE_LOCATION: ${{ inputs.azure_location || vars.AZURE_LOCATION }}
       AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
       AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
-      DB_CONNECTION: ${{ secrets.DB_CONNECTION }}
       DEPLOY_ENV: ${{ inputs.environment }}
       RESOURCE_GROUP: ${{ inputs.resource_group || vars.RESOURCE_GROUP }}
       WEB_APP_NAME_INPUT: ${{ inputs.web_app_name || vars.WEB_APP_NAME }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -130,7 +72,7 @@ jobs:
           fi
 
           missing=()
-          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID RESOURCE_GROUP; do
+          for name in APP_NAME AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID RESOURCE_GROUP; do
             if [[ -z "${!name}" ]]; then
               missing+=("$name")
             fi
@@ -141,34 +83,13 @@ jobs:
             exit 1
           fi
 
-          # <deployment-settings:workflow-required-checks>
-          # No generated required deployment setting checks.
-          # </deployment-settings:workflow-required-checks>
-
-          if [[ "${{ inputs.deploy_infra }}" == "true" && -z "$SQL_ADMIN_PASSWORD" ]]; then
-            echo "SQL_ADMIN_PASSWORD must be configured as a GitHub Environment secret when deploy_infra is true."
-            exit 1
-          fi
-
-          if [[ "${{ inputs.deploy_infra }}" == "true" ]] &&
-             { [[ -n "$WEB_PLAN_NAME" && -z "$WEB_PLAN_RESOURCE_GROUP" ]] ||
-               [[ -z "$WEB_PLAN_NAME" && -n "$WEB_PLAN_RESOURCE_GROUP" ]]; }; then
-            echo "WEB_PLAN_NAME and WEB_PLAN_RESOURCE_GROUP must either both be set or both be unset."
-            exit 1
-          fi
-
-          if [[ "${{ inputs.deploy_infra }}" != "true" && -z "$WEB_APP_NAME_INPUT" ]]; then
-            echo "WEB_APP_NAME or the web_app_name input must be configured when deploy_infra is false."
-            exit 1
-          fi
-
       - name: Setup .NET
-        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           dotnet-version: ${{ inputs.dotnet_version }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ inputs.node_version }}
           cache: npm
@@ -207,139 +128,107 @@ jobs:
           zip -qr ../webapp.zip .
 
       - name: Azure login
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy infrastructure
-        id: deploy_infra
-        if: ${{ inputs.deploy_infra }}
+      - name: Resolve existing App Service
+        id: resolve_app
         shell: bash
         run: |
           set -euo pipefail
 
-          deployment_name="${APP_NAME}-${DEPLOY_ENV}-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}"
-          params=(
-            "appName=$APP_NAME"
-            "env=$DEPLOY_ENV"
-            "expectedSubscriptionId=$AZURE_SUBSCRIPTION_ID"
-          )
+          if [[ -n "$WEB_APP_NAME_INPUT" ]]; then
+            web_app_name="$WEB_APP_NAME_INPUT"
+            az webapp show \
+              --resource-group "$RESOURCE_GROUP" \
+              --name "$web_app_name" \
+              --output none
+          else
+            mapfile -t web_apps < <(
+              az webapp list \
+                --resource-group "$RESOURCE_GROUP" \
+                --output json |
+                jq -r --arg app "$APP_NAME" --arg env "$DEPLOY_ENV" \
+                  '.[] | select(.tags.application == $app and .tags.environment == $env) | .name'
+            )
 
-          add_param() {
-            local name="$1"
-            local value="$2"
-
-            if [[ -n "$value" ]]; then
-              params+=("$name=$value")
+            if (( ${#web_apps[@]} != 1 )); then
+              echo "Expected one App Service tagged application=$APP_NAME and environment=$DEPLOY_ENV in $RESOURCE_GROUP; found ${#web_apps[@]}."
+              exit 1
             fi
-          }
 
-          add_param "location" "$AZURE_LOCATION"
-          add_param "sqlAdminLogin" "$SQL_ADMIN_LOGIN"
-          add_param "sqlAdminPassword" "$SQL_ADMIN_PASSWORD"
-          add_param "sqlDatabaseName" "$SQL_DATABASE_NAME"
-          add_param "sqlSkuName" "$SQL_SKU_NAME"
-          add_param "sqlSkuTier" "$SQL_SKU_TIER"
-          add_param "webPlanName" "$WEB_PLAN_NAME"
-          add_param "webPlanResourceGroup" "$WEB_PLAN_RESOURCE_GROUP"
-
-          az deployment group create \
-            --name "$deployment_name" \
-            --resource-group "$RESOURCE_GROUP" \
-            --template-file infrastructure/azure/main.bicep \
-            --parameters "${params[@]}" \
-            --query properties.outputs \
-            --output json | tee publish/deployment-outputs.json
-
-          deployment_guard_passed="$(jq -r '.deploymentGuardPassed.value // false' publish/deployment-outputs.json)"
-          if [[ "$deployment_guard_passed" != "true" ]]; then
-            echo "Azure deployment guard did not pass. Check subscription ID, resource group suffix, and environment values."
-            exit 1
-          fi
-
-          web_app_name="$(jq -r '.webAppName.value // empty' publish/deployment-outputs.json)"
-          if [[ -z "$web_app_name" ]]; then
-            echo "The infrastructure deployment did not return a webAppName output."
-            exit 1
+            web_app_name="${web_apps[0]}"
           fi
 
           echo "web_app_name=$web_app_name" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve existing App Service
-        id: resolve_existing
-        if: ${{ ! inputs.deploy_infra }}
-        shell: bash
-        run: echo "web_app_name=$WEB_APP_NAME_INPUT" >> "$GITHUB_OUTPUT"
-
-      - name: Apply runtime app settings
+      - name: Check SCM readiness
         shell: bash
         env:
-          WEB_APP_NAME: ${{ steps.deploy_infra.outputs.web_app_name || steps.resolve_existing.outputs.web_app_name }}
+          WEB_APP_NAME: ${{ steps.resolve_app.outputs.web_app_name }}
         run: |
           set -euo pipefail
 
-          settings=(
-            "ASPNETCORE_ENVIRONMENT=$DEPLOY_ENV"
-            "WEBSITE_RUN_FROM_PACKAGE=1"
-          )
+          scm_url="https://${WEB_APP_NAME}.scm.azurewebsites.net/api/settings"
+          ready_count=0
 
-          add_setting() {
-            local name="$1"
-            local value="$2"
+          for attempt in {1..12}; do
+            scm_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 10 "$scm_url" || true)"
 
-            if [[ -n "$value" ]]; then
-              settings+=("$name=$value")
+            if [[ "$scm_status" == "200" || "$scm_status" == "401" ]]; then
+              ((ready_count += 1))
+              if (( ready_count == 2 )); then
+                echo "SCM is ready for package deployment."
+                exit 0
+              fi
+            else
+              ready_count=0
             fi
-          }
 
-          add_setting "DB_CONNECTION" "$DB_CONNECTION"
-          # <deployment-settings:workflow-runtime-settings>
-          disabled_settings=(
-          )
+            if (( attempt < 12 )); then
+              sleep 5
+            fi
+          done
 
-          if (( ${#disabled_settings[@]} > 0 )); then
-            az webapp config appsettings delete \
-              --resource-group "$RESOURCE_GROUP" \
-              --name "$WEB_APP_NAME" \
-              --setting-names "${disabled_settings[@]}" \
-              --output none
-          fi
-
-          add_setting "Auth__CallbackPath" "$AUTH_CALLBACK_PATH"
-          add_setting "Auth__ClientId" "$AUTH_CLIENT_ID"
-          add_setting "Auth__Domain" "$AUTH_DOMAIN"
-          add_setting "Auth__Instance" "$AUTH_INSTANCE"
-          add_setting "Auth__TenantId" "$AUTH_TENANT_ID"
-          add_setting "Notification__BaseUrl" "$NOTIFICATION_BASE_URL"
-          add_setting "Notification__DefaultAppName" "$NOTIFICATION_DEFAULT_APP_NAME"
-          add_setting "Notification__DefaultButtonText" "$NOTIFICATION_DEFAULT_BUTTON_TEXT"
-          settings+=("OTEL_EXPORTER_OTLP_ENDPOINT=$OTEL_EXPORTER_OTLP_ENDPOINT")
-          add_setting "OTEL_EXPORTER_OTLP_HEADERS" "$OTEL_EXPORTER_OTLP_HEADERS"
-          add_setting "OTEL_EXPORTER_OTLP_PROTOCOL" "$OTEL_EXPORTER_OTLP_PROTOCOL"
-          add_setting "OTEL_RESOURCE_ATTRIBUTES" "$OTEL_RESOURCE_ATTRIBUTES"
-          add_setting "OTEL_SERVICE_NAME" "$OTEL_SERVICE_NAME"
-          add_setting "Smtp__BccEmail" "$SMTP_BCC_EMAIL"
-          add_setting "Smtp__FromEmail" "$SMTP_FROM_EMAIL"
-          add_setting "Smtp__FromName" "$SMTP_FROM_NAME"
-          add_setting "Smtp__Host" "$SMTP_HOST"
-          add_setting "Smtp__Password" "$SMTP_PASSWORD"
-          add_setting "Smtp__Port" "$SMTP_PORT"
-          add_setting "Smtp__ReplyToEmail" "$SMTP_REPLY_TO_EMAIL"
-          add_setting "Smtp__Timeout" "$SMTP_TIMEOUT"
-          add_setting "Smtp__UseSsl" "$SMTP_USE_SSL"
-          add_setting "Smtp__Username" "$SMTP_USERNAME"
-          # </deployment-settings:workflow-runtime-settings>
-
-          az webapp config appsettings set \
-            --resource-group "$RESOURCE_GROUP" \
-            --name "$WEB_APP_NAME" \
-            --settings "${settings[@]}" \
-            --output none
+          echo "SCM is not ready for package deployment."
+          exit 1
 
       - name: Deploy app package
         uses: azure/webapps-deploy@02a81bead70021f5284939794bcec79c271ab383 # v3
         with:
-          app-name: ${{ steps.deploy_infra.outputs.web_app_name || steps.resolve_existing.outputs.web_app_name }}
+          app-name: ${{ steps.resolve_app.outputs.web_app_name }}
           package: publish/webapp.zip
+
+      - name: Verify application health
+        shell: bash
+        env:
+          WEB_APP_NAME: ${{ steps.resolve_app.outputs.web_app_name }}
+        run: |
+          set -euo pipefail
+
+          app_url="https://${WEB_APP_NAME}.azurewebsites.net/health"
+          ready_count=0
+
+          for attempt in {1..12}; do
+            app_status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 10 "$app_url" || true)"
+
+            if [[ "$app_status" == "200" ]]; then
+              ((ready_count += 1))
+              if (( ready_count == 2 )); then
+                echo "The deployed application is healthy."
+                exit 0
+              fi
+            else
+              ready_count=0
+            fi
+
+            if (( attempt < 12 )); then
+              sleep 5
+            fi
+          done
+
+          echo "The deployed application did not become healthy."
+          exit 1
