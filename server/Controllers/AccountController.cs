@@ -11,8 +11,7 @@ public class AccountController : Controller
     [ApiExplorerSettings(IgnoreApi = true)]
     public IActionResult Login(string? returnUrl)
     {
-        // redirect to return url if it exists, otherwise /
-        return Redirect(returnUrl ?? "/");
+        return LocalRedirect(Url.IsLocalUrl(returnUrl) ? returnUrl! : "/");
     }
 
 }

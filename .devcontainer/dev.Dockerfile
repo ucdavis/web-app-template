@@ -11,10 +11,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# .NET 10.0 SDK (version must match global.json)
+# Latest stable .NET 10 SDK, matching global.json latestFeature policy
 RUN wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh \
     && chmod +x /tmp/dotnet-install.sh \
-    && /tmp/dotnet-install.sh --version 10.0.100 --install-dir /usr/share/dotnet \
+    && /tmp/dotnet-install.sh --channel 10.0 --quality GA --install-dir /usr/share/dotnet \
     && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet \
     && rm /tmp/dotnet-install.sh
 

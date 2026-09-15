@@ -33,7 +33,7 @@ describe('notification route', () => {
       ).toBeInTheDocument();
       expect(
         screen.getByText(
-          /server\.core\/Views\/Emails\/DefaultNotification_mjml\.cshtml/
+          /server\/Examples\/Notifications\/Views\/DefaultNotification_mjml\.cshtml/
         )
       ).toBeInTheDocument();
 

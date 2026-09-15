@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Server.Core.Data;
 using Server.Core.Notification;
+using Server.Examples.Notifications;
 using Server.Helpers;
 using Server.Services;
 
@@ -39,6 +40,7 @@ try
 
     builder.Services.AddControllers();
     builder.Services.AddNotificationServices(builder.Configuration);
+    builder.Services.AddNotificationExamples(builder.Configuration);
 
     // Add response caching for pages that opt-in
     // https://learn.microsoft.com/en-us/aspnet/core/performance/caching/middleware?view=aspnetcore-9.0

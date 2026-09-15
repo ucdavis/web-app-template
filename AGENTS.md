@@ -16,7 +16,7 @@ This is a full-stack web application template using modern React and .NET techno
 
 - **Vite** (`^7.1.5`) - Primary build tool and dev server on port `5173`
 - **TypeScript** (`^5.9.2`) - Primary language for all React components
-- **Node.js** `>=22.0.0` - Runtime requirement
+- **Node.js** `>=22.18.0` - Runtime requirement
 
 ### React & Routing
 
@@ -141,6 +141,7 @@ Controllers    Static Files + SPA fallback (wwwroot)
 │   │   ├── shared/      # Reusable UI/auth components
 │   │   └── test/        # Client tests
 ├── server/              # ASP.NET Core host app
+│   ├── Examples/Notifications/ # Optional notification samples
 │   ├── Controllers/
 │   ├── Helpers/
 │   ├── Properties/
@@ -226,6 +227,10 @@ Controllers    Static Files + SPA fallback (wwwroot)
 8. **Prefer existing shared helpers** - Reuse `fetchJson`, query options, auth context, and shared components before adding new abstractions
 9. **Environment-aware code** - Keep development and production behavior aligned through relative URLs and existing proxy/static-file patterns
 10. **Responsive design** - Use Tailwind responsive utilities
+
+### Optional Notifications
+
+Reusable email delivery and rendering live in `server.core/Notification/`. Demo composition, controller, models, and templates live in `server/Examples/Notifications/`; the frontend demo lives in `client/src/examples/notifications/`. See `server.core/Notification/README.md` for the exact removal steps.
 
 ### C# Readability Preferences
 

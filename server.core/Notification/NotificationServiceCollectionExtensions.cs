@@ -17,13 +17,10 @@ public static class NotificationServiceCollectionExtensions
         services.AddOptions<SmtpOptions>()
             .Bind(configuration.GetSection(SmtpOptions.SectionName))
             .ValidateOnStart();
-        services.AddOptions<NotificationOptions>()
-            .Bind(configuration.GetSection(NotificationOptions.SectionName));
 
         services.AddSingleton<MjmlRenderer>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<INotificationRenderer, RazorMjmlNotificationRenderer>();
-        services.AddScoped<INotificationService, NotificationService>();
         services.AddRazorTemplating();
 
         return services;

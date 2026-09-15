@@ -2,13 +2,14 @@ using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Server.Core.Notification;
+using Server.Examples.Notifications;
 
-namespace Server.Tests.Notification;
+namespace Server.Tests.Examples.Notifications;
 
 public class RazorMjmlNotificationRendererTests
 {
     [Fact]
-    public async Task RenderAsync_renders_html_from_a_server_core_template()
+    public async Task RenderAsync_renders_html_from_an_example_template()
     {
         var services = new ServiceCollection();
         var configuration = new ConfigurationBuilder()
@@ -25,13 +26,14 @@ public class RazorMjmlNotificationRendererTests
 
         services.AddLogging();
         services.AddNotificationServices(configuration);
+        services.AddNotificationExamples(configuration);
 
         using var serviceProvider = services.BuildServiceProvider();
         using var scope = serviceProvider.CreateScope();
 
         var renderer = scope.ServiceProvider.GetRequiredService<INotificationRenderer>();
 
-        var html = await renderer.RenderAsync("/Views/Emails/DefaultNotification_mjml.cshtml", new DefaultNotificationTemplateModel
+        var html = await renderer.RenderAsync("/Examples/Notifications/Views/DefaultNotification_mjml.cshtml", new DefaultNotificationTemplateModel
         {
             AppName = "Template App",
             Header = "Render Test",
@@ -65,13 +67,14 @@ public class RazorMjmlNotificationRendererTests
 
         services.AddLogging();
         services.AddNotificationServices(configuration);
+        services.AddNotificationExamples(configuration);
 
         using var serviceProvider = services.BuildServiceProvider();
         using var scope = serviceProvider.CreateScope();
 
         var renderer = scope.ServiceProvider.GetRequiredService<INotificationRenderer>();
 
-        var html = await renderer.RenderAsync("/Views/Emails/TableNotification_mjml.cshtml", new TableNotificationTemplateModel
+        var html = await renderer.RenderAsync("/Examples/Notifications/Views/TableNotification_mjml.cshtml", new TableNotificationTemplateModel
         {
             AppName = "Template App",
             Header = "Statement",

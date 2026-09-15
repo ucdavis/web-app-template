@@ -23,6 +23,8 @@ node_modules/
 *.userosscache
 *.sln.docstates
 .env
+.env.*
+!.env.example
 
 # Build results
 [Dd]ebug/

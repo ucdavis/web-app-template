@@ -12,7 +12,7 @@ Use this checklist right after cloning the template to ensure every new project 
 
 If you need the app to run on ports other than the default `5165` (API) and `5173` (Vite), change the values in all four places so hot reload keeps working:
 
-1. `server/Properties/launchSettings.json` → update `profiles.http.applicationUrl` (and IIS Express URL if you use it).
+1. `server/Properties/launchSettings.json` → update both `profiles.http.applicationUrl` and `profiles.http-cli.applicationUrl` (and IIS Express URL if you use it).
 2. `server/server.csproj` → adjust `<SpaProxyServerUrl>` so the .NET SPA proxy opens the correct Vite address.
 3. `client/vite.config.ts` → change `server.port` and update every proxy target pointing at `http://localhost:5165`.
 4. `.devcontainer/devcontainer.json` → update `containerEnv.ASPNETCORE_URLS`, `forwardPorts`, and `portsAttributes` so port auto-forwarding stays in sync.
@@ -377,8 +377,9 @@ Confirm your observability backend (Grafana, New Relic, Azure Monitor) receives 
 The template includes a reusable email notification stack in `server.core`:
 
 - Shared services live in `server.core/Notification/`.
-- Razor + MJML templates live in `server.core/Views/Emails/` and `server.core/Views/Shared/`.
-- The notification UI lives at `client/src/routes/(authenticated)/notification.tsx`.
+- Sample composition, request models, controller, and email templates live in `server/Examples/Notifications/`.
+- Shared email layout and button templates live in `server.core/Views/Shared/`.
+- The notification UI lives in `client/src/examples/notifications/`, with a thin route at `client/src/routes/(authenticated)/notification.tsx`.
 - The default notification trigger lives at `POST /api/notification/default` and is enabled for local development and the deployed `test` environment.
 
 For local development, point the `Smtp` settings in `server/.env.Development` or `server/appsettings.Development.json` at your Mailtrap SMTP inbox. At minimum, review:
@@ -400,7 +401,9 @@ Optional SMTP and notification settings you may also want to customize:
 - `Notification__DefaultAppName`
 - `Notification__DefaultButtonText`
 
-When you start replacing the default notification flow with real notification use cases, keep app-specific composition in your own core services. Follow `NotificationService` as the pattern for rendering templates with `INotificationRenderer`, then hand the final text/html message to `IEmailService` for delivery.
+When you start replacing the default notification flow with real notification use cases, keep app-specific composition in your own core services. Follow `SampleNotificationService` as the pattern for rendering templates with `INotificationRenderer`, then hand the final text/html message to `IEmailService` for delivery.
+
+For the registration boundaries and an exact removal checklist, see [optional notifications](server.core/Notification/README.md).
 
 ## 8. Clean Up Sample Code
 

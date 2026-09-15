@@ -30,15 +30,16 @@
     "postStartCommand": "bash .devcontainer/wait-for-sql.sh && npm run start",
     "remoteUser": "vscode",
     "forwardPorts": [
-        5165
+        5165,
+        5173
     ],
     "portsAttributes": {
         "5165": {
-            "label": "Web App (ASP.NET + Vite Proxy)",
+            "label": "ASP.NET Core API",
             "onAutoForward": "ignore"
         },
         "5173": {
-            "label": "Vite Dev Server (Internal - Use 5165)",
+            "label": "Web App (Vite)",
             "onAutoForward": "openBrowser"
         },
         "14333": {
