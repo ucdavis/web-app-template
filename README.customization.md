@@ -10,12 +10,13 @@ Use this checklist right after cloning the template to ensure every new project 
 
 ## 2. Dev Ports & SPA Proxy Wiring (optional)
 
-If you need the app to run on ports other than the default `5165` (API) and `5173` (Vite), change the values in all four places so hot reload keeps working:
+If you need the app to run on ports other than the default `5165` (API) and `5173` (Vite), update these locations so startup and hot reload keep working:
 
 1. `server/Properties/launchSettings.json` → update both `profiles.http.applicationUrl` and `profiles.http-cli.applicationUrl` (and IIS Express URL if you use it).
 2. `server/server.csproj` → adjust `<SpaProxyServerUrl>` so the .NET SPA proxy opens the correct Vite address.
-3. `client/vite.config.ts` → change `server.port` and update every proxy target pointing at `http://localhost:5165`.
+3. `client/vite.config.ts` → change `server.port` and the fallback backend URL used by `target`.
 4. `.devcontainer/devcontainer.json` → update `containerEnv.ASPNETCORE_URLS`, `forwardPorts`, and `portsAttributes` so port auto-forwarding stays in sync.
+5. Root `package.json` → update the backend health URLs in `start:client:debug` and `start:client:when-server-ready`.
 
 ## 3. Microsoft Entra ID (Azure AD) App Sign-In Setup
 
@@ -51,12 +52,9 @@ The Azure deployment bootstrap in section 5 creates a user-assigned managed iden
 ## 4. Secrets, Connection Strings, & Environment Files
 
 - Connection strings: overwrite `ConnectionStrings:DefaultConnection` in `server/appsettings.Development.json` or, preferably, set `DB_CONNECTION` in `server/.env` / `server/.env.Development`. `Program.cs` reads `DB_CONNECTION` first, then falls back to the JSON file.
-- Telemetry settings: use the example values in `server/.env.example` and provide real endpoints/keys in your `.env` files:
-  - `OTEL_EXPORTER_OTLP_ENDPOINT`
-  - `OTEL_EXPORTER_OTLP_HEADERS` (e.g., `Authorization=Bearer <token>`)
-  - `OTEL_SERVICE_NAME`
-  - `OTEL_RESOURCE_ATTRIBUTES` (e.g., `deployment.environment=Development,service.namespace=<app-name>`)
-- Commit only the `.env.example` scaffolding—never real credentials—and document which secrets are required for each environment.
+- Optional external telemetry: configure the commented telemetry settings from [server/.env.example](server/.env.example) in your local environment file when you have a collector endpoint and credentials.
+- `Program.cs` loads appsettings first, then `server/.env`, then the environment-specific file such as `server/.env.Development`. Process environment variables take precedence over those files.
+- Git ignores `.env` and `.env.*`, with an exception for `.env.example`. Commit only example scaffolding, never real credentials, and document which secrets are required for each environment.
 
 ## 5. Azure Deployment Setup
 
@@ -289,6 +287,8 @@ The `CI/CD` workflow:
 
 Before the first package deployment, run the manual `Configure Azure` workflow for the target environment. Run it again whenever Bicep, deployment settings, GitHub Environment variables, or GitHub Environment secrets change. Wait for configuration to finish before starting a package deployment. Both workflows use the same environment-specific FIFO concurrency queue, so configuration and package deployment for one environment cannot overlap, pending operations do not displace one another, and running operations are not canceled. The `test` and `prod` queues are independent, and GitHub retains up to 100 pending operations in each queue.
 
+For production, complete the manual [SQL connectivity prerequisite](infrastructure/azure/README.md#production-sql-connectivity) before deploying the first package.
+
 For local deployment:
 
 ```bash
@@ -365,45 +365,13 @@ The app currently stores ASP.NET Core data-protection keys on the local filesyst
 
 ## 6. Telemetry & Logging Adjustments
 
-`server/Helpers/TelemetryHelper.cs` wires OpenTelemetry for logs, traces, and metrics. Tweak as needed:
+`server/Helpers/TelemetryHelper.cs` registers JSON console logging separately from OTLP exporters for logs, traces, and metrics. The exporters are registered even when no external collector is configured.
 
-- Update the sampler rate (`TraceIdRatioBasedSampler(0.2)`) for production.
-- Validate that your OTLP endpoint accepts the JSON console logs or add `logging.AddConsole()` if you also want plain text locally.
-
-Confirm your observability backend (Grafana, New Relic, Azure Monitor) receives traffic by temporarily setting `OTEL_LOG_LEVEL=debug` and checking the startup output.
+Review the trace sampler in that helper for production. If you use external telemetry, configure an OTLP-compatible collector using the environment settings described in section 4 and confirm it receives logs, traces, and metrics.
 
 ## 7. Email Notification
 
-The template includes a reusable email notification stack in `server.core`:
-
-- Shared services live in `server.core/Notification/`.
-- Sample composition, request models, controller, and email templates live in `server/Examples/Notifications/`.
-- Shared email layout and button templates live in `server.core/Views/Shared/`.
-- The notification UI lives in `client/src/examples/notifications/`, with a thin route at `client/src/routes/(authenticated)/notification.tsx`.
-- The default notification trigger lives at `POST /api/notification/default` and is enabled for local development and the deployed `test` environment.
-
-For local development, point the `Smtp` settings in `server/.env.Development` or `server/appsettings.Development.json` at your Mailtrap SMTP inbox. At minimum, review:
-
-- `Smtp__Host`
-- `Smtp__Port`
-- `Smtp__UseSsl`
-- `Smtp__Username`
-- `Smtp__Password`
-- `Smtp__FromEmail`
-- `Smtp__FromName`
-- `Notification__BaseUrl`
-
-Optional SMTP and notification settings you may also want to customize:
-
-- `Smtp__Timeout`
-- `Smtp__ReplyToEmail`
-- `Smtp__BccEmail`
-- `Notification__DefaultAppName`
-- `Notification__DefaultButtonText`
-
-When you start replacing the default notification flow with real notification use cases, keep app-specific composition in your own core services. Follow `SampleNotificationService` as the pattern for rendering templates with `INotificationRenderer`, then hand the final text/html message to `IEmailService` for delivery.
-
-For the registration boundaries and an exact removal checklist, see [optional notifications](server.core/Notification/README.md).
+See [optional email notifications](server.core/Notification/README.md) for SMTP setup, reusable services, sample composition and routes, and removal instructions.
 
 ## 8. Clean Up Sample Code
 
@@ -434,7 +402,7 @@ Discard unused assets, tests, and mock data that referenced the template demos.
 - [ ] `az bicep build --file infrastructure/azure/main.bicep` succeeds.
 - [ ] `az bicep build --file infrastructure/azure/github-oidc.bicep` succeeds.
 - [ ] GitHub Environment variables/secrets are configured from the OIDC bootstrap outputs.
-- [ ] Logging and OTLP exports reach your observability backend.
+- [ ] If external telemetry is configured, logs, traces, and metrics reach your collector.
 - [ ] Signing in via Microsoft Entra succeeds locally (and in cloud environments, once deployed).
 - [ ] README and onboarding docs describe your product, not the template.
 

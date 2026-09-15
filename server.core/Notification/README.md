@@ -2,6 +2,12 @@
 
 Email is optional. Leave `Smtp:Host` empty when no SMTP service is configured; the app can start without email credentials.
 
+## Configure local email
+
+To send sample email through Mailtrap or another SMTP test inbox, fill in the SMTP settings from [server/.env.example](../../server/.env.example) in `server/.env` or `server/.env.Development`. Replace the empty `Smtp__Host` entry when enabling delivery. The copied example overrides the Mailtrap host in `appsettings.Development.json`; editing that JSON file alone will not enable SMTP. See [configuration precedence](../../README.customization.md#4-secrets-connection-strings--environment-files).
+
+Keep credentials in ignored environment files. [SmtpOptions and its validator](Email/SmtpOptions.cs) define the supported settings, defaults, and required values when a host is configured. The example file also lists the optional notification settings for application links, display name, and button text.
+
 ## Reusable code
 
 `AddNotificationServices(configuration)` registers SMTP options, `IEmailService`, and `INotificationRenderer`. It does not register sample message composition.
@@ -11,7 +17,7 @@ Email is optional. Leave `Smtp:Host` empty when no SMTP service is configured; t
 - `server.core/Views/Shared/` contains the shared email layout and button templates.
 - `NotificationTemplateModels.cs` contains the shared layout and button models.
 
-Applications can compose their own messages by rendering a template with `INotificationRenderer`, then passing the resulting HTML and plain text to `IEmailService`.
+Applications can compose their own messages by rendering a template with `INotificationRenderer`, then passing the resulting HTML and plain text to `IEmailService`. Use [SampleNotificationService](../../server/Examples/Notifications/SampleNotificationService.cs) as the composition example.
 
 ## Examples
 
@@ -28,6 +34,8 @@ The frontend demo lives in `client/src/examples/notifications/`. Its route remai
 
 Keep `AddNotificationServices`, the reusable core code, SMTP settings, and the tests under `tests/server.tests/Notification/`.
 
+The Razor/MJML rendering tests use the sample templates and are removed with the example tests. Adapt those tests to your application's templates when replacing the examples. Run the client build/tests and `dotnet test` after removal, and use Configure Azure to apply disabled runtime settings before the next package deployment.
+
 ## Remove email entirely
 
 After removing the examples:
@@ -36,4 +44,5 @@ After removing the examples:
 2. Remove the `Server.Core.Notification` import and `AddNotificationServices` call from `server/Program.cs`.
 3. Remove MailKit, Mjml.Net, and Razor.Templating.Core from `server.core/server.core.csproj`. If the project has no other Razor templates, use `Microsoft.NET.Sdk` and remove `AddRazorSupportForMvc`.
 4. Remove `Smtp` settings from appsettings and local environment files. Add all `SMTP_*` entries in the deployment defaults catalog to the overlay's `disabled` list and run `npm run deployment-settings:sync`.
-5. Run the client build/tests and `dotnet test` before deploying. Use Configure Azure to apply runtime setting removals before the next package deployment.
+
+Repeat the verification and runtime-setting cleanup described above after removing email support.

@@ -96,7 +96,7 @@ Important settings:
 
 Responsibilities:
 
-- Enables `Microsoft.AspNetCore.SpaProxy` for the development profiles
+- Enables `Microsoft.AspNetCore.SpaProxy` for the Visual Studio `http` and IIS Express profiles; `http-cli` leaves frontend startup to the caller
 - Defines the backend application URLs used by `dotnet run`, `dotnet watch`, and Visual Studio
 
 ### `client/vite.config.ts`
@@ -260,9 +260,4 @@ For the data-protection scale-out caveat, see [First deployment](../README.custo
 
 ### Changing ports
 
-If you change the development ports, update all of these together:
-
-1. `server/Properties/launchSettings.json`
-2. `server/server.csproj` (`<SpaProxyServerUrl>`)
-3. `client/vite.config.ts`
-4. `.devcontainer/devcontainer.json`
+Follow [Dev Ports & SPA Proxy Wiring](../README.customization.md#2-dev-ports--spa-proxy-wiring-optional) for the files that must change together.

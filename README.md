@@ -198,11 +198,13 @@ The VS Code flow intentionally uses the `http-cli` launch profile instead of the
 4. Frontend API calls automatically include the authentication cookie
 5. Backend validates the cookie for protected endpoints
 
+After sign-in, `/login?returnUrl=...` accepts only local paths such as `/fetch?sort=date`. Missing or external destinations fall back to `/`.
+
 ## Testing
 
 ### Client tests
 
-- Run `cd client && npm test` to execute the Vitest suite once.
+- Run `cd client && npm test -- --run` to execute the Vitest suite once.
 - Use `npm run test:watch` inside `client/` for red/green feedback while you work.
 - Tests run against a jsdom environment with Testing Library so you do not need the backend running.
 
