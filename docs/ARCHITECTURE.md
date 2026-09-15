@@ -71,7 +71,7 @@ Azure SQL, Application Insights, and Log Analytics
 
 Each infrastructure configuration validates the expected subscription ID and requires the target resource group to end with the matching environment suffix before resources are created.
 
-GitHub deployments authenticate to Azure with OIDC through a per-environment Entra app registration. The one-time bootstrap template creates the app registration, service principal, GitHub Environment federated credential, and optional role assignments on the environment resource group and shared App Service plan.
+GitHub deployments authenticate to Azure with OIDC through a per-environment user-assigned managed identity. The one-time bootstrap template creates the managed identity in the application resource group, adds the GitHub Environment federated credential, and optionally assigns Contributor on the environment resource group and Website Contributor on the exact shared App Service plan.
 
 ## Key Files
 

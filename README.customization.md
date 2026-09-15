@@ -46,7 +46,7 @@ The template default for `Auth:ClientId` is a placeholder on purpose. Replace it
 
 If you change `CallbackPath`, remember to mirror it in the Entra redirect URIs.
 
-The Azure deployment bootstrap in section 5 automates a different Entra application/service principal for GitHub Actions OIDC. Do not use that bootstrap `clientId` as `Auth:ClientId` unless you intentionally combined the deployment identity and the user sign-in app registration, which is not the default setup.
+The Azure deployment bootstrap in section 5 creates a user-assigned managed identity for GitHub Actions OIDC. Do not use that managed identity's `clientId` as `Auth:ClientId`; it is separate from the application registration used for user sign-in.
 
 ## 4. Secrets, Connection Strings, & Environment Files
 
@@ -185,11 +185,13 @@ Secrets use `"classification": "secret"` and are read from the selected GitHub E
 
 ### One-time OIDC bootstrap
 
-Run `infrastructure/azure/github-oidc.bicep` once per environment before the first GitHub deployment. Run it again after repository, organization, GitHub Environment, resource group, subscription, shared App Service plan, or identity changes, or if the generated Entra app/service principal is deleted.
+Run `infrastructure/azure/github-oidc.bicep` once per environment before the first GitHub deployment. Run it again after repository, organization, GitHub Environment, resource group, subscription, shared App Service plan, or identity changes, or if the generated user-assigned managed identity is deleted.
 
 Why OIDC is used: GitHub Actions receives short-lived Azure tokens scoped to this repository and GitHub Environment. That removes the need to store long-lived Azure client secrets in GitHub.
 
-This bootstrap is only for deployment authentication from GitHub Actions to Azure. It does not create or configure the Microsoft Identity Web app registration used for end-user sign-in in section 3. By default it grants the deployment identity Contributor on the application resource group and Website Contributor on the exact shared App Service plan.
+This bootstrap is only for deployment authentication from GitHub Actions to Azure. It does not create or configure the Microsoft Identity Web app registration used for end-user sign-in in section 3. It creates a user-assigned managed identity in the application resource group, adds the environment-scoped GitHub federated credential, and grants the identity Contributor on the application resource group and Website Contributor on the exact shared App Service plan by default.
+
+The managed identity lives in the resource group where it receives Contributor, matching the KOI deployment pattern. It can therefore manage its own managed-identity resource and federated credentials, but Contributor does not allow it to create, change, or delete Azure RBAC assignments.
 
 Validate the bootstrap for `test` before applying it:
 
@@ -232,7 +234,7 @@ az deployment sub create \
     webPlanResourceGroup="$web_plan_resource_group"
 ```
 
-For example, with the default `APP_NAME=webapp`, use `deployment_name="github-oidc-webapp"`. For production, repeat with `env="prod"`, a production deployment name such as `deployment_name="github-oidc-<app-name>-prod"`, a `-prod` resource group, `webPlanName="Nibbler"`, and `webPlanResourceGroup="service-plans-linux"`. The bootstrap output should include `deploymentGuardPassed=true`, `clientId`, `tenantId`, `subscriptionId`, `principalId`, `resourceGroupName`, `federatedCredentialSubject`, and `webPlanRoleAssignmentId`.
+For example, with the default `APP_NAME=webapp`, use `deployment_name="github-oidc-webapp"`. For production, repeat with `env="prod"`, a production deployment name such as `deployment_name="github-oidc-<app-name>-prod"`, a `-prod` resource group, `webPlanName="Nibbler"`, and `webPlanResourceGroup="service-plans-linux"`. The bootstrap output should include `deploymentGuardPassed=true`, `deploymentIdentityName`, `clientId`, `tenantId`, `subscriptionId`, `principalId`, `resourceGroupName`, `federatedCredentialSubject`, and `webPlanRoleAssignmentId`.
 
 If you did not set `--name`, Azure CLI usually names the deployment after the template file, for example `github-oidc`. Find recent subscription deployments with:
 
@@ -273,9 +275,9 @@ Then add the SQL admin password as a GitHub Environment secret:
 gh secret set SQL_ADMIN_PASSWORD --env test
 ```
 
-The operator needs permission to create Entra applications/service principals. With the default `assignRbac=true`, the operator also needs permission to create the application resource group and role assignments at both the application resource group and shared App Service plan scopes. Owner at subscription scope is sufficient; equivalent narrower permissions can combine resource-group creation rights with User Access Administrator at the required role-assignment scopes. If those permissions are unavailable, run with `assignRbac=false`, then have an Azure owner assign Contributor to the emitted `principalId` on the application resource group and Website Contributor on the exact shared App Service plan.
+The operator needs permission to create the application resource group and user-assigned managed identity. With the default `assignRbac=true`, the operator also needs permission to create role assignments at both the application resource group and shared App Service plan scopes. Owner at subscription scope is sufficient; equivalent narrower permissions can combine resource-group and managed-identity creation rights with User Access Administrator or Role Based Access Control Administrator at the required role-assignment scopes. If those permissions are unavailable, run with `assignRbac=false`, then have an Azure owner assign Contributor to the emitted `principalId` on the application resource group and Website Contributor on the exact shared App Service plan.
 
-The first Bicep build or deployment may restore the Microsoft Graph extension configured in `infrastructure/azure/bicepconfig.json`.
+For an existing installation that used the previous deployment app registration, apply this bootstrap to create parallel RBAC assignments for the new managed identity. Then replace the GitHub Environment's `AZURE_CLIENT_ID` with the new `clientId`, run Configure Azure, and run a normal package deployment. The bootstrap does not delete the previous app registration, service principal, or RBAC assignments.
 
 ### First deployment
 
