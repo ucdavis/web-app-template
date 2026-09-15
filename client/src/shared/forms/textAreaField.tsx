@@ -1,31 +1,29 @@
-import { useFieldContext } from './formContext.tsx';
 import { FieldWrapper } from './fieldWrapper.tsx';
+import { useFieldContext } from './formContext.tsx';
 
-interface TextFieldProps {
+interface TextAreaFieldProps {
   hint?: string;
   label: string;
   placeholder?: string;
-  type?: 'email' | 'password' | 'search' | 'tel' | 'text' | 'url';
+  rows?: number;
 }
 
-export function TextField({
+export function TextAreaField({
   hint,
   label,
   placeholder,
-  type = 'text',
-}: TextFieldProps) {
+  rows = 5,
+}: TextAreaFieldProps) {
   const field = useFieldContext<string>();
   const hasError = field.state.meta.isTouched && !field.state.meta.isValid;
 
   return (
     <FieldWrapper hint={hint} label={label}>
-      <input
-        className={`input input-bordered w-full ${
-          hasError ? 'input-error' : ''
-        }`}
-        onChange={(e) => field.handleChange(e.target.value)}
+      <textarea
+        className={`textarea textarea-bordered w-full ${hasError ? 'textarea-error' : ''}`}
+        onChange={(event) => field.handleChange(event.target.value)}
         placeholder={placeholder ?? `Enter ${label.toLowerCase()}`}
-        type={type}
+        rows={rows}
         value={field.state.value}
       />
     </FieldWrapper>
