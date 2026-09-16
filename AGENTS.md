@@ -2,6 +2,13 @@
 
 This is a full-stack web application template using modern React and .NET technologies. Please follow these guidelines when generating code suggestions.
 
+
+## Docker sandbox for investigation
+
+For a disposable app with local sign-in and fixed sample data, run `docker compose -f .devcontainer/docker-compose.sandbox.yml up --build --wait` from the repo root. Open `http://localhost:5280` and choose Sample User. Mail from the Notification example appears at `http://localhost:8025`.
+
+The sandbox builds the current checkout and needs only Docker. It has its own SQL volume and excludes host `.env` files. Use `down --volumes` with this same Compose file to reset only the sandbox, then start it again. See [docs/SANDBOX.md](docs/SANDBOX.md) for role checks, logs, alternate ports, and container-based tests.
+
 ## Architecture Overview
 
 - **Frontend**: React 19 with TypeScript, built with Vite

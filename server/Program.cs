@@ -23,8 +23,6 @@ try
         .AddEnvFile($".env.{builder.Environment.EnvironmentName}", optional: true) // env-specific secrets
         .AddEnvironmentVariables(); // OS env vars override everything
 
-    ValidateAuthConfiguration(builder.Configuration);
-
     // setup logging and telemetry
     TelemetryHelper.ConfigureLogging(builder.Logging);
     TelemetryHelper.ConfigureOpenTelemetry(builder.Services);
@@ -35,10 +33,10 @@ try
         o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
     });
 
-    // Add auth config (entra)
-    builder.Services.AddAuthenticationServices(builder.Configuration);
+    // Use Entra by default; the Docker sandbox explicitly enables local cookies.
+    builder.Services.AddAuthenticationServices(builder.Configuration, builder.Environment);
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllersWithViews();
     builder.Services.AddNotificationServices(builder.Configuration);
     builder.Services.AddNotificationExamples(builder.Configuration);
 
@@ -93,8 +91,7 @@ try
     using (var scope = app.Services.CreateScope())
     {
         var init = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
-        var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
-        var includeSampleData = env.IsDevelopment() || env.IsEnvironment("test");
+        var includeSampleData = builder.Configuration.GetValue<bool>("DevelopmentData:SeedOnStartup");
         await init.InitializeAsync(includeSampleData);
     }
 
@@ -197,16 +194,4 @@ static void ApplyNoStoreHeaders(HttpContext context)
     context.Response.Headers.CacheControl = "no-store,max-age=0";
     context.Response.Headers.Pragma = "no-cache";
     context.Response.Headers.Expires = "0";
-}
-
-static void ValidateAuthConfiguration(IConfiguration configuration)
-{
-    var clientId = configuration["Auth:ClientId"]?.Trim();
-
-    if (string.IsNullOrWhiteSpace(clientId) ||
-        string.Equals(clientId, "<client-guid>", StringComparison.OrdinalIgnoreCase))
-    {
-        throw new InvalidOperationException(
-            "Auth:ClientId is not configured. Replace the placeholder in server/appsettings.json or set the Auth__ClientId environment variable.");
-    }
 }

@@ -11,7 +11,28 @@ A full-stack web application template featuring a .NET 10 backend with React/Vit
 - **Development**: Hot reload for both frontend and backend
 - **Development Integration**: ASP.NET Core `SpaProxy` launches Vite for Visual Studio users, while Vite proxies API and auth routes back to ASP.NET Core during development
 
-## Quick Start
+## Run the Docker sandbox
+
+With Docker and Compose installed, run this from a clone or downloaded copy of the repository:
+
+```bash
+docker compose -f .devcontainer/docker-compose.sandbox.yml up --build --wait
+```
+
+Open [the sandbox](http://localhost:5280) and choose **Sign in as Sample User**. The image builds the current checkout's React app and .NET server. SQL Server starts first, then the app applies migrations and seeds ten weather records dated January 1–10, 2025. No host Node, .NET, `.env`, Entra registration, or SMTP account is needed. The first build needs internet access to download images and dependencies.
+
+The [local inbox](http://localhost:8025) captures mail from the Notification page. Use **Basic User** at [local sign-in](http://localhost:5280/login) to test the weather API's `403` response, or sign out there. These fictional users have fixed identities and claims; the template does not have a user table.
+
+Restarting preserves database changes. To return to the original fixtures, remove this sandbox's containers and volumes, then start it again:
+
+```bash
+docker compose -f .devcontainer/docker-compose.sandbox.yml down --volumes
+docker compose -f .devcontainer/docker-compose.sandbox.yml up --build --wait
+```
+
+This deletes the sandbox database and local sign-in keys. It does not affect the regular development database. Rebuild with `up --build --wait` after editing source. See [the sandbox guide](docs/SANDBOX.md) for ports, logs, checks, and agent use.
+
+## Set up for development
 
 1. **Clone the repository**
 
@@ -111,6 +132,8 @@ In development, the frontend runs from **http://localhost:5173** and proxies bac
 
 The backend requires a SQL Server connection string.
 
+Startup always applies migrations. Sample weather data is inserted only when `DevelopmentData__SeedOnStartup=true`, and only if the weather table is empty. The Docker sandbox sets this flag. For ordinary development, opt in through `server/.env` when you want the sample records.
+
 - Outside DevContainer, the default development connection points to the SQL Server container published on `localhost:14333`.
 - Inside DevContainer, `devcontainer.json` overrides `DB_CONNECTION` to use the internal Docker hostname `sql:1433`.
 
@@ -132,6 +155,8 @@ Useful companion commands:
 ### Auth Configuration
 
 The app uses OIDC with Microsoft Entra ID (Azure AD). The template intentionally ships with a placeholder `Auth:ClientId`; replace it with your app registration's client ID before testing sign-in so copied projects cannot accidentally authenticate as the template app.
+
+The Docker sandbox explicitly sets `Auth__UseLocal=true` in the `Development` environment. This enables the fictional local users and bypasses Entra configuration. The flag defaults to false, and startup rejects it in any other environment.
 
 For a new application registration, redirect URIs, and app-specific auth settings, follow [the customization guide](README.customization.md#3-microsoft-entra-id-azure-ad-app-sign-in-setup).
 
