@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Server.Helpers;
 using Server.Services;
@@ -31,7 +33,7 @@ public class AuthenticationHelperTests : IDisposable
         services.AddSingleton<IConfiguration>(configuration);
         services.AddScoped(_ => TestDbContextFactory.CreateInMemory());
         services.AddScoped<IUserService, UserService>();
-        services.AddAuthenticationServices(configuration);
+        services.AddAuthenticationServices(configuration, new TestEnvironment());
         _provider = services.BuildServiceProvider();
         _scope = _provider.CreateScope();
     }
@@ -172,5 +174,13 @@ public class AuthenticationHelperTests : IDisposable
     {
         _scope.Dispose();
         _provider.Dispose();
+    }
+
+    private sealed class TestEnvironment : IHostEnvironment
+    {
+        public string EnvironmentName { get; set; } = Environments.Production;
+        public string ApplicationName { get; set; } = "Server.Tests";
+        public string ContentRootPath { get; set; } = "/";
+        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }
