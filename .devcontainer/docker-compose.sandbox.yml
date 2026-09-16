@@ -10,6 +10,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Auth__UseLocal: "true"
+      Auth__LocalCookieSuffix: ${COMPOSE_PROJECT_NAME}
       DB_CONNECTION: Server=sql,1433;Database=SandboxDb;User ID=sa;Password=SandboxOnly123!;Encrypt=False;TrustServerCertificate=True;
       DevelopmentData__SeedOnStartup: "true"
       OTEL_SDK_DISABLED: "true"

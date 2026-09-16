@@ -52,6 +52,8 @@ For a second checkout, choose another Compose project and host ports. Use the sa
 SANDBOX_PORT=5281 SANDBOX_MAIL_PORT=8026 docker compose -p template-review -f .devcontainer/docker-compose.sandbox.yml up --build --wait
 ```
 
+Compose sets `Auth__LocalCookieSuffix` to the project name so local sign-in and antiforgery cookies stay separate across sandboxes on different localhost ports.
+
 Local authentication is opt-in with `Auth__UseLocal=true` and allowed only in `Development`. The local cookie uses its own authentication scheme and name. Login and logout are POST forms with antiforgery validation, and login accepts only local return URLs. Keep the sandbox bound to loopback; anyone who can reach it can choose a fictional user.
 
 SQL Server uses its Linux AMD64 image. On Apple Silicon, Docker Desktop needs AMD64 emulation enabled. If SQL stays unhealthy, inspect `docker compose -f .devcontainer/docker-compose.sandbox.yml logs sql` and Docker's available memory. SQL Server needs at least 2 GB of memory, with additional room for the build and app.

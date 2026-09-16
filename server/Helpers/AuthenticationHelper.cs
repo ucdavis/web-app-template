@@ -15,10 +15,18 @@ public static class AuthenticationHelper
     {
         if (LocalAuthentication.IsEnabled(configuration, environment))
         {
+            var cookieName = ".WebAppTemplate.LocalSandbox";
+            var cookieSuffix = configuration["Auth:LocalCookieSuffix"];
+            if (!string.IsNullOrEmpty(cookieSuffix))
+            {
+                cookieName += $".{cookieSuffix}";
+                services.AddAntiforgery(options => options.Cookie.Name = $"{cookieName}.Antiforgery");
+            }
+
             services.AddAuthentication(LocalAuthentication.Scheme)
                 .AddCookie(LocalAuthentication.Scheme, options =>
                 {
-                    options.Cookie.Name = ".WebAppTemplate.LocalSandbox";
+                    options.Cookie.Name = cookieName;
                     options.LoginPath = "/login";
                     options.Events.OnRedirectToLogin = ctx =>
                     {
