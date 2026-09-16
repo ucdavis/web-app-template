@@ -13,11 +13,16 @@ A full-stack web application template featuring a .NET 10 backend with React/Vit
 
 ## Run the Docker sandbox
 
-With Docker and Compose installed, run this from a clone or downloaded copy of the repository:
+With Docker and Compose installed, choose a unique project name for this checkout or worktree, then run these commands from its root:
 
 ```bash
-docker compose -f .devcontainer/docker-compose.sandbox.yml up --build --wait
+export SANDBOX_PROJECT=template-feature-a
+export SANDBOX_PORT=5280
+export SANDBOX_MAIL_PORT=8025
+docker compose -p "$SANDBOX_PROJECT" -f .devcontainer/docker-compose.sandbox.yml up --build --wait
 ```
+
+Use a distinct `SANDBOX_PROJECT` for every checkout and different app and inbox ports for sandboxes running concurrently. Keep these same values for every command that manages this sandbox, including in a new terminal. Compose rejects an unset or empty `SANDBOX_PROJECT`. See [multiple sandboxes](docs/SANDBOX.md#ports-and-multiple-sandboxes) for a second worktree example.
 
 Open [the sandbox](http://localhost:5280) and choose **Sign in as Sample User**. The image builds the current checkout's React app and .NET server. SQL Server starts first, then the app applies migrations and seeds ten weather records dated January 1–10, 2025. No host Node, .NET, `.env`, Entra registration, or SMTP account is needed. The first build needs internet access to download images and dependencies.
 
@@ -26,8 +31,8 @@ The [local inbox](http://localhost:8025) captures mail from the Notification pag
 Restarting preserves database changes. To return to the original fixtures, remove this sandbox's containers and volumes, then start it again:
 
 ```bash
-docker compose -f .devcontainer/docker-compose.sandbox.yml down --volumes
-docker compose -f .devcontainer/docker-compose.sandbox.yml up --build --wait
+docker compose -p "$SANDBOX_PROJECT" -f .devcontainer/docker-compose.sandbox.yml down --volumes
+docker compose -p "$SANDBOX_PROJECT" -f .devcontainer/docker-compose.sandbox.yml up --build --wait
 ```
 
 This deletes the sandbox database and local sign-in keys. It does not affect the regular development database. Rebuild with `up --build --wait` after editing source. See [the sandbox guide](docs/SANDBOX.md) for ports, logs, and agent use.

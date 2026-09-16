@@ -1,5 +1,5 @@
 # Standalone: do not combine this file with docker-compose.yml.
-name: web-app-template-sandbox
+name: ${SANDBOX_PROJECT:?Set SANDBOX_PROJECT to a unique name for this checkout}
 
 services:
   app:
