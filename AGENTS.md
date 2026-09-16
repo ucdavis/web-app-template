@@ -2,6 +2,10 @@
 
 This is a full-stack web application template using modern React and .NET technologies. Please follow these guidelines when generating code suggestions.
 
+## Docker sandbox for investigation
+
+Use the [Docker sandbox quick start](README.md#run-the-docker-sandbox) to investigate the current checkout with local sign-in and sample data. See [the sandbox guide](docs/SANDBOX.md) for role checks, logs, alternate ports, and browser investigation.
+
 ## Architecture Overview
 
 - **Frontend**: React 19 with TypeScript, built with Vite
@@ -16,7 +20,7 @@ This is a full-stack web application template using modern React and .NET techno
 
 - **Vite** (`^7.1.5`) - Primary build tool and dev server on port `5173`
 - **TypeScript** (`^5.9.2`) - Primary language for all React components
-- **Node.js** - See [Quick Start](README.md#quick-start) for runtime requirements and setup.
+- **Node.js** - See [development setup](README.md#set-up-for-development) for runtime requirements and setup.
 
 ### React & Routing
 
@@ -94,40 +98,7 @@ This is a full-stack web application template using modern React and .NET techno
 
 ### Development Request Flow
 
-**Command-line development**:
-```text
-Browser → :5173 (Vite)
-            ↓
-    ┌───────┴────────────────────────────┐
-    │                                    │
-frontend assets/routes   /api, /login, /signin-oidc, /health
-    │                                    │
-    ↓                                    ↓
- React + HMR                 Vite proxy → :5165 (ASP.NET Core)
-```
-
-**Visual Studio development**:
-```text
-Visual Studio F5
-    ↓
-ASP.NET Core profile (:5165)
-    ↓
-SpaProxy ensures Vite is running
-    ↓
-Browser is redirected to :5173
-```
-
-**Production mode**:
-```text
-Browser → :5165 (ASP.NET Core)
-            ↓
-    ┌───────┴────────┐
-    │                │
-/api/*          everything else
-    │                │
-    ↓                ↓
-Controllers    Static Files + SPA fallback (wwwroot)
-```
+See [Development Architecture](docs/ARCHITECTURE.md#development-request-flow) for request-flow diagrams and [Vite's responsibilities](docs/ARCHITECTURE.md#clientviteconfigts) for the backend proxy routes.
 
 ### Project Structure
 
@@ -189,9 +160,9 @@ Controllers    Static Files + SPA fallback (wwwroot)
 
 ### API Integration
 
-- **Development mode**: Vite proxies `/api`, `/login`, `/signin-oidc`, and `/health` to ASP.NET Core
+- **Development mode**: Follow the [Vite proxy configuration](docs/ARCHITECTURE.md#clientviteconfigts) for backend routes
 - **Production mode**: ASP.NET Core serves static files from `wwwroot/` and handles `/api` routes directly
-- Authentication is handled by Microsoft Identity Web on the backend
+- Authentication modes are documented under [Auth Configuration](README.md#auth-configuration)
 - Use type-safe API client patterns for request and response shapes
 - Prefer relative paths like `/api/example`, never hardcoded `http://localhost:5165/api/example`
 
@@ -313,6 +284,6 @@ public class ExampleController : ControllerBase
    - `cd client && npm run build` outputs frontend assets to `client/dist/`
    - `dotnet publish` also builds the client and copies `client/dist/` into `wwwroot`
    - ASP.NET Core serves static files directly in production
-   - SPA fallback to `index.html` is enabled only outside development
+   - See [the middleware responsibilities](docs/ARCHITECTURE.md#serverprogramcs) for static files and SPA fallback behavior
 
 When generating code, ensure it follows these patterns and integrates well with the existing technology stack.

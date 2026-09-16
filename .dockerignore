@@ -1,0 +1,15 @@
+.git
+**/node_modules
+**/bin
+**/obj
+**/dist
+**/.env
+**/.env.*
+**/*.user
+**/*.pfx
+**/*.pem
+.aspnet
+.vs
+.idea
+output
+publish

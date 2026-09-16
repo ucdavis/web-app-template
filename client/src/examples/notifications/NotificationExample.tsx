@@ -165,7 +165,7 @@ export function NotificationExample() {
                     </div>
                     <p className="text-sm text-base-content/70">
                       The SMTP sender delivers the message using the configured
-                      Mailtrap or production server.
+                      SMTP server.
                     </p>
                   </div>
                 </div>
@@ -202,9 +202,10 @@ export function NotificationExample() {
 
               <div className="alert alert-info">
                 <span>
-                  This template expects local SMTP testing to flow through
-                  Mailtrap. Leave the recipient blank to send to your signed-in
-                  account, or enter another test inbox address.
+                  The Docker sandbox captures email in its local Mailpit inbox.
+                  Other development setups use your configured SMTP server.
+                  Leave the recipient blank to use your signed-in account, or
+                  enter another test inbox address.
                 </span>
               </div>
             </div>

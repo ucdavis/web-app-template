@@ -1,0 +1,48 @@
+@model string
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Local sign-in | Web App Template</title>
+    <style>
+        body { margin: 0; background: #f2f5f8; color: #172b40; font-family: system-ui, sans-serif; }
+        main { max-width: 560px; margin: 10vh auto; padding: 32px; background: white; border-top: 6px solid #ffbf00; border-radius: 8px; }
+        h1 { color: #022851; }
+        p { line-height: 1.6; }
+        button { display: block; width: 100%; padding: 16px; margin-top: 16px; text-align: left; border: 1px solid #b8c6d3; border-radius: 6px; background: white; color: #022851; font: inherit; cursor: pointer; }
+        button:hover { background: #eef4fa; }
+        button:focus-visible, a:focus-visible { outline: 3px solid #13639e; outline-offset: 3px; }
+        button span { display: block; margin-top: 6px; font-size: 14px; }
+        a { color: #00588a; }
+    </style>
+</head>
+<body>
+<main>
+    <p>Web App Template · Docker sandbox</p>
+    <h1>Choose a local user</h1>
+    <p>These fictional accounts work without Entra or a password. Sample User can open every example. Basic User lets you check access denied responses.</p>
+    <form action="/login/local" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnUrl" value="@Model" />
+        <button name="persona" value="sample" type="submit">
+            <strong>Sign in as Sample User</strong>
+            <span>sample@example.test · User and SampleRole</span>
+        </button>
+        <button name="persona" value="basic" type="submit">
+            <strong>Sign in as Basic User</strong>
+            <span>basic@example.test · User only</span>
+        </button>
+    </form>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <p>Signed in as <strong>@User.Identity.Name</strong>. <a href="@Model">Continue to the app</a></p>
+        <form action="/logout/local" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit">Sign out</button>
+        </form>
+    }
+    <p><a href="/about">Visit the public about page</a></p>
+</main>
+</body>
+</html>

@@ -1,17 +1,43 @@
 # Web App Template
 
-A full-stack web application template featuring a .NET 10 backend with React/Vite frontend, using OIDC authentication with Microsoft Entra ID.
+A full-stack web application template featuring a .NET 10 backend with React/Vite frontend, using OIDC authentication with Microsoft Entra ID by default.
 
 ## Architecture
 
 - **Backend**: .NET 10 Web API with ASP.NET Core
 - **Frontend**: React 19 with Vite, TypeScript, and TanStack Router/Query/Table
-- **Authentication**: OIDC with Microsoft Entra ID (Azure AD)
+- **Authentication**: See [Auth Configuration](#auth-configuration) for the default Entra flow and optional local sign-in
 - **Styling**: Tailwind CSS
 - **Development**: Hot reload for both frontend and backend
 - **Development Integration**: ASP.NET Core `SpaProxy` launches Vite for Visual Studio users, while Vite proxies API and auth routes back to ASP.NET Core during development
 
-## Quick Start
+## Run the Docker sandbox
+
+With Docker and Compose installed, choose a unique project name for this checkout or worktree, then run these commands from its root:
+
+```bash
+export SANDBOX_PROJECT=template-feature-a
+export SANDBOX_PORT=5280
+export SANDBOX_MAIL_PORT=8025
+docker compose -p "$SANDBOX_PROJECT" -f .devcontainer/docker-compose.sandbox.yml up --build --wait
+```
+
+Use a distinct `SANDBOX_PROJECT` for every checkout and different app and inbox ports for sandboxes running concurrently. Keep these same values for every command that manages this sandbox, including in a new terminal. Compose rejects an unset or empty `SANDBOX_PROJECT`. See [multiple sandboxes](docs/SANDBOX.md#ports-and-multiple-sandboxes) for a second worktree example.
+
+Open [the sandbox](http://localhost:5280) and choose **Sign in as Sample User**. The image builds the current checkout's React app and .NET server. SQL Server starts first, then the app applies migrations and seeds ten weather records dated January 1–10, 2025. No host Node, .NET, `.env`, Entra registration, or SMTP account is needed. The first build needs internet access to download images and dependencies.
+
+The [local inbox](http://localhost:8025) captures mail from the Notification page. Use **Basic User** at [local sign-in](http://localhost:5280/login) to test the weather API's `403` response, or sign out there. These fictional users have fixed identities and claims; the template does not have a user table.
+
+Restarting preserves database changes. To return to the original fixtures, remove this sandbox's containers and volumes, then start it again:
+
+```bash
+docker compose -p "$SANDBOX_PROJECT" -f .devcontainer/docker-compose.sandbox.yml down --volumes
+docker compose -p "$SANDBOX_PROJECT" -f .devcontainer/docker-compose.sandbox.yml up --build --wait
+```
+
+This deletes the sandbox database and local sign-in keys. It does not affect the regular development database. Rebuild with `up --build --wait` after editing source. See [the sandbox guide](docs/SANDBOX.md) for ports, logs, and agent use.
+
+## Set up for development
 
 1. **Clone the repository**
 
@@ -28,7 +54,7 @@ A full-stack web application template featuring a .NET 10 backend with React/Vit
    cp server/.env.example server/.env
    ```
 
-   Set `Auth__ClientId` in `server/.env` to your application's Entra sign-in client ID. Follow [app sign-in setup](README.customization.md#3-microsoft-entra-id-azure-ad-app-sign-in-setup) to create the registration and configure redirect URIs. The backend intentionally stops if the placeholder is still present. This step also applies before opening the DevContainer.
+   Choose an authentication mode under [Auth Configuration](#auth-configuration) and configure it in `server/.env` before starting the backend. This step also applies before opening the DevContainer.
 
    SMTP and external telemetry are optional. Leave their example settings disabled until you configure those services.
 
@@ -111,6 +137,8 @@ In development, the frontend runs from **http://localhost:5173** and proxies bac
 
 The backend requires a SQL Server connection string.
 
+Startup always applies migrations. Sample weather data is inserted only when `DevelopmentData__SeedOnStartup=true`, and only if the weather table is empty. The Docker sandbox sets this flag. For ordinary development, opt in through `server/.env` when you want the sample records.
+
 - Outside DevContainer, the default development connection points to the SQL Server container published on `localhost:14333`.
 - Inside DevContainer, `devcontainer.json` overrides `DB_CONNECTION` to use the internal Docker hostname `sql:1433`.
 
@@ -131,7 +159,9 @@ Useful companion commands:
 
 ### Auth Configuration
 
-The app uses OIDC with Microsoft Entra ID (Azure AD). The template intentionally ships with a placeholder `Auth:ClientId`; replace it with your app registration's client ID before testing sign-in so copied projects cannot accidentally authenticate as the template app.
+By default, the app uses OIDC with Microsoft Entra ID (Azure AD). In this mode, set `Auth__ClientId` in `server/.env` to your app registration's client ID before starting the backend. Startup rejects the template's placeholder so copied projects cannot accidentally authenticate as the template app.
+
+The Docker sandbox enables fictional local users with `Auth__UseLocal=true`, bypassing Entra configuration. To use these users in ordinary development, set the same flag in `server/.env`. The flag defaults to false, and startup rejects it outside the `Development` environment.
 
 For a new application registration, redirect URIs, and app-specific auth settings, follow [the customization guide](README.customization.md#3-microsoft-entra-id-azure-ad-app-sign-in-setup).
 
@@ -193,7 +223,7 @@ The VS Code flow intentionally uses the `http-cli` launch profile instead of the
 ### Authentication Flow
 
 1. Frontend routes requiring authentication redirect to the backend's login endpoint
-2. Backend handles OIDC flow with Microsoft Entra ID
+2. Backend uses the mode described under [Auth Configuration](#auth-configuration)
 3. Upon successful authentication, a same-site cookie is set
 4. Frontend API calls automatically include the authentication cookie
 5. Backend validates the cookie for protected endpoints

@@ -7,7 +7,7 @@ This template uses:
 - ASP.NET Core on port `5165` for API, auth, health checks, and Swagger
 - Vite on port `5173` for the React frontend during development
 - ASP.NET Core `SpaProxy` so Visual Studio can launch the frontend without a separate `.esproj`
-- Vite proxy rules so frontend requests to `/api`, `/login`, `/signin-oidc`, and `/health` are forwarded to ASP.NET Core
+- Vite proxy rules for the [backend routes listed below](#clientviteconfigts)
 
 In production, ASP.NET Core serves the built frontend from `server/wwwroot`.
 
@@ -34,7 +34,7 @@ Browser → :5173 (Vite)
             ↓
     ┌───────┴──────────────┐
     │                      │
-frontend assets/routes   /api, /login, /signin-oidc, /health
+frontend assets/routes   backend routes
     │                      │
     ↓                      ↓
  React + HMR         Proxy to :5165 (ASP.NET Core)
@@ -104,7 +104,7 @@ Responsibilities:
 Responsibilities:
 
 - Runs the frontend dev server on port `5173`
-- Proxies backend routes to ASP.NET Core
+- Proxies `/api`, `/login`, `/logout`, `/signin-oidc`, and `/health` to ASP.NET Core, including the local sign-in and sign-out POST routes
 - Detects either `ASPNETCORE_URLS` or `ASPNETCORE_HTTPS_PORT` so the same config works for normal `dotnet watch` and IIS Express
 
 ### `server/Program.cs`
@@ -112,8 +112,7 @@ Responsibilities:
 Responsibilities:
 
 - Configures the ASP.NET Core middleware pipeline
-- Serves static files in all environments
-- Reserves SPA fallback behavior for production, where the built frontend lives in `wwwroot`
+- Serves static files and maps the SPA fallback to `wwwroot/index.html` in all environments. This lets the published Docker sandbox serve the built frontend while running in `Development`; ordinary development still uses Vite for frontend assets and routes.
 
 ### `infrastructure/azure/main.bicep`
 
