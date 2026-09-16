@@ -122,18 +122,12 @@ public static class AuthenticationHelper
     /// </summary>
     private static async Task OnTokenValidated(Microsoft.AspNetCore.Authentication.OpenIdConnect.TokenValidatedContext ctx)
     {
-        // Load up the roles on first login (can also change other user info/claims here if needed)
         var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
-        var userId = ctx.Principal!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var updated = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
 
-        if (string.IsNullOrEmpty(userId)) return;
-
-        var roles = await userService.GetRolesForUser(userId);
-
-        var identity = (ClaimsIdentity)ctx.Principal.Identity!;
-        foreach (var role in roles)
+        if (updated != null)
         {
-            identity.AddClaim(new Claim(ClaimTypes.Role, role));
+            ctx.Principal = updated;
         }
     }
 
@@ -142,8 +136,6 @@ public static class AuthenticationHelper
     /// </summary>
     private static async Task OnValidatePrincipal(Microsoft.AspNetCore.Authentication.Cookies.CookieValidatePrincipalContext ctx)
     {
-        // On every request with a cookie, check if the user's roles/claims need updating
-        // We could use a cache here or roleVersion or timestamp or something, but for simplicity we'll just hit the DB every time
         var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
         var updated = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
 

@@ -49,6 +49,10 @@ If you change `CallbackPath`, remember to mirror it in the Entra redirect URIs.
 
 The Azure deployment bootstrap in section 5 creates a user-assigned managed identity for GitHub Actions OIDC. Do not use that managed identity's `clientId` as `Auth:ClientId`; it is separate from the application registration used for user sign-in.
 
+### Application roles
+
+Customize `GetRolesForUser` in [UserService.cs](server/Services/UserService.cs) to load your application's roles. The sample returns `User` and `SampleRole` for every user with an ID. Both Entra sign-in and cookie validation use `UpdateUserPrincipalIfNeeded` to apply those roles, replacing mapped Entra role claims while preserving other claims and identity metadata. Cookie validation renews the cookie only when the roles change.
+
 ## 4. Secrets, Connection Strings, & Environment Files
 
 - Connection strings: overwrite `ConnectionStrings:DefaultConnection` in `server/appsettings.Development.json` or, preferably, set `DB_CONNECTION` in `server/.env` / `server/.env.Development`. `Program.cs` reads `DB_CONNECTION` first, then falls back to the JSON file.
