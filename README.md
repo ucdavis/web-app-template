@@ -20,28 +20,43 @@ A full-stack web application template featuring a .NET 10 backend with React/Vit
    cd web-app-template
    ```
 
-2. **Open In DevContainer**
+2. **Configure authentication before starting**
+
+   Copy the local configuration example:
+
+   ```bash
+   cp server/.env.example server/.env
+   ```
+
+   Set `Auth__ClientId` in `server/.env` to your application's Entra sign-in client ID. Follow [app sign-in setup](README.customization.md#3-microsoft-entra-id-azure-ad-app-sign-in-setup) to create the registration and configure redirect URIs. The backend intentionally stops if the placeholder is still present. This step also applies before opening the DevContainer.
+
+   SMTP and external telemetry are optional. Leave their example settings disabled until you configure those services.
+
+3. **Open In DevContainer**
 
    - Open the project folder in Visual Studio Code.
    - Click the prompt to open in container (or manually select from the command palette).
 
 _Using the DevContainer is optional, but it will get you the right version of dotnet + node, plus install all dependencies and setup a local SQL instance for you_
 
-3. **Start the application**
+4. **Start the application**
 
-   **Inside DevContainer**: The application starts automatically via `postStartCommand` — no manual steps required.
+   **Inside DevContainer**: After the authentication configuration above, `postStartCommand` starts the application automatically.
 
    **Outside DevContainer (command line)**:
 
    Prerequisites:
    - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-   - [Node.js 22+](https://nodejs.org/) (includes npm)
+   - [Node.js 22.18+](https://nodejs.org/) (includes npm)
    - Docker (for the local SQL Server container)
+
+   With nvm, run `nvm install` and `nvm use` from the repo root to use the supported Node 22 line.
 
    Install dependencies and start the app:
    ```bash
-   npm install
-   cd client && npm install && cd ..
+   npm ci
+   cd client && npm ci && cd ..
+   dotnet tool restore
    npm run db:up
    npm start
    ```
@@ -52,13 +67,14 @@ _Using the DevContainer is optional, but it will get you the right version of do
 
    Prerequisites:
    - Visual Studio 2026 version 18.0 or later (for `net10.0` support)
-   - [Node.js 22+](https://nodejs.org/) (includes npm)
+   - [Node.js 22.18+](https://nodejs.org/) (includes npm)
    - Docker (for the local SQL Server container)
 
    Install dependencies and start the database:
    ```bash
-   npm install
-   cd client && npm install && cd ..
+   npm ci
+   cd client && npm ci && cd ..
+   dotnet tool restore
    npm run db:up
    ```
 
@@ -68,19 +84,20 @@ _Using the DevContainer is optional, but it will get you the right version of do
 
    Prerequisites:
    - [.NET 10 SDK](https://dotnet.microsoft.com/download)
-   - [Node.js 22+](https://nodejs.org/) (includes npm)
+   - [Node.js 22.18+](https://nodejs.org/) (includes npm)
    - Docker (for the local SQL Server container)
 
    Install dependencies and start the database:
    ```bash
-   npm install
-   cd client && npm install && cd ..
+   npm ci
+   cd client && npm ci && cd ..
+   dotnet tool restore
    npm run db:up
    ```
 
    Then open the repo root in VS Code, install the recommended extensions when prompted (at minimum the Microsoft C# extension), choose `Full Stack: VS Code` in **Run and Debug**, and press `F5`. VS Code builds and launches the backend with the `http-cli` launch profile, starts Vite after the backend health check passes, and opens the app in your default external browser at `http://localhost:5173`. For backend-only debugging, choose `Backend: ASP.NET Core + Swagger`.
 
-4. **Access the application**
+5. **Access the application**
 
 In development, the frontend runs from **http://localhost:5173** and proxies backend requests to ASP.NET Core on **http://localhost:5165**.
 
@@ -116,7 +133,7 @@ Useful companion commands:
 
 The app uses OIDC with Microsoft Entra ID (Azure AD). The template intentionally ships with a placeholder `Auth:ClientId`; replace it with your app registration's client ID before testing sign-in so copied projects cannot accidentally authenticate as the template app.
 
-For a new application registration, redirect URIs, and app-specific auth settings, follow [the customization guide](README.customization.md#3-microsoft-entra-id-azure-ad-setup).
+For a new application registration, redirect URIs, and app-specific auth settings, follow [the customization guide](README.customization.md#3-microsoft-entra-id-azure-ad-app-sign-in-setup).
 
 To include the `ucdPersonIAMID` claim shown on the main page, follow [Authentication](https://app.notion.com/p/caes-cru/Authentication-2eae70f674118020ba74e953828d2591?source=copy_link).
 
@@ -142,7 +159,7 @@ The health check endpoint (`/health`) is configured to return the status of the 
 
 ## Azure Deployment
 
-The template includes generic Azure App Service deployment scaffolding in `infrastructure/azure/` and GitHub Actions workflows in `.github/workflows/`.
+GitHub Actions is the primary deployment path. Start with the [Azure deployment guide](infrastructure/azure/README.md); it links to the detailed bootstrap instructions and describes the production SQL networking prerequisite.
 
 Cloud deployments are intentionally limited to `test` and `prod`. Before the first cloud deployment, replace placeholder names such as `webapp`, `rg-webapp-test`, and `rg-webapp-prod` with names for your application.
 
@@ -181,11 +198,13 @@ The VS Code flow intentionally uses the `http-cli` launch profile instead of the
 4. Frontend API calls automatically include the authentication cookie
 5. Backend validates the cookie for protected endpoints
 
+After sign-in, `/login?returnUrl=...` accepts only local paths such as `/fetch?sort=date`. Missing or external destinations fall back to `/`.
+
 ## Testing
 
 ### Client tests
 
-- Run `cd client && npm test` to execute the Vitest suite once.
+- Run `cd client && npm test -- --run` to execute the Vitest suite once.
 - Use `npm run test:watch` inside `client/` for red/green feedback while you work.
 - Tests run against a jsdom environment with Testing Library so you do not need the backend running.
 
@@ -200,7 +219,7 @@ The VS Code flow intentionally uses the `http-cli` launch profile instead of the
 ### Client
 
 - JavaScript/TypeScript packages: run `npm outdated` at the repository root and inside `client/` to see what can be updated. Use `npm update` in each location for compatible updates, or `npm install <package>@latest` when you need to jump to a new major version.
-- After updating Node packages, reinstall if needed (`npm install`, `cd client && npm install`) and rerun key checks like `npm run lint`, `cd client && npm test`, and `dotnet test`.
+- After updating Node packages, reinstall if needed (`npm install`, `cd client && npm install`) and rerun key checks like `cd client && npm run lint`, `cd client && npm test`, and `dotnet test`.
 
 ### Server
 
@@ -220,7 +239,7 @@ You can update individual packages or you can use the `--upgrade` flag to update
 dotnet-outdated --upgrade --version-lock Major
 ```
 
-If you update `Microsoft.EntityFrameworkCore.Design` or another package that a tool depends on, you'll want to update that tool as well to match, ex: `dotnet tool update dotnet-ef --local --version 8.0.21`. That will update it for you but also set the value in our `dotnet-tools.json` so it's consistent for everyone.
+If you update `Microsoft.EntityFrameworkCore.Design` or another package that a tool depends on, you'll want to update that tool as well to match, ex: `dotnet tool update dotnet-ef --local --version 10.0.1`. That will update it for you but also set the value in our `dotnet-tools.json` so it's consistent for everyone.
 
 And as always, after updating dependencies, make sure to run `dotnet build` and `dotnet test` to verify everything is working.
 

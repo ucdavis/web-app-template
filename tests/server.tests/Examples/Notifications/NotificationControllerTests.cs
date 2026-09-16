@@ -5,11 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
-using Server.Controllers;
-using Server.Models.Notification;
 using Server.Core.Notification;
+using Server.Examples.Notifications;
 
-namespace Server.Tests.Notification;
+namespace Server.Tests.Examples.Notifications;
 
 public class NotificationControllerTests
 {
@@ -284,7 +283,7 @@ public class NotificationControllerTests
 
     private static NotificationController CreateController(
         string environmentName,
-        INotificationService notificationService,
+        ISampleNotificationService notificationService,
         Claim[]? claims = null)
     {
         var controller = new NotificationController(
@@ -303,7 +302,7 @@ public class NotificationControllerTests
         return controller;
     }
 
-    private sealed class FakeNotificationService : INotificationService
+    private sealed class FakeNotificationService : ISampleNotificationService
     {
         public List<Invocation> Invocations { get; } = [];
         public List<TableInvocation> TableInvocations { get; } = [];
@@ -333,7 +332,7 @@ public class NotificationControllerTests
         }
     }
 
-    private sealed class ThrowingNotificationService : INotificationService
+    private sealed class ThrowingNotificationService : ISampleNotificationService
     {
         private readonly Exception _exception;
 

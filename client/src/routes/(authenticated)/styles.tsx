@@ -1,20 +1,20 @@
 import { createFileRoute, Link } from '@tanstack/react-router';
 
 const proximaNovaFaces = [
-  { label: 'Thin', className: 'font-thin' },
-  { label: 'Thin italic', className: 'font-thin italic' },
-  { label: 'Light', className: 'font-light' },
-  { label: 'Light italic', className: 'font-light italic' },
-  { label: 'Regular', className: 'font-normal' },
-  { label: 'Regular italic', className: 'font-normal italic' },
-  { label: 'Medium', className: 'font-medium' },
-  { label: 'Medium italic', className: 'font-medium italic' },
-  { label: 'Semibold', className: 'font-semibold' },
-  { label: 'Semibold italic', className: 'font-semibold italic' },
-  { label: 'Bold', className: 'font-bold' },
-  { label: 'Bold italic', className: 'font-bold italic' },
-  { label: 'Extra bold', className: 'font-extrabold' },
-  { label: 'Extra bold italic', className: 'font-extrabold italic' },
+  { className: 'font-thin', label: 'Thin' },
+  { className: 'font-thin italic', label: 'Thin italic' },
+  { className: 'font-light', label: 'Light' },
+  { className: 'font-light italic', label: 'Light italic' },
+  { className: 'font-normal', label: 'Regular' },
+  { className: 'font-normal italic', label: 'Regular italic' },
+  { className: 'font-medium', label: 'Medium' },
+  { className: 'font-medium italic', label: 'Medium italic' },
+  { className: 'font-semibold', label: 'Semibold' },
+  { className: 'font-semibold italic', label: 'Semibold italic' },
+  { className: 'font-bold', label: 'Bold' },
+  { className: 'font-bold italic', label: 'Bold italic' },
+  { className: 'font-extrabold', label: 'Extra bold' },
+  { className: 'font-extrabold italic', label: 'Extra bold italic' },
 ];
 
 export const Route = createFileRoute('/(authenticated)/styles')({
@@ -66,7 +66,7 @@ function RouteComponent() {
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {proximaNovaFaces.map(({ label, className }) => (
+            {proximaNovaFaces.map(({ className, label }) => (
               <article
                 className="card border border-base-300 bg-base-100"
                 key={label}

@@ -16,7 +16,7 @@ This is a full-stack web application template using modern React and .NET techno
 
 - **Vite** (`^7.1.5`) - Primary build tool and dev server on port `5173`
 - **TypeScript** (`^5.9.2`) - Primary language for all React components
-- **Node.js** `>=22.0.0` - Runtime requirement
+- **Node.js** - See [Quick Start](README.md#quick-start) for runtime requirements and setup.
 
 ### React & Routing
 
@@ -44,7 +44,7 @@ This is a full-stack web application template using modern React and .NET techno
 
 - **Tailwind CSS** (`^4.1.14`) - Utility-first CSS framework
 - **DaisyUI** (`^5.1.27`) - Tailwind CSS component library
-- **UC Davis Gunrock Tailwind** (`^2.4.0`) - Custom design system
+- **UC Davis Gunrock Tailwind** - Custom design system; dependency version is in [client/package.json](client/package.json).
 - CSS imports are structured like:
   ```css
   @import "tailwindcss";
@@ -141,6 +141,7 @@ Controllers    Static Files + SPA fallback (wwwroot)
 │   │   ├── shared/      # Reusable UI/auth components
 │   │   └── test/        # Client tests
 ├── server/              # ASP.NET Core host app
+│   ├── Examples/Notifications/ # Optional notification samples
 │   ├── Controllers/
 │   ├── Helpers/
 │   ├── Properties/
@@ -204,8 +205,7 @@ Controllers    Static Files + SPA fallback (wwwroot)
 - `npm run db:logs` - Tail SQL Server logs
 - `cd client && npm run build` - Build the frontend for production
 - `cd client && npm run lint` - Run ESLint
-- `cd client && npm test` - Run client tests once
-- `cd client && npm run test:watch` - Watch client tests
+- Client test commands: see [Client tests](README.md#client-tests).
 - `dotnet test` - Execute the .NET test project(s)
 
 ### Testing
@@ -226,6 +226,10 @@ Controllers    Static Files + SPA fallback (wwwroot)
 8. **Prefer existing shared helpers** - Reuse `fetchJson`, query options, auth context, and shared components before adding new abstractions
 9. **Environment-aware code** - Keep development and production behavior aligned through relative URLs and existing proxy/static-file patterns
 10. **Responsive design** - Use Tailwind responsive utilities
+
+### Optional Notifications
+
+See [optional email notifications](server.core/Notification/README.md) for reusable services, sample boundaries, configuration, and removal steps.
 
 ### C# Readability Preferences
 

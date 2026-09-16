@@ -14,7 +14,7 @@ This is a full-stack web application template using modern React and .NET techno
 
 - **Vite** (`^7.1.5`) - Primary build tool and dev server (port 5173)
 - **TypeScript** (`^5.9.2`) - Primary language for all React components
-- **Node.js** `>=22.0.0` - Runtime requirement
+- **Node.js** - See [Quick Start](../README.md#quick-start) for runtime requirements and setup.
 
 ### React & Routing
 
@@ -42,7 +42,7 @@ This is a full-stack web application template using modern React and .NET techno
 
 - **Tailwind CSS** (`^4.1.14`) - Utility-first CSS framework
 - **DaisyUI** (`^5.1.27`) - Tailwind CSS component library
-- **UC Davis Gunrock Tailwind** (`^2.4.0`) - Custom design system
+- **UC Davis Gunrock Tailwind** - See [Styling & UI](../AGENTS.md#styling--ui) for the design system.
 - CSS imports structure:
   ```css
   @import "tailwindcss";
@@ -55,7 +55,7 @@ This is a full-stack web application template using modern React and .NET techno
 - **ESLint** (`^9.35.0`) with custom config (`@nkzw/eslint-config`)
 - **Prettier** (`^3.6.2`) - Code formatting
 - **TanStack ESLint plugins** for Query and Router
-- **Vitest** (`^3.2.4`) - Testing framework
+- Client testing: see [Client tests](../README.md#client-tests).
 
 ### Path Aliases
 
@@ -82,8 +82,7 @@ This is a full-stack web application template using modern React and .NET techno
 
 ### Development Tools
 
-- **Swashbuckle** (`^6.4.0`) - Swagger/OpenAPI documentation
-- **DotNetEnv** (`^3.1.1`) - Environment variable management
+See [Development Tools](../AGENTS.md#development-tools) for backend tooling.
 
 ## Development Patterns
 
@@ -140,10 +139,7 @@ This is a full-stack web application template using modern React and .NET techno
 
 ### Development Commands
 
-- `npm run dev` - Start Vite development server
-- `npm start` - Start .NET backend with watch mode
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
+See [Quick Start](../README.md#quick-start) for startup commands and [Development Commands](../AGENTS.md#development-commands) for component-specific commands.
 
 ## Code Generation Preferences
 
