@@ -1,12 +1,12 @@
 # Web App Template
 
-A full-stack web application template featuring a .NET 10 backend with React/Vite frontend, using OIDC authentication with Microsoft Entra ID.
+A full-stack web application template featuring a .NET 10 backend with React/Vite frontend, using OIDC authentication with Microsoft Entra ID by default.
 
 ## Architecture
 
 - **Backend**: .NET 10 Web API with ASP.NET Core
 - **Frontend**: React 19 with Vite, TypeScript, and TanStack Router/Query/Table
-- **Authentication**: OIDC with Microsoft Entra ID (Azure AD)
+- **Authentication**: See [Auth Configuration](#auth-configuration) for the default Entra flow and optional local sign-in
 - **Styling**: Tailwind CSS
 - **Development**: Hot reload for both frontend and backend
 - **Development Integration**: ASP.NET Core `SpaProxy` launches Vite for Visual Studio users, while Vite proxies API and auth routes back to ASP.NET Core during development
@@ -154,7 +154,7 @@ Useful companion commands:
 
 ### Auth Configuration
 
-The app uses OIDC with Microsoft Entra ID (Azure AD). The template intentionally ships with a placeholder `Auth:ClientId`; replace it with your app registration's client ID before testing sign-in so copied projects cannot accidentally authenticate as the template app.
+By default, the app uses OIDC with Microsoft Entra ID (Azure AD). The template intentionally ships with a placeholder `Auth:ClientId`; replace it with your app registration's client ID before starting the backend in this mode so copied projects cannot accidentally authenticate as the template app.
 
 The Docker sandbox explicitly sets `Auth__UseLocal=true` in the `Development` environment. This enables the fictional local users and bypasses Entra configuration. The flag defaults to false, and startup rejects it in any other environment.
 
@@ -218,7 +218,7 @@ The VS Code flow intentionally uses the `http-cli` launch profile instead of the
 ### Authentication Flow
 
 1. Frontend routes requiring authentication redirect to the backend's login endpoint
-2. Backend handles OIDC flow with Microsoft Entra ID
+2. Backend uses the mode described under [Auth Configuration](#auth-configuration)
 3. Upon successful authentication, a same-site cookie is set
 4. Frontend API calls automatically include the authentication cookie
 5. Backend validates the cookie for protected endpoints

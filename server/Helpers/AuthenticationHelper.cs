@@ -9,7 +9,7 @@ namespace Server.Helpers;
 public static class AuthenticationHelper
 {
     /// <summary>
-    /// Configures Microsoft Identity Web authentication with Azure AD/Entra ID
+    /// Keeps Entra as the default; local sign-in must be explicitly enabled in Development.
     /// </summary>
     public static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {

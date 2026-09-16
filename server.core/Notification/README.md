@@ -4,6 +4,8 @@ Email is optional. Leave `Smtp:Host` empty when no SMTP service is configured; t
 
 ## Configure local email
 
+The [Docker sandbox](../../README.md#run-the-docker-sandbox) configures a local Mailpit inbox automatically. The settings below apply to development outside the sandbox.
+
 To send sample email through Mailtrap or another SMTP test inbox, fill in the SMTP settings from [server/.env.example](../../server/.env.example) in `server/.env` or `server/.env.Development`. Replace the empty `Smtp__Host` entry when enabling delivery. The copied example overrides the Mailtrap host in `appsettings.Development.json`; editing that JSON file alone will not enable SMTP. See [configuration precedence](../../README.customization.md#4-secrets-connection-strings--environment-files).
 
 Keep credentials in ignored environment files. [SmtpOptions and its validator](Email/SmtpOptions.cs) define the supported settings, defaults, and required values when a host is configured. The example file also lists the optional notification settings for application links, display name, and button text.

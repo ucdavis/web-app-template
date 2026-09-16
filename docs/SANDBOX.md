@@ -4,21 +4,20 @@ The sandbox packages the current checkout into an image and runs it with SQL Ser
 
 ## Start and inspect
 
-Run commands from the repository root. This Compose file is standalone, unlike the Leaves override that inspired it.
+Follow the [README quick start](../README.md#run-the-docker-sandbox) to build and open the sandbox. Run commands from the repository root. This Compose file is standalone; do not combine it with the regular development Compose file.
 
 ```bash
-docker compose -f .devcontainer/docker-compose.sandbox.yml up --build --wait
 docker compose -f .devcontainer/docker-compose.sandbox.yml ps
 docker compose -f .devcontainer/docker-compose.sandbox.yml logs --tail=100 app
 ```
 
-Open <http://localhost:5280>. Choose Sample User to access the examples. The app health check at `/health` verifies SQL connectivity after migrations and seeding finish. Compose waits for SQL and Mailpit health before starting the app.
+The app health check at `/health` verifies SQL connectivity after migrations and seeding finish. Compose waits for SQL and Mailpit health before starting the app.
 
 Try these flows:
 
-1. Sign in as Sample User, open Fetch, and page through the ten fixed weather records.
+1. Sign in as Sample User, open Fetch, and page through the fixed weather records.
 2. Open Table Export and download the example CSV. Open Form to try validation.
-3. Open Notification and send either example. Read the rendered email at <http://localhost:8025>. Mailpit captures all recipients locally and has no relay configured.
+3. Open Notification and send either example. Read the rendered email in the local inbox linked in the quick start. Mailpit captures all recipients locally and has no relay configured.
 4. Visit `/login`, switch to Basic User, and request `/api/weatherforecast`. It returns `403` because this user lacks `SampleRole`. `/api/user/me` still returns their identity.
 5. Visit `/login` and sign out. `/api/user/me` returns `401`. The public `/about` page still opens.
 
@@ -26,19 +25,13 @@ Sample User has ID `sandbox-sample`, email `sample@example.test`, IAM ID `sandbo
 
 ## Stop, rebuild, and reset
 
+To stop the sandbox and preserve the database and cookie keys:
+
 ```bash
-# Stop and preserve the database and cookie keys.
 docker compose -f .devcontainer/docker-compose.sandbox.yml down
-
-# Build the current source and start again.
-docker compose -f .devcontainer/docker-compose.sandbox.yml up --build --wait
-
-# Delete only this sandbox's database and cookie keys to restore fixtures on next startup.
-docker compose -f .devcontainer/docker-compose.sandbox.yml down --volumes
-docker compose -f .devcontainer/docker-compose.sandbox.yml up --build --wait
 ```
 
-Seeding does not overwrite existing weather rows or duplicate them on restart. A volume reset recreates the database from migrations and the fixed January 1–10, 2025 fixtures. Mailpit's inbox is temporary and clears when its container stops.
+Use the [README rebuild and reset commands](../README.md#run-the-docker-sandbox) to restart from current source or restore the original fixtures. See [Database configuration](../README.md#database-configuration) for the seeding policy. Mailpit's inbox is temporary and clears when its container stops.
 
 The sandbox copies source at build time. It does not mount the checkout or hot reload. Use the regular development workflow for hot reload. Docker excludes host `.env` files, keys, dependencies, and build outputs using `.dockerignore`.
 
@@ -54,13 +47,13 @@ SANDBOX_PORT=5281 SANDBOX_MAIL_PORT=8026 docker compose -p template-review -f .d
 
 Compose sets `Auth__LocalCookieSuffix` to the project name so local sign-in and antiforgery cookies stay separate across sandboxes on different localhost ports.
 
-Local authentication is opt-in with `Auth__UseLocal=true` and allowed only in `Development`. The local cookie uses its own authentication scheme and name. Login and logout are POST forms with antiforgery validation, and login accepts only local return URLs. Keep the sandbox bound to loopback; anyone who can reach it can choose a fictional user.
+See [Auth Configuration](../README.md#auth-configuration) for enabling local authentication and its environment restriction. The local cookie uses its own authentication scheme and name. Login and logout are POST forms with antiforgery validation, and login accepts only local return URLs. Keep the sandbox bound to loopback; anyone who can reach it can choose a fictional user.
 
 SQL Server uses its Linux AMD64 image. On Apple Silicon, Docker Desktop needs AMD64 emulation enabled. If SQL stays unhealthy, inspect `docker compose -f .devcontainer/docker-compose.sandbox.yml logs sql` and Docker's available memory. SQL Server needs at least 2 GB of memory, with additional room for the build and app.
 
 ## Agent use
 
-Agents can use a host browser at `http://localhost:5280` or join the Compose network from a browser container and visit `http://sandbox.test:8080`. The `sandbox.test` network alias avoids Chromium's automatic HTTPS upgrade for the `app` hostname. Follow the sign-in form so the browser receives a real cookie. Do not replace `/api/user/me` or the weather endpoint with mocks when verifying the sandbox.
+Agents can use the host URL in the [quick start](../README.md#run-the-docker-sandbox) or join the Compose network from a browser container and visit `http://sandbox.test:8080`. The `sandbox.test` network alias avoids Chromium's automatic HTTPS upgrade for the `app` hostname. Follow the sign-in form so the browser receives a real cookie. Do not replace `/api/user/me` or the weather endpoint with mocks when verifying the sandbox.
 
 Useful commands inside the app and database containers:
 
