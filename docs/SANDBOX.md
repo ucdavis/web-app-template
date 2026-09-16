@@ -56,15 +56,7 @@ Local authentication is opt-in with `Auth__UseLocal=true` and allowed only in `D
 
 SQL Server uses its Linux AMD64 image. On Apple Silicon, Docker Desktop needs AMD64 emulation enabled. If SQL stays unhealthy, inspect `docker compose -f .devcontainer/docker-compose.sandbox.yml logs sql` and Docker's available memory. SQL Server needs at least 2 GB of memory, with additional room for the build and app.
 
-## Checks and agent use
-
-Run the backend tests, client tests, and client lint using the container SDKs:
-
-```bash
-docker build -f .devcontainer/sandbox.Dockerfile --target checks .
-```
-
-The regular sandbox build runs the TypeScript and production asset build. The `checks` target also runs the auth configuration tests, including rejection of local sign-in outside Development.
+## Agent use
 
 Agents can use a host browser at `http://localhost:5280` or join the Compose network from a browser container and visit `http://sandbox.test:8080`. The `sandbox.test` network alias avoids Chromium's automatic HTTPS upgrade for the `app` hostname. Follow the sign-in form so the browser receives a real cookie. Do not replace `/api/user/me` or the weather endpoint with mocks when verifying the sandbox.
 

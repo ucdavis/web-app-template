@@ -6,11 +6,6 @@ WORKDIR /workspace
 COPY . .
 RUN dotnet publish server/server.csproj --configuration Release --output /app/server
 
-# Run the existing test suites without installing SDKs on the host.
-FROM build AS checks
-RUN dotnet test --configuration Release \
-    && cd client && npm test -- --run && npm run lint
-
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS app
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \

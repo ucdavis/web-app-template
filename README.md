@@ -30,7 +30,7 @@ docker compose -f .devcontainer/docker-compose.sandbox.yml down --volumes
 docker compose -f .devcontainer/docker-compose.sandbox.yml up --build --wait
 ```
 
-This deletes the sandbox database and local sign-in keys. It does not affect the regular development database. Rebuild with `up --build --wait` after editing source. See [the sandbox guide](docs/SANDBOX.md) for ports, logs, checks, and agent use.
+This deletes the sandbox database and local sign-in keys. It does not affect the regular development database. Rebuild with `up --build --wait` after editing source. See [the sandbox guide](docs/SANDBOX.md) for ports, logs, and agent use.
 
 ## Set up for development
 
