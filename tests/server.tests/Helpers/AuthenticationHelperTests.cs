@@ -128,6 +128,43 @@ public class AuthenticationHelperTests : IDisposable
             .Should().Equal("DirectoryRole", "OldRole");
     }
 
+    [Theory]
+    [InlineData(false, ClaimTypes.Role)]
+    [InlineData(true, ClaimTypes.Role)]
+    [InlineData(false, "application-role")]
+    [InlineData(true, "application-role")]
+    public async Task Role_updates_honor_each_identity_role_claim_type(bool validateCookie, string primaryRoleClaimType)
+    {
+        var primary = new ClaimsIdentity(CreatePrincipal().Claims, "OpenIdConnect", "name", primaryRoleClaimType);
+        primary.AddClaim(new Claim(primaryRoleClaimType, "User"));
+        primary.AddClaim(new Claim(primaryRoleClaimType, "SampleRole"));
+        var secondary = new ClaimsIdentity(
+            [new Claim("secondary-role", "StaleRole"), new Claim("department", "Example department")],
+            "AdditionalIdentity", "name", "secondary-role");
+        var principal = new ClaimsPrincipal([primary, secondary]);
+        principal.IsInRole("StaleRole").Should().BeTrue();
+
+        ClaimsPrincipal updated;
+        if (validateCookie)
+        {
+            var cookie = await ValidateCookie(principal);
+            cookie.ShouldRenew.Should().BeTrue();
+            updated = cookie.Principal!;
+        }
+        else
+        {
+            updated = await ValidateToken(principal);
+        }
+
+        updated.IsInRole("StaleRole").Should().BeFalse();
+        updated.IsInRole("User").Should().BeTrue();
+        updated.IsInRole("SampleRole").Should().BeTrue();
+        updated.Identities.First().RoleClaimType.Should().Be(primaryRoleClaimType);
+        updated.Identities.Last().RoleClaimType.Should().Be("secondary-role");
+        updated.FindFirst("department")!.Value.Should().Be("Example department");
+        principal.IsInRole("StaleRole").Should().BeTrue();
+    }
+
     private static ClaimsPrincipal CreatePrincipal(string? userId = "sample-user")
     {
         var claims = new List<Claim>

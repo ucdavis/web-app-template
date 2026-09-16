@@ -41,7 +41,10 @@ public class UserService : IUserService
         var currentRoles = await GetRolesForUser(userId);
 
         // compare roles to existing claims, only update if different
-        var existingRoles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+        var existingRoles = principal.Identities
+            .SelectMany(identity => identity.FindAll(identity.RoleClaimType))
+            .Select(claim => claim.Value)
+            .ToList();
         var changed = currentRoles.Count != existingRoles.Count ||
                       currentRoles.Except(existingRoles).Any();
 
@@ -52,7 +55,7 @@ public class UserService : IUserService
 
         foreach (var identity in updatedPrincipal.Identities)
         {
-            foreach (var roleClaim in identity.FindAll(ClaimTypes.Role).ToList())
+            foreach (var roleClaim in identity.FindAll(identity.RoleClaimType).ToList())
             {
                 identity.RemoveClaim(roleClaim);
             }
@@ -61,7 +64,7 @@ public class UserService : IUserService
         var primaryIdentity = (ClaimsIdentity)updatedPrincipal.Identity!;
         foreach (var role in currentRoles)
         {
-            primaryIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
+            primaryIdentity.AddClaim(new Claim(primaryIdentity.RoleClaimType, role));
         }
 
         return updatedPrincipal;
