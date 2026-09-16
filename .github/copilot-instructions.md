@@ -18,7 +18,7 @@ Use the [Docker sandbox quick start](../README.md#run-the-docker-sandbox) to inv
 
 - **Vite** (`^7.1.5`) - Primary build tool and dev server (port 5173)
 - **TypeScript** (`^5.9.2`) - Primary language for all React components
-- **Node.js** - See [Quick Start](../README.md#quick-start) for runtime requirements and setup.
+- **Node.js** - See [development setup](../README.md#set-up-for-development) for runtime requirements and setup.
 
 ### React & Routing
 
@@ -143,7 +143,7 @@ See [Development Tools](../AGENTS.md#development-tools) for backend tooling.
 
 ### Development Commands
 
-See [Quick Start](../README.md#quick-start) for startup commands and [Development Commands](../AGENTS.md#development-commands) for component-specific commands.
+See [development setup](../README.md#set-up-for-development) for startup commands and [Development Commands](../AGENTS.md#development-commands) for component-specific commands.
 
 ## Code Generation Preferences
 

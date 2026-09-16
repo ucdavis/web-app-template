@@ -49,7 +49,7 @@ This deletes the sandbox database and local sign-in keys. It does not affect the
    cp server/.env.example server/.env
    ```
 
-   Set `Auth__ClientId` in `server/.env` to your application's Entra sign-in client ID. Follow [app sign-in setup](README.customization.md#3-microsoft-entra-id-azure-ad-app-sign-in-setup) to create the registration and configure redirect URIs. The backend intentionally stops if the placeholder is still present. This step also applies before opening the DevContainer.
+   Choose an authentication mode under [Auth Configuration](#auth-configuration) and configure it in `server/.env` before starting the backend. This step also applies before opening the DevContainer.
 
    SMTP and external telemetry are optional. Leave their example settings disabled until you configure those services.
 
@@ -154,9 +154,9 @@ Useful companion commands:
 
 ### Auth Configuration
 
-By default, the app uses OIDC with Microsoft Entra ID (Azure AD). The template intentionally ships with a placeholder `Auth:ClientId`; replace it with your app registration's client ID before starting the backend in this mode so copied projects cannot accidentally authenticate as the template app.
+By default, the app uses OIDC with Microsoft Entra ID (Azure AD). In this mode, set `Auth__ClientId` in `server/.env` to your app registration's client ID before starting the backend. Startup rejects the template's placeholder so copied projects cannot accidentally authenticate as the template app.
 
-The Docker sandbox explicitly sets `Auth__UseLocal=true` in the `Development` environment. This enables the fictional local users and bypasses Entra configuration. The flag defaults to false, and startup rejects it in any other environment.
+The Docker sandbox enables fictional local users with `Auth__UseLocal=true`, bypassing Entra configuration. To use these users in ordinary development, set the same flag in `server/.env`. The flag defaults to false, and startup rejects it outside the `Development` environment.
 
 For a new application registration, redirect URIs, and app-specific auth settings, follow [the customization guide](README.customization.md#3-microsoft-entra-id-azure-ad-app-sign-in-setup).
 
