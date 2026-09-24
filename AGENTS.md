@@ -2,6 +2,10 @@
 
 This is a full-stack web application template using modern React and .NET technologies. Please follow these guidelines when generating code suggestions.
 
+## Pull requests
+
+Follow `.github/pull_request_template.md` when creating or updating pull requests, including through the CLI. Use a concise, descriptive title and describe the final change. Remove optional sections that do not apply, and never claim validation that was not performed.
+
 ## Architecture Overview
 
 - **Frontend**: React 19 with TypeScript, built with Vite
