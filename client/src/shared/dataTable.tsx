@@ -51,8 +51,9 @@ export const DataTable = <TData extends object>({
 
   const filterControl =
     globalFilter === 'none' ? null : (
-      <label className="input input-bordered flex items-center gap-2 w-full max-w-sm">
+      <div className="input input-bordered flex items-center gap-2 w-full max-w-sm">
         <svg
+          aria-hidden="true"
           className="h-[1em] opacity-50"
           viewBox="0 0 24 24"
           xmlns="http://www.w3.org/2000/svg"
@@ -69,6 +70,7 @@ export const DataTable = <TData extends object>({
           </g>
         </svg>
         <input
+          aria-label="Search table"
           className="grow"
           onChange={(e) => table.setGlobalFilter(e.target.value)}
           placeholder={filterPlaceholder}
@@ -77,11 +79,13 @@ export const DataTable = <TData extends object>({
         />
         {table.getState().globalFilter && (
           <button
+            aria-label="Clear table search"
             className="btn btn-ghost btn-sm btn-circle"
             onClick={() => table.setGlobalFilter('')}
             type="button"
           >
             <svg
+              aria-hidden="true"
               className="h-4 w-4"
               fill="currentColor"
               viewBox="0 0 16 16"
@@ -91,7 +95,7 @@ export const DataTable = <TData extends object>({
             </svg>
           </button>
         )}
-      </label>
+      </div>
     );
 
   const resolvedTableActions =
@@ -122,22 +126,40 @@ export const DataTable = <TData extends object>({
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
-                    className="cursor-pointer"
+                    aria-sort={
+                      header.column.getIsSorted() === 'asc'
+                        ? 'ascending'
+                        : header.column.getIsSorted() === 'desc'
+                          ? 'descending'
+                          : undefined
+                    }
                     key={header.id}
-                    onClick={header.column.getToggleSortingHandler?.()}
+                    scope="col"
                   >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
+                    {header.isPlaceholder ? null : header.column.getCanSort() ? (
+                      <button
+                        className="flex w-full items-center gap-1 text-left cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2"
+                        onClick={header.column.getToggleSortingHandler()}
+                        type="button"
+                      >
+                        {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
                         )}
-                    {/* Add sort indicator if column is sorted */}
-                    {header.column.getIsSorted() === 'asc'
-                      ? ' 🔼'
-                      : header.column.getIsSorted() === 'desc'
-                        ? ' 🔽'
-                        : ''}
+                        <span aria-hidden="true">
+                          {header.column.getIsSorted() === 'asc'
+                            ? '▲'
+                            : header.column.getIsSorted() === 'desc'
+                              ? '▼'
+                              : ''}
+                        </span>
+                      </button>
+                    ) : (
+                      flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )
+                    )}
                   </th>
                 ))}
               </tr>
@@ -161,6 +183,7 @@ export const DataTable = <TData extends object>({
             className="btn btn-xs"
             disabled={!table.getCanPreviousPage()}
             onClick={() => table.previousPage()}
+            type="button"
           >
             Previous
           </button>
@@ -168,6 +191,7 @@ export const DataTable = <TData extends object>({
             className="btn btn-xs"
             disabled={!table.getCanNextPage()}
             onClick={() => table.nextPage()}
+            type="button"
           >
             Next
           </button>

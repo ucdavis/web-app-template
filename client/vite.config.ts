@@ -42,6 +42,10 @@ export default defineConfig({
         secure: false,
         target,
       },
+      '/logout': {
+        secure: false,
+        target,
+      },
       '/signin-oidc': {
         secure: false,
         target,

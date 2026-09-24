@@ -24,15 +24,14 @@
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.1" />
     <PackageReference Include="Microsoft.Identity.Web" Version="3.14.1" />
     <PackageReference Include="Microsoft.AspNetCore.SpaProxy" Version="10.0.1" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.13.1" />
-    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.13.1" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.13.0" />
-    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.13.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.18.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.18.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.18.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.18.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0" />
-    <!-- Intentionally override the in-box .NET 10 System.Security.Cryptography.Xml version to pick up
-         critical security fixes for CVE-2026-26171 and CVE-2026-33116 (EncryptedXml DoS, CVSS 7.5).
-         Revisit when .NET 10.1 ships or when the shared runtime includes 10.0.6+ so this override can be removed. -->
-    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.6" NoWarn="NU1510" />
+    <!-- Keep XML security fixes independent of the installed shared runtime.
+         Update this override with .NET 10 security patches until deployed runtimes guarantee equivalent fixes. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +41,13 @@
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" LinkBase="client" />
     <ProjectReference Include="..\server.core\server.core.csproj" />
   </ItemGroup>
+
+  <!-- Preserve the patched XML assembly even when an older shared runtime provides it. -->
+  <Target Name="PreserveXmlSecurityOverride" AfterTargets="AddPrunePackageReferences">
+    <ItemGroup>
+      <PrunePackageReference Remove="System.Security.Cryptography.Xml" />
+    </ItemGroup>
+  </Target>
 
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition="'$(Configuration)' == 'Debug' and !Exists('$(SpaRoot)node_modules')">
     <Exec Command="node --version" ContinueOnError="true">

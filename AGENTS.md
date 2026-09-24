@@ -1,10 +1,14 @@
-# GitHub Copilot Instructions
+# Agent instructions
 
 This is a full-stack web application template using modern React and .NET technologies. Please follow these guidelines when generating code suggestions.
 
 ## Pull requests
 
 Follow `.github/pull_request_template.md` when creating or updating pull requests, including through the CLI. Use a concise, descriptive title and describe the final change. Remove optional sections that do not apply, and never claim validation that was not performed.
+
+## Docker sandbox for investigation
+
+Use the [Docker sandbox quick start](README.md#run-the-docker-sandbox) to investigate the current checkout with local sign-in and sample data. See [the sandbox guide](docs/SANDBOX.md) for role checks, logs, alternate ports, and browser investigation.
 
 ## Architecture Overview
 
@@ -20,7 +24,7 @@ Follow `.github/pull_request_template.md` when creating or updating pull request
 
 - **Vite** (`^7.1.5`) - Primary build tool and dev server on port `5173`
 - **TypeScript** (`^5.9.2`) - Primary language for all React components
-- **Node.js** `>=22.0.0` - Runtime requirement
+- **Node.js** - See [development setup](README.md#set-up-for-development) for runtime requirements and setup.
 
 ### React & Routing
 
@@ -48,7 +52,7 @@ Follow `.github/pull_request_template.md` when creating or updating pull request
 
 - **Tailwind CSS** (`^4.1.14`) - Utility-first CSS framework
 - **DaisyUI** (`^5.1.27`) - Tailwind CSS component library
-- **UC Davis Gunrock Tailwind** (`^2.4.0`) - Custom design system
+- **UC Davis Gunrock Tailwind** - Custom design system; dependency version is in [client/package.json](client/package.json).
 - CSS imports are structured like:
   ```css
   @import "tailwindcss";
@@ -98,40 +102,7 @@ Follow `.github/pull_request_template.md` when creating or updating pull request
 
 ### Development Request Flow
 
-**Command-line development**:
-```text
-Browser → :5173 (Vite)
-            ↓
-    ┌───────┴────────────────────────────┐
-    │                                    │
-frontend assets/routes   /api, /login, /signin-oidc, /health
-    │                                    │
-    ↓                                    ↓
- React + HMR                 Vite proxy → :5165 (ASP.NET Core)
-```
-
-**Visual Studio development**:
-```text
-Visual Studio F5
-    ↓
-ASP.NET Core profile (:5165)
-    ↓
-SpaProxy ensures Vite is running
-    ↓
-Browser is redirected to :5173
-```
-
-**Production mode**:
-```text
-Browser → :5165 (ASP.NET Core)
-            ↓
-    ┌───────┴────────┐
-    │                │
-/api/*          everything else
-    │                │
-    ↓                ↓
-Controllers    Static Files + SPA fallback (wwwroot)
-```
+See [Development Architecture](docs/ARCHITECTURE.md#development-request-flow) for request-flow diagrams and [Vite's responsibilities](docs/ARCHITECTURE.md#clientviteconfigts) for the backend proxy routes.
 
 ### Project Structure
 
@@ -145,6 +116,7 @@ Controllers    Static Files + SPA fallback (wwwroot)
 │   │   ├── shared/      # Reusable UI/auth components
 │   │   └── test/        # Client tests
 ├── server/              # ASP.NET Core host app
+│   ├── Examples/Notifications/ # Optional notification samples
 │   ├── Controllers/
 │   ├── Helpers/
 │   ├── Properties/
@@ -192,9 +164,9 @@ Controllers    Static Files + SPA fallback (wwwroot)
 
 ### API Integration
 
-- **Development mode**: Vite proxies `/api`, `/login`, `/signin-oidc`, and `/health` to ASP.NET Core
+- **Development mode**: Follow the [Vite proxy configuration](docs/ARCHITECTURE.md#clientviteconfigts) for backend routes
 - **Production mode**: ASP.NET Core serves static files from `wwwroot/` and handles `/api` routes directly
-- Authentication is handled by Microsoft Identity Web on the backend
+- Authentication modes are documented under [Auth Configuration](README.md#auth-configuration)
 - Use type-safe API client patterns for request and response shapes
 - Prefer relative paths like `/api/example`, never hardcoded `http://localhost:5165/api/example`
 
@@ -208,8 +180,7 @@ Controllers    Static Files + SPA fallback (wwwroot)
 - `npm run db:logs` - Tail SQL Server logs
 - `cd client && npm run build` - Build the frontend for production
 - `cd client && npm run lint` - Run ESLint
-- `cd client && npm test` - Run client tests once
-- `cd client && npm run test:watch` - Watch client tests
+- Client test commands: see [Client tests](README.md#client-tests).
 - `dotnet test` - Execute the .NET test project(s)
 
 ### Testing
@@ -230,6 +201,10 @@ Controllers    Static Files + SPA fallback (wwwroot)
 8. **Prefer existing shared helpers** - Reuse `fetchJson`, query options, auth context, and shared components before adding new abstractions
 9. **Environment-aware code** - Keep development and production behavior aligned through relative URLs and existing proxy/static-file patterns
 10. **Responsive design** - Use Tailwind responsive utilities
+
+### Optional Notifications
+
+See [optional email notifications](server.core/Notification/README.md) for reusable services, sample boundaries, configuration, and removal steps.
 
 ### C# Readability Preferences
 
@@ -313,6 +288,6 @@ public class ExampleController : ControllerBase
    - `cd client && npm run build` outputs frontend assets to `client/dist/`
    - `dotnet publish` also builds the client and copies `client/dist/` into `wwwroot`
    - ASP.NET Core serves static files directly in production
-   - SPA fallback to `index.html` is enabled only outside development
+   - See [the middleware responsibilities](docs/ARCHITECTURE.md#serverprogramcs) for static files and SPA fallback behavior
 
 When generating code, ensure it follows these patterns and integrates well with the existing technology stack.

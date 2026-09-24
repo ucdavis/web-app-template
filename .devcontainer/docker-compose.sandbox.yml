@@ -1,0 +1,77 @@
+# Standalone: do not combine this file with docker-compose.yml.
+name: ${SANDBOX_PROJECT:?Set SANDBOX_PROJECT to a unique name for this checkout}
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/sandbox.Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Auth__UseLocal: "true"
+      Auth__LocalCookieSuffix: ${COMPOSE_PROJECT_NAME}
+      DB_CONNECTION: Server=sql,1433;Database=SandboxDb;User ID=sa;Password=SandboxOnly123!;Encrypt=False;TrustServerCertificate=True;
+      DevelopmentData__SeedOnStartup: "true"
+      OTEL_SDK_DISABLED: "true"
+      Smtp__Host: mailpit
+      Smtp__Port: "1025"
+      Smtp__UseSsl: "false"
+      Smtp__Username: sandbox
+      Smtp__Password: sandbox
+      Smtp__FromEmail: no-reply@example.test
+      Smtp__FromName: Template sandbox
+      Notification__BaseUrl: http://localhost:${SANDBOX_PORT:-5280}
+    ports:
+      - "127.0.0.1:${SANDBOX_PORT:-5280}:8080"
+    volumes:
+      - sandbox-keys:/app/.aspnet
+    networks:
+      default:
+        aliases:
+          - sandbox.test
+    depends_on:
+      sql:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--max-time", "3", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 4s
+      start_period: 60s
+      retries: 12
+
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: SandboxOnly123!
+    volumes:
+      - sandbox-sql:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 5s
+      timeout: 5s
+      start_period: 30s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.31.1
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+      MP_DISABLE_VERSION_CHECK: "true"
+    ports:
+      - "127.0.0.1:${SANDBOX_MAIL_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  sandbox-sql:
+  sandbox-keys:

@@ -1,6 +1,6 @@
-namespace Server.Core.Notification;
+namespace Server.Examples.Notifications;
 
-public sealed class NotificationOptions
+public sealed class SampleNotificationOptions
 {
     public const string SectionName = "Notification";
 

@@ -22,7 +22,7 @@ describe('fetch route', () => {
       })
     );
 
-    let cleanup: () => void = () => undefined;
+    let cleanup: (() => void) | undefined;
 
     try {
       ({ cleanup } = renderRoute({ initialPath: '/fetch' }));
@@ -41,7 +41,7 @@ describe('fetch route', () => {
     } finally {
       consoleError.mockRestore();
       consoleWarn.mockRestore();
-      cleanup();
+      cleanup?.();
     }
   });
 

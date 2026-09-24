@@ -1,21 +1,21 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Server.Controllers;
 using Server.Core.Notification;
-using Server.Models.Notification;
 
-namespace Server.Controllers;
+namespace Server.Examples.Notifications;
 
 public sealed class NotificationController : ApiControllerBase
 {
     private readonly IHostEnvironment _environment;
     private readonly ILogger<NotificationController> _logger;
-    private readonly INotificationService _notificationService;
+    private readonly ISampleNotificationService _notificationService;
 
     public NotificationController(
         IHostEnvironment environment,
         ILogger<NotificationController> logger,
-        INotificationService notificationService)
+        ISampleNotificationService notificationService)
     {
         _environment = environment;
         _logger = logger;

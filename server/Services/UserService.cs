@@ -5,8 +5,6 @@ namespace Server.Services;
 
 public interface IUserService
 {
-    Task<List<string>> GetRolesForUser(string userId);
-
     Task<ClaimsPrincipal?> UpdateUserPrincipalIfNeeded(ClaimsPrincipal principal);
 }
 
@@ -21,7 +19,7 @@ public class UserService : IUserService
         _dbContext = dbContext;
     }
 
-    public async Task<List<string>> GetRolesForUser(string userId)
+    private async Task<List<string>> GetRolesForUser(string userId)
     {
         // fake role strings but use _dbContext to get real roles later
         var roles = new List<string> { "User", "SampleRole" };
@@ -31,10 +29,9 @@ public class UserService : IUserService
 
     public async Task<ClaimsPrincipal?> UpdateUserPrincipalIfNeeded(ClaimsPrincipal principal)
     {
-        // Here you could check if the user's roles or other claims have changed
-        // and if so, create a new ClaimsPrincipal with updated claims.
+        // Application roles are authoritative for both sign-in and cookie validation.
         var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId == null)
+        if (string.IsNullOrEmpty(userId))
         {
             return null; // can't update without user ID
         }
@@ -44,28 +41,32 @@ public class UserService : IUserService
         var currentRoles = await GetRolesForUser(userId);
 
         // compare roles to existing claims, only update if different
-        var cookieRoles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
-        var changed = currentRoles.Count != cookieRoles.Count ||
-                      currentRoles.Except(cookieRoles).Any();
+        var existingRoles = principal.Identities
+            .SelectMany(identity => identity.FindAll(identity.RoleClaimType))
+            .Select(claim => claim.Value)
+            .ToList();
+        var changed = currentRoles.Count != existingRoles.Count ||
+                      currentRoles.Except(existingRoles).Any();
 
         if (!changed) { return null; } // no change
 
-        // create new identity with updated roles
-        var newId = new ClaimsIdentity(principal.Claims, authenticationType: principal.Identity?.AuthenticationType);
+        // Clone each identity to preserve claim mappings and metadata without changing the input.
+        var updatedPrincipal = new ClaimsPrincipal(principal.Identities.Select(identity => identity.Clone()));
 
-        // remove old role claims
-        foreach (var roleClaim in newId.FindAll(ClaimTypes.Role).ToList())
+        foreach (var identity in updatedPrincipal.Identities)
         {
-            newId.RemoveClaim(roleClaim);
+            foreach (var roleClaim in identity.FindAll(identity.RoleClaimType).ToList())
+            {
+                identity.RemoveClaim(roleClaim);
+            }
         }
 
-        // add new role claims
+        var primaryIdentity = (ClaimsIdentity)updatedPrincipal.Identity!;
         foreach (var role in currentRoles)
         {
-            newId.AddClaim(new Claim(ClaimTypes.Role, role));
+            primaryIdentity.AddClaim(new Claim(primaryIdentity.RoleClaimType, role));
         }
 
-        // create new principal and return it
-        return new ClaimsPrincipal(newId);
+        return updatedPrincipal;
     }
 }

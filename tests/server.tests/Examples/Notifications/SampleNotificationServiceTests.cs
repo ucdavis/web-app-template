@@ -1,20 +1,21 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using Server.Core.Notification;
+using Server.Examples.Notifications;
 
-namespace Server.Tests.Notification;
+namespace Server.Tests.Examples.Notifications;
 
-public class NotificationServiceTests
+public class SampleNotificationServiceTests
 {
     [Fact]
     public async Task SendAsync_renders_the_template_and_sends_the_email()
     {
         var emailService = new CaptureEmailService();
         var notificationRenderer = new CaptureNotificationRenderer();
-        var service = new NotificationService(
+        var service = new SampleNotificationService(
             emailService,
             notificationRenderer,
-            Options.Create(new NotificationOptions
+            Options.Create(new SampleNotificationOptions
             {
                 BaseUrl = "https://example.test",
                 DefaultAppName = "Notification Center",
@@ -30,7 +31,7 @@ public class NotificationServiceTests
             To = ["person@example.com"],
         }, "Notification subject", "Notification header", "Notification message");
 
-        notificationRenderer.TemplatePath.Should().Be("/Views/Emails/DefaultNotification_mjml.cshtml");
+        notificationRenderer.TemplatePath.Should().Be("/Examples/Notifications/Views/DefaultNotification_mjml.cshtml");
         notificationRenderer.Model.Should().BeOfType<DefaultNotificationTemplateModel>();
 
         var model = (DefaultNotificationTemplateModel)notificationRenderer.Model!;
@@ -58,10 +59,10 @@ public class NotificationServiceTests
     {
         var emailService = new CaptureEmailService();
         var notificationRenderer = new CaptureNotificationRenderer();
-        var service = new NotificationService(
+        var service = new SampleNotificationService(
             emailService,
             notificationRenderer,
-            Options.Create(new NotificationOptions
+            Options.Create(new SampleNotificationOptions
             {
                 BaseUrl = "",
                 DefaultAppName = "",
@@ -88,10 +89,10 @@ public class NotificationServiceTests
     {
         var emailService = new CaptureEmailService();
         var notificationRenderer = new CaptureNotificationRenderer();
-        var service = new NotificationService(
+        var service = new SampleNotificationService(
             emailService,
             notificationRenderer,
-            Options.Create(new NotificationOptions
+            Options.Create(new SampleNotificationOptions
             {
                 DefaultAppName = "Notification Center",
             }),
@@ -123,7 +124,7 @@ public class NotificationServiceTests
         ],
         465.50m);
 
-        notificationRenderer.TemplatePath.Should().Be("/Views/Emails/TableNotification_mjml.cshtml");
+        notificationRenderer.TemplatePath.Should().Be("/Examples/Notifications/Views/TableNotification_mjml.cshtml");
         notificationRenderer.Model.Should().BeOfType<TableNotificationTemplateModel>();
 
         var model = (TableNotificationTemplateModel)notificationRenderer.Model!;

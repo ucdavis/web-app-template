@@ -1,10 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using Microsoft.Extensions.Options;
+using Server.Core.Notification;
 
-namespace Server.Core.Notification;
+namespace Server.Examples.Notifications;
 
-public interface INotificationService
+public interface ISampleNotificationService
 {
     Task SendAsync(
         EmailRecipients recipients,
@@ -23,21 +24,21 @@ public interface INotificationService
         CancellationToken cancellationToken = default);
 }
 
-public sealed class NotificationService : INotificationService
+public sealed class SampleNotificationService : ISampleNotificationService
 {
-    private const string DefaultTemplatePath = "/Views/Emails/DefaultNotification_mjml.cshtml";
-    private const string TableTemplatePath = "/Views/Emails/TableNotification_mjml.cshtml";
+    private const string DefaultTemplatePath = "/Examples/Notifications/Views/DefaultNotification_mjml.cshtml";
+    private const string TableTemplatePath = "/Examples/Notifications/Views/TableNotification_mjml.cshtml";
     private static readonly CultureInfo CurrencyCulture = CultureInfo.GetCultureInfo("en-US");
 
     private readonly IEmailService _emailService;
-    private readonly NotificationOptions _notificationOptions;
+    private readonly SampleNotificationOptions _notificationOptions;
     private readonly INotificationRenderer _notificationRenderer;
     private readonly SmtpOptions _smtpOptions;
 
-    public NotificationService(
+    public SampleNotificationService(
         IEmailService emailService,
         INotificationRenderer notificationRenderer,
-        IOptions<NotificationOptions> notificationOptions,
+        IOptions<SampleNotificationOptions> notificationOptions,
         IOptions<SmtpOptions> smtpOptions)
     {
         _emailService = emailService;

@@ -9,10 +9,54 @@ namespace Server.Helpers;
 public static class AuthenticationHelper
 {
     /// <summary>
-    /// Configures Microsoft Identity Web authentication with Azure AD/Entra ID
+    /// Keeps Entra as the default; local sign-in must be explicitly enabled in Development.
     /// </summary>
-    public static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddAuthenticationServices(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
+        if (LocalAuthentication.IsEnabled(configuration, environment))
+        {
+            var cookieName = ".WebAppTemplate.LocalSandbox";
+            var cookieSuffix = configuration["Auth:LocalCookieSuffix"];
+            if (!string.IsNullOrEmpty(cookieSuffix))
+            {
+                cookieName += $".{cookieSuffix}";
+                services.AddAntiforgery(options => options.Cookie.Name = $"{cookieName}.Antiforgery");
+            }
+
+            services.AddAuthentication(LocalAuthentication.Scheme)
+                .AddCookie(LocalAuthentication.Scheme, options =>
+                {
+                    options.Cookie.Name = cookieName;
+                    options.LoginPath = "/login";
+                    options.Events.OnRedirectToLogin = ctx =>
+                    {
+                        if (ctx.Request.Path.StartsWithSegments("/api"))
+                        {
+                            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        }
+                        else
+                        {
+                            ctx.Response.Redirect(ctx.RedirectUri);
+                        }
+                        return Task.CompletedTask;
+                    };
+                    options.Events.OnRedirectToAccessDenied = ctx =>
+                    {
+                        ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        return Task.CompletedTask;
+                    };
+                });
+            return services;
+        }
+
+        var clientId = configuration["Auth:ClientId"]?.Trim();
+        if (string.IsNullOrWhiteSpace(clientId) ||
+            string.Equals(clientId, "<client-guid>", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "Auth:ClientId is not configured. Replace the placeholder in server/appsettings.json or set the Auth__ClientId environment variable.");
+        }
+
         services
             .AddAuthentication(options =>
             {
@@ -78,18 +122,12 @@ public static class AuthenticationHelper
     /// </summary>
     private static async Task OnTokenValidated(Microsoft.AspNetCore.Authentication.OpenIdConnect.TokenValidatedContext ctx)
     {
-        // Load up the roles on first login (can also change other user info/claims here if needed)
         var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
-        var userId = ctx.Principal!.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var updated = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
 
-        if (string.IsNullOrEmpty(userId)) return;
-
-        var roles = await userService.GetRolesForUser(userId);
-
-        var identity = (ClaimsIdentity)ctx.Principal.Identity!;
-        foreach (var role in roles)
+        if (updated != null)
         {
-            identity.AddClaim(new Claim(ClaimTypes.Role, role));
+            ctx.Principal = updated;
         }
     }
 
@@ -98,8 +136,6 @@ public static class AuthenticationHelper
     /// </summary>
     private static async Task OnValidatePrincipal(Microsoft.AspNetCore.Authentication.Cookies.CookieValidatePrincipalContext ctx)
     {
-        // On every request with a cookie, check if the user's roles/claims need updating
-        // We could use a cache here or roleVersion or timestamp or something, but for simplicity we'll just hit the DB every time
         var userService = ctx.HttpContext.RequestServices.GetRequiredService<IUserService>();
         var updated = await userService.UpdateUserPrincipalIfNeeded(ctx.Principal!);
 

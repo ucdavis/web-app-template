@@ -23,6 +23,8 @@ node_modules/
 *.userosscache
 *.sln.docstates
 .env
+.env.*
+!.env.example
 
 # Build results
 [Dd]ebug/
@@ -39,6 +41,7 @@ msbuild.log
 msbuild.err
 msbuild.wrn
 .aspnet/
+output/playwright/
 
 # Visual Studio 2015
 .vs/

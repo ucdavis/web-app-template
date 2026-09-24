@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Server.Core.Notification;
 
-internal static class EmailValidation
+public static class EmailValidation
 {
     public static void ValidateRecipients(EmailRecipients recipients)
     {
